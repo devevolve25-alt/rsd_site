@@ -1,0 +1,614 @@
+:root {
+   /* Cores (Consolidado e mapeado para novas definições quando apropriado) */
+   --color-dark-bg-primary: #000000; /* Fundo principal muito escuro, conforme novo input */
+   --color-gradient-brown-accent: #36221c; /* NOVO: Marrom escuro para o gradiente, mais visível */
+
+   --color-dark-bg-card: #28282c;    /* Fundo dos cards (grafite) - mantido da versão anterior para animação */
+   --color-card-bg-dark-gray: #1f1f22; /* Tom de cinza escuro para animação do fundo do card - mantido */
+
+   --color-glow-blue: #00BFFF;       /* Azul vibrante para glow (coincide com novo input) */
+   --color-glow-blue-secondary: #00bcd4; /* Um segundo tom de azul para variação do glow - mantido */
+   --color-glow-green: #39FF14;      /* Verde vibrante para glow (coincide com novo input) */
+
+   --color-text-golden: #FFD700;     /* Dourado para títulos (coincide com novo input) */
+   --color-text-vibrant-blue: #00BFFF; /* Azul vibrante para subtítulos/destaque - ajustado */
+   --color-text-vibrant-green: #39FF14; /* Verde vibrante para subtítulos/destaque - ajustado */
+   --color-text-light-blue: #ADD8E6;  /* Azul claro para texto de corpo - mantido */
+   --color-text-light-green: #98FB98; /* Verde claro para itens de lista - ajustado */
+   --color-text-primary-light: #E0FFFF; /* Cor de texto padrão levemente azulada - do novo input */
+   
+   --color-cta-hover-fill-gold: rgba(255, 215, 0, 0.2); /* Fundo sutil para CTA hover (dourado) */
+   --color-cta-hover-fill-blue: rgba(0, 191, 255, 0.2);
+   --color-cta-hover-fill-green: rgba(57, 255, 20, 0.2);
+
+
+   /* Fontes */
+   --font-primary: 'Segoe UI', Arial, sans-serif; /* Fonte moderna e limpa, conforme novo input */
+   --font-weight-bold: 700;
+   --font-weight-semibold: 600;
+   --font-weight-normal: 400;
+
+   /* Spacing (Reintroduzido) */
+   --padding-card: 2.5rem; /* Espaçamento interno generoso do card */
+   --margin-bottom-section: 4rem; /* Margem entre seções */
+
+   /* Animações e Transições */
+   --animation-duration-fast: 0.2s;
+   --animation-duration-medium: 0.4s;
+   --animation-duration-slow: 1.5s;
+   --transition-ease: ease-in-out;
+   --animation-duration-card-bg: 10s; /* Duração ajustada para a animação do fundo do card para suavidade */
+   --animation-duration-pulse: 4s; /* Duração da animação de pulso */
+   --animation-duration-gradient-shift: 25s; /* NOVO: Duração para o movimento do gradiente */
+}
+
+/* ========================================= */
+/* BASE / GERAL */
+/* ========================================= */
+body {
+   margin: 0;
+   padding: 0;
+   font-family: var(--font-primary);
+   background-color: var(--color-dark-bg-primary);
+   color: var(--color-text-primary-light); /* Cor de texto padrão levemente azulada */
+   line-height: 1.6;
+   -webkit-font-smoothing: antialiased;
+   -moz-osx-font-smoothing: grayscale;
+
+   /* Layout Centralizado da Página */
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   padding: 40px 20px;
+   min-height: 100vh;
+   background-image: radial-gradient(circle at center, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.9) 70%, var(--color-dark-bg-primary) 100%);
+   background-size: cover;
+   background-attachment: fixed;
+}
+
+/* inicio estilo card */
+/* Um wrapper para centralizar os cards e dar um respiro */
+.cards-container {
+    max-width: 900px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+/* ========================================= */
+/* ANIMAÇÕES GLOBAIS (PARA FUNDOS SUTIS OU ELEMENTOS DECORATIVOS) */
+/* ========================================= */
+@keyframes pulseEffect {
+    0% { transform: scale(0.9); opacity: 0.7; }
+    100% { transform: scale(1.1); opacity: 1; }
+}
+
+/* NOVO: Animação para o fundo do card com gradiente em movimento */
+@keyframes backgroundGradientMove {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes floatEffect {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); } /* Sobe 8px */
+    100% { transform: translateY(0px); } /* Volta à posição original */
+}
+
+/* Estilo do Card Principal (.quantum-card) */
+.quantum-card {
+   position: relative;
+   background: transparent; /* Mantido para a base, mas o ::after vai sobrepor como fundo */
+   border-radius: 15px;
+   padding: var(--padding-card);
+   margin-bottom: var(--margin-bottom-section);
+   overflow: hidden;
+   box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+   transition: transform var(--animation-duration-medium) var(--transition-ease),
+               box-shadow var(--animation-duration-medium) var(--transition-ease); /* Adicionado box-shadow na transição */
+   will-change: transform, box-shadow;
+   z-index: 1; /* Garante que o conteúdo do card esteja acima do ::after */
+   border: 2px solid var(--color-text-golden); /* <--- Esta é a linha a ser adicionada/modificada */
+}
+
+.quantum-card:hover {
+   transform: translateY(-5px) scale(1.005);
+   box-shadow: 0 5px 25px rgba(0, 0, 0, 0.4);
+}
+
+/* REMOVIDO EFEITO GLOW: ::before agora está inativo */
+.quantum-card::before {
+   content: '';
+   position: absolute;
+   top: 0;
+   left: 0;
+   right: 0;
+   bottom: 0;
+   border-radius: 15px; /* Manter o border-radius do card */
+   background: none; /* Remover qualquer background de glow */
+   z-index: -2; /* Abaixo do ::after para não interferir */
+   opacity: 0; /* Garantir que não seja visível */
+   filter: none; /* Remover blur */
+   animation: none; /* Remover animação */
+   transition: none; /* Remover transição */
+   will-change: unset; /* Reset will-change */
+}
+
+/* NOVO: ::after agora é o fundo do card com gradiente em movimento */
+.quantum-card::after {
+   content: '';
+   position: absolute;
+   top: 0;
+   left: 0;
+   right: 0;
+   bottom: 0;
+   border-radius: 15px;
+   /* Gradiente de fundo com cores discretas para o efeito de movimento */
+   background: linear-gradient(
+       45deg,
+       var(--color-dark-bg-primary) 45%,
+       var(--color-gradient-brown-accent) 50%, /* Usando o novo marrom escuro */
+       var(--color-dark-bg-primary) 55%
+   );
+   background-size: 200% 200%; /* Tamanho maior para permitir o movimento do gradiente */
+   animation: backgroundGradientMove var(--animation-duration-gradient-shift) ease-in-out infinite alternate; /* Animação do movimento */
+   z-index: -1; /* Permanece abaixo do conteúdo principal do card */
+   will-change: background-position;
+}
+
+
+/* REMOVIDO EFEITO GLOW: ::before no hover agora está inativo */
+.quantum-card:hover::before {
+   opacity: 0; /* Garantir que não seja visível no hover também */
+   filter: none; /* Remover blur no hover */
+   animation: none; /* Remover animação no hover */
+   will-change: unset; /* Reset will-change */
+}
+
+/* Efeitos de Fundo Internos do Card */
+.quantum-card .quantum-bg-effect-top-left,
+.quantum-card .quantum-bg-effect-bottom-right {
+    position: absolute;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    filter: blur(20px);
+    z-index: 2; /* Acima do ::after, mas abaixo dos textos */
+    opacity: 0.2; /* Opacidade para que seja sutil */
+}
+.quantum-card .quantum-bg-effect-top-left {
+    top: -75px;
+    left: -75px;
+    background: radial-gradient(circle, rgba(0,255,255,0.2) 0%, rgba(0,255,255,0) 70%);
+    animation: pulseEffect var(--animation-duration-pulse) infinite alternate;
+}
+.quantum-card .quantum-bg-effect-bottom-right {
+    bottom: -75px;
+    right: -75px;
+    background: radial-gradient(circle, rgba(255,215,0,0.2) 0%, rgba(255,215,0,0) 70%);
+    animation: pulseEffect var(--animation-duration-pulse) infinite alternate reverse;
+}
+
+
+/* ========================================= */
+/* TIPOGRAFIA */
+/* ========================================= */
+.main-content h1 {
+   color: var(--color-text-golden);
+   font-size: 3.5rem;
+   text-align: center;
+   margin-bottom: 20px;
+   text-shadow: 0 0 15px rgba(255,215,0,0.8);
+   letter-spacing: 1px;
+   text-transform: uppercase;
+}
+
+.main-content p {
+   color: var(--color-text-primary-light);
+   font-size: 1.2em;
+   text-align: center;
+   max-width: 800px;
+   margin-bottom: 40px;
+}
+
+.quantum-card h2 {
+   color: var(--color-text-golden);
+   font-size: 2.8em;
+   text-align: center;
+   margin-bottom: 15px;
+   text-shadow: 0 0 15px rgba(255,215,0,0.8);
+   letter-spacing: 1px;
+   text-transform: uppercase;
+   position: relative;
+   z-index: 3; /* Acima dos efeitos de fundo internos */
+   transition: text-shadow var(--animation-duration-fast) var(--transition-ease);
+}
+.quantum-card h2:hover {
+   text-shadow: 0 0 20px rgba(255,215,0,1);
+}
+
+.quantum-card h3 {
+   color: var(--color-text-vibrant-green);
+   font-size: 1.5em;
+   text-align: center;
+   margin-bottom: 30px;
+   font-weight: var(--font-weight-normal);
+   text-shadow: 0 0 10px rgba(57,255,20,0.6);
+   position: relative;
+   z-index: 3;
+}
+
+.quantum-card p {
+   color: var(--color-text-light-blue);
+   font-size: 1.1em;
+   line-height: 1.8;
+   text-align: justify;
+   margin-bottom: 30px;
+   position: relative;
+   z-index: 3;
+}
+
+.quantum-card p strong {
+   color: var(--color-text-golden);
+   text-shadow: 0 0 5px rgba(255,215,0,0.5);
+}
+.quantum-card p em {
+   color: var(--color-text-vibrant-blue);
+   text-shadow: 0 0 5px rgba(0,191,255,0.5);
+   font-style: normal;
+   position: relative;
+   z-index: 3;
+}
+
+/* ========================================= */
+/* LISTAS PERSONALIZADAS */
+/* ========================================= */
+.quantum-card ul {
+   list-style: none;
+   padding: 0;
+   margin-bottom: 40px;
+   display: grid;
+   grid-template-columns: 1fr;
+   gap: 15px;
+   position: relative;
+   z-index: 3;
+}
+.quantum-card ul li {
+   color: var(--color-text-light-green);
+   font-size: 1.05em;
+   display: flex;
+   align-items: center;
+   position: relative;
+   padding-left: 1.8rem;
+}
+.quantum-card ul li::before {
+   content: '✦';
+   position: absolute;
+   left: 0;
+   color: var(--color-text-golden);
+   font-size: 1.2rem;
+   line-height: 1;
+   text-shadow: 0 0 8px rgba(255, 215, 0, 0.7);
+   transition: text-shadow var(--animation-duration-fast) var(--transition-ease);
+}
+.quantum-card ul li:hover::before {
+   text-shadow: 0 0 12px rgba(255, 215, 0, 0.9);
+}
+
+/* ========================================= */
+/* BOTÕES (CALL-TO-ACTION) */
+/* ========================================= */
+.cta-button {
+   background-color: transparent;
+   border: 2px solid var(--color-text-golden);
+   color: var(--color-text-golden);
+   padding: 15px 35px;
+   border-radius: 8px;
+   cursor: pointer;
+   font-size: 1.2em;
+   font-weight: var(--font-weight-bold);
+   text-transform: uppercase;
+   box-shadow: 0 0 15px rgba(255,215,0,0.6);
+   transition: all var(--animation-duration-medium) var(--transition-ease);
+   position: relative;
+   z-index: 3; /* Acima dos efeitos de fundo internos */
+   overflow: hidden;
+   background: linear-gradient(45deg, rgba(255,215,0,0.05) 0%, rgba(0,191,255,0.05) 50%, rgba(57,255,20,0.05) 100%);
+   text-decoration: none;
+   display: inline-block;
+}
+.cta-button:hover {
+   background-color: var(--color-text-golden);
+   color: var(--color-dark-bg-primary);
+   box-shadow: 0 0 25px rgba(255,215,0,1);
+   transform: scale(1.05);
+   border-color: var(--color-text-golden);
+}
+
+/* Variações de botões para diferentes cores */
+.cta-button.blue {
+    border-color: var(--color-glow-blue);
+    color: var(--color-glow-blue);
+    box-shadow: 0 0 15px rgba(0,191,255,0.6);
+    background: linear-gradient(45deg, var(--color-cta-hover-fill-blue) 0%, var(--color-cta-hover-fill-gold) 50%, var(--color-cta-hover-fill-green) 100%);
+}
+.cta-button.blue:hover {
+    background-color: var(--color-glow-blue);
+    color: var(--color-dark-bg-primary);
+    box-shadow: 0 0 25px rgba(0,191,255,1);
+    border-color: var(--color-glow-blue);
+}
+.cta-button.green {
+    border-color: var(--color-glow-green);
+    color: var(--color-glow-green);
+    box-shadow: 0 0 15px rgba(57,255,20,0.6);
+    background: linear-gradient(45deg, var(--color-cta-hover-fill-green) 0%, var(--color-cta-hover-fill-blue) 50%, var(--color-cta-hover-fill-gold) 100%);
+}
+.cta-button.green:hover {
+    background-color: var(--color-glow-green);
+    color: var(--color-dark-bg-primary);
+    box-shadow: 0 0 25px rgba(57,255,20,1);
+    border-color: var(--color-glow-green);
+}
+
+/* Imagens dentro dos cards (da versão anterior) */
+.quantum-card img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 20px auto;
+    filter: drop-shadow(0 0 15px rgba(0, 188, 212, 0.7));
+    border-radius: 5px;
+    position: relative;
+    z-index: 3;
+}
+
+
+/* ========================================= */
+/* MENU LATERAL */
+/* ========================================= */
+.side-menu {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 80px;
+    background-color: rgba(10, 10, 15, 0.9);
+    box-shadow: 5px 0 15px rgba(0, 0, 0, 0.5);
+    padding-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    z-index: 1000;
+}
+.side-menu a {
+    color: var(--color-glow-blue);
+    font-size: 1.8rem;
+    text-decoration: none;
+    transition: color 0.3s var(--transition-ease), text-shadow 0.3s var(--transition-ease);
+    text-shadow: 0 0 8px rgba(0, 188, 212, 0.4);
+}
+.side-menu a:hover {
+    color: var(--color-text-golden);
+    text-shadow: 0 0 15px var(--color-text-golden);
+}
+.side-menu .logo {
+    font-size: 2.5rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-golden);
+    text-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+    margin-bottom: 30px;
+}
+
+/* Ajuste para o conteúdo não ser escondido pelo menu lateral */
+.main-content {
+    margin-left: 80px;
+    width: calc(100% - 80px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+
+/* ========================================= */
+/* RESPONSIVIDADE BÁSICA (Ajustes para telas menores) */
+/* ========================================= */
+@media (max-width: 768px) {
+   .quantum-card {
+       padding: 1.5rem;
+       margin-bottom: 2rem;
+   }
+   .main-content h1 {
+       font-size: 2.5rem;
+   }
+   .quantum-card h2 {
+       font-size: 2rem;
+   }
+   .quantum-card h3 {
+       font-size: 1.3rem;
+   }
+   .quantum-card p, .quantum-card ul li, .cta-button {
+       font-size: 0.95em;
+   }
+   .cta-button {
+       padding: 12px 25px;
+   }
+    /* Mobile: Menu lateral vira menu superior */
+    .side-menu {
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        justify-content: space-around;
+        position: relative;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        padding: 15px 0;
+    }
+    .side-menu .logo {
+        display: none;
+    }
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+        padding-top: 20px;
+    }
+    body {
+        padding: 20px 0;
+    }
+    .cards-container {
+        padding: 0 10px;
+    }
+    .quantum-card .quantum-bg-effect-top-left,
+    .quantum-card .quantum-bg-effect-bottom-right {
+        width: 100px;
+        height: 100px;
+        filter: blur(15px);
+    }
+}
+
+/* ========================================= */
+/* CARROSSEL DE CASES */
+/* ========================================= */
+.case-studies-carousel {
+    display: flex; /* Para organizar os cards lado a lado */
+    overflow-x: auto; /* Habilita a rolagem horizontal */
+    scroll-snap-type: x mandatory; /* Para que a rolagem "grude" nos cards */
+    -webkit-overflow-scrolling: touch; /* Melhora a rolagem em dispositivos iOS */
+    gap: 20px; /* Espaço entre os cards-filhos */
+    padding: 20px 0; /* Um pouco de padding vertical e horizontal para visualização */
+    margin-bottom: 30px; /* Espaço abaixo do carrossel */
+    width: 100%; /* Garante que ocupe a largura disponível no card pai */
+
+    /* Opcional: Esconder a barra de rolagem para um visual mais limpo */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE and Edge */
+}
+
+.case-studies-carousel::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+.case-study-card {
+    flex: 0 0 auto; /* Impede que os cards encolham e mantém o tamanho fixo */
+    width: 300px; /* Largura de cada card-filho (ajuste conforme necessário) */
+    scroll-snap-align: start; /* Onde o card deve "grudar" na rolagem */
+    background-color: var(--color-card-bg-dark-gray); /* Um fundo sutil para o card-filho */
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+    transition: transform var(--animation-duration-fast) var(--transition-ease);
+    will-change: transform;
+    animation: floatEffect 5s ease-in-out infinite; /* <--- NOVA LINHA AQUI */
+
+}
+
+.case-study-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+.case-study-card h3 {
+    color: var(--color-text-golden); /* Reutilizando as cores existentes */
+    font-size: 1.4em;
+    margin-top: 0;
+    margin-bottom: 10px;
+    text-align: left; /* Alinhamento à esquerda para título do case */
+    text-shadow: 0 0 8px rgba(255,215,0,0.6);
+}
+
+.case-study-card p {
+    color: var(--color-text-light-blue);
+    font-size: 0.95em;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    text-align: left; /* Alinhamento à esquerda para descrição */
+}
+
+.case-study-card .cta-button {
+    display: inline-block; /* Para que o botão se ajuste ao conteúdo */
+    margin-top: 10px;
+    font-size: 0.9em; /* Botão ligeiramente menor nos cards-filhos */
+    padding: 10px 20px; /* Padding ajustado */
+}
+
+/* Ajuste opcional para botões menores dentro dos cards-filhos, se a classe 'small' for usada */
+.cta-button.small {
+    font-size: 0.8em;
+    padding: 8px 15px;
+}
+
+/* Responsividade básica para o carrossel */
+@media (max-width: 768px) {
+    .case-study-card {
+        width: 260px; /* Ligeiramente menor em telas pequenas */
+    }
+    .case-studies-carousel {
+        padding: 15px 0; /* Ajuste o padding em mobile */
+        gap: 15px;
+    }
+}
+
+/* ========================================= */
+/* CONTROLES DE CARROSSEL (SETAS) */
+/* ========================================= */
+.case-carousel-container {
+    position: relative; /* Essencial para posicionar as setas de forma absoluta */
+    width: 100%;
+    margin-bottom: 30px; /* Mantém o espaçamento inferior do carrossel */
+    display: flex; /* Para centralizar o carrossel dentro deste contêiner se necessário */
+    align-items: center; /* Alinha as setas verticalmente com o carrossel */
+}
+
+.carousel-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(0, 0, 0, 0.6); /* Fundo escuro semitransparente */
+    color: var(--color-text-golden); /* Cor da seta */
+    border: 1px solid var(--color-text-golden);
+    border-radius: 50%; /* Botão circular */
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 10; /* Garante que as setas fiquem acima dos cards */
+    transition: background-color var(--animation-duration-fast) ease-in-out,
+                color var(--animation-duration-fast) ease-in-out,
+                box-shadow var(--animation-duration-fast) ease-in-out;
+    box-shadow: 0 0 10px rgba(255,215,0,0.4);
+
+    /* Ocultar setas em dispositivos móveis por padrão */
+    display: none; 
+}
+
+/* Mostrar setas apenas em telas maiores (desktop) */
+@media (min-width: 769px) {
+    .carousel-arrow {
+        display: flex; /* Exibir as setas no desktop */
+    }
+    /* Ajustar padding do carrossel para não ficar atrás das setas */
+    .case-studies-carousel {
+        padding: 20px 60px; /* Aumenta o padding lateral para acomodar as setas */
+    }
+}
+
+
+.carousel-arrow.left-arrow {
+    left: 10px; /* Posição à esquerda */
+}
+
+.carousel-arrow.right-arrow {
+    right: 10px; /* Posição à direita */
+}
+
+.carousel-arrow:hover {
+    background-color: var(--color-text-golden);
+    color: var(--color-dark-bg-primary); /* Inverte as cores no hover */
+    box-shadow: 0 0 15px rgba(255,215,0,0.8);
+}
