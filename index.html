@@ -218,7 +218,18 @@
         console.log('🔍 SCRIPT: Botões de Fechar Chat encontrados:', closeChatButtons.length);
         console.log('🔍 SCRIPT: Campos de Input do Chat encontrados:', chatInputs.length);
         console.log('🔍 SCRIPT: Botões de Enviar Chat encontrados:', chatSendButtons.length);
+        try {
+            const WEBHOOK_URL_MERCURIA_RSD = "https://powerfulkiwi-n8n.cloudfy.live/webhook/a344ecd0-aeb5-4228-959d-795fcf2f5ecf"; 
 
+            const response = await fetch(WEBHOOK_URL_MEFCURIA_RSD, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    message: input,
+                    entity: "mercurIA-rsd",
+                    timestamp: new Date().toISOString()
+                })
+            });   
 
         // Função para adicionar mensagem ao chat
         function addMessage(chatMessagesContainer, message, type) {
