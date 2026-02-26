@@ -214,11 +214,8 @@
         const chatInputs = document.querySelectorAll('.chat-input');
         const chatSendButtons = document.querySelectorAll('.chat-send-button');
 
-        console.log('🔍 SCRIPT: Botões CTA encontrados:', ctaButtons.length);
-        console.log('🔍 SCRIPT: Botões de Fechar Chat encontrados:', closeChatButtons.length);
-        console.log('🔍 SCRIPT: Campos de Input do Chat encontrados:', chatInputs.length);
-        console.log('🔍 SCRIPT: Botões de Enviar Chat encontrados:', chatSendButtons.length);
-         
+        // URL do Webhook para comunicação com agente de IA
+        const webhookURL = 'https://powerfulkiwi-n8n.cloudfy.live/webhook/a344ecd0-aeb5-4228-959d-795fcf2f5ecf';
 
         // Função para adicionar mensagem ao chat
         function addMessage(chatMessagesContainer, message, type) {
@@ -266,19 +263,19 @@
             });
         });
 
-        // Lógica para enviar mensagens (apenas demonstração visual)
+        // Lógica para enviar mensagens (agora com webhook)
         chatSendButtons.forEach(button => {
             console.log('➡️ SCRIPT: Anexando listener ao botão Enviar Mensagem.');
-            button.addEventListener('click', () => {
+            button.addEventListener('click', async () => { // Adicionado 'async' para usar await
                 console.log('🎉 SCRIPT: Botão Enviar Mensagem clicado!');
                 const chatInput = button.previousElementSibling; // O input é o elemento irmão anterior
                 const chatMessagesContainer = button.closest('.card-chat-modal').querySelector('.chat-messages');
                 const userMessage = chatInput.value.trim();
 
-                // >>> AQUI VOCÊ CAPTURA O ID DO BOTÃO DE ENVIO <<<
-                const sendButtonId = button.id; // Captura o ID do botão "Enviar"
+                // Captura o ID do botão de envio para usar como contexto
+                const sendButtonId = button.id;
                 console.log('✉️ SCRIPT: ID do botão de envio:', sendButtonId);
-                // Você usaria 'sendButtonId' para informar ao seu backend/API da IA sobre o assunto.
+                const chatContext = sendButtonId.replace('send', '').replace('Chat', ''); // Ex: Vendisia, Whatsapp, Website, Expand, Approaches, Contact
 
 
                 if (userMessage) {
@@ -286,12 +283,36 @@
                     chatInput.value = ''; // Limpa o input
                     console.log('✉️ SCRIPT: Mensagem do usuário adicionada.');
 
-                    // Simula uma resposta da IA
-                    setTimeout(() => {
-                        // Aqui, em uma implementação real, você enviaria userMessage e sendButtonId para sua IA.
-                        addMessage(chatMessagesContainer, `Obrigado pela sua mensagem sobre ${sendButtonId.replace('send', '').replace('Chat', '')}! Nossa IA está processando...`, 'ai');
-                        console.log('🤖 SCRIPT: Resposta da IA simulada adicionada.');
-                    }, 1000);
+                    // Construir o payload para o webhook
+                    const payload = {
+                        message: userMessage,
+                        context: chatContext,
+                        timestamp: new Date().toISOString()
+                    };
+                    console.log('📡 SCRIPT: Enviando para webhook:', payload);
+
+                    try {
+                        const response = await fetch(webhookURL, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            console.log('✅ SCRIPT: Webhook respondeu com sucesso:', data);
+                            // Aqui você pode adicionar a resposta da IA ao chat
+                            addMessage(chatMessagesContainer, data.aiResponse || 'Obrigado pela sua mensagem! Nossa IA recebeu e está processando.', 'ai');
+                        } else {
+                            console.error('❌ SCRIPT: Erro na resposta do webhook:', response.status, response.statusText);
+                            addMessage(chatMessagesContainer, 'Houve um erro ao se comunicar com a IA. Por favor, tente novamente mais tarde.', 'ai');
+                        }
+                    } catch (error) {
+                        console.error('🔥 SCRIPT: Erro ao enviar mensagem para o webhook:', error);
+                        addMessage(chatMessagesContainer, 'Não foi possível conectar com a IA. Verifique sua conexão ou tente novamente.', 'ai');
+                    }
                 }
             });
         });
