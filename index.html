@@ -304,7 +304,7 @@
                             const data = await response.json();
                             console.log('✅ SCRIPT: Webhook respondeu com sucesso:', data);
                             // Aqui você pode adicionar a resposta da IA ao chat
-                            addMessage(chatMessagesContainer, data.aiResponse || 'Obrigado pela sua mensagem! Nossa IA recebeu e está processando.', 'ai');
+                        addMessage(chatMessagesContainer, data.output || 'Obrigado pela sua mensagem! Nossa IA recebeu e está processando.', 'ai');    
                         } else {
                             console.error('❌ SCRIPT: Erro na resposta do webhook:', response.status, response.statusText);
                             addMessage(chatMessagesContainer, 'Houve um erro ao se comunicar com a IA. Por favor, tente novamente mais tarde.', 'ai');
