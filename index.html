@@ -9,13 +9,15 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!--
     <div class="side-menu">
-        <div class="logo">RSD</div> <!-- Logo atualizado para RSD -->
+        <div class="logo">RSD</div>
         <a href="#home" aria-label="Home">🏠</a>
         <a href="#services" aria-label="Services">⚙️</a>
         <a href="#portfolio" aria-label="Portfolio">💼</a>
         <a href="#contact" aria-label="Contact">✉️</a>
     </div>
+    -->
 
     <div class="main-content">
         <!-- Título principal em dourado -->
@@ -24,7 +26,7 @@
         <p>Na vanguarda da inovação tecnológica, a RS DESENVOLVIMENTO é a sua parceira estratégica para construir o futuro digital do seu negócio. Com um olhar no horizonte e as mais avançadas tecnologias de Inteligência Artificial, projetamos e implementamos soluções personalizadas que não apenas otimizam suas operações, mas as preparam para um crescimento exponencial e duradouro.</p>
 
         <div class="cards-container">
-            <!-- 1º Card: Nossas Soluções Atuais -->
+            <!-- CARD PAI MODIFICADO: Contém os três cards filhos -->
             <div class="quantum-card">
                 <div class="quantum-bg-effect-top-left"></div>
                 <div class="quantum-bg-effect-bottom-right"></div>
@@ -32,36 +34,82 @@
                 <h2>Nossas Soluções Atuais: A Solidez da Inovação.</h2>
                 <p>Começamos pavimentando o caminho com plataformas robustas e eficientes, garantindo que você tenha as ferramentas certas para as demandas de hoje:</p>
 
-                <h3>1. VENDISIA: Sua Plataforma de Agendamento Inteligente e Completa</h3>
-                <p>Conheça a VENDISIA, nossa plataforma de atendimento e agendamento que já está revolucionando a gestão de horários. Pensada "mobile first" e com um agente de IA integrado, a VENDISIA é a escolha ideal para:</p>
-                <ul>
-                    <li><strong>Beleza & Bem-Estar:</strong> Salões de beleza, barbearias, clínicas de estética, spas.</li>
-                    <li><strong>Saúde & Cuidado:</strong> Clínicas médicas e odontológicas, fisioterapeutas, nutricionistas.</li>
-                    <li><strong>Serviços Profissionais:</strong> Personal trainers, coaches, consultores e professores.</li>
-                    <li>E todo tipo de negócio que precisa de agendamentos otimizados e gestão completa (cálculo de comissões, faturamento, CRM).</li>
-                </ul>
-                <p>Disponível em planos flexíveis (<em>Conecta Fácil, Agenda Pro, Gestão Total</em>), a VENDISIA é a prova de que a inteligência artificial já transforma a realidade de milhares de negócios.</p>
+                <!-- CARD FILHO 1: VENDISIA -->
+                <div class="inner-solution-card">
+                    <h3>VENDISIA: Sua Plataforma de Agendamento Inteligente e Completa</h3>
+                    <p>Conheça a VENDISIA, nossa plataforma de atendimento e agendamento que já está revolucionando a gestão de horários. Pensada "mobile first" e com um agente de IA integrado, a VENDISIA é a escolha ideal para:</p>
+                    <ul>
+                        <li><strong>Beleza & Bem-Estar:</strong> Salões de beleza, barbearias, clínicas de estética, spas.</li>
+                        <li><strong>Saúde & Cuidado:</strong> Clínicas médicas e odontológicas, fisioterapeutas, nutricionistas.</li>
+                        <li><strong>Serviços Profissionais:</strong> Personal trainers, coaches, consultores e professores.</li>
+                        <li>E todo tipo de negócio que precisa de agendamentos otimizados e gestão completa (cálculo de comissões, faturamento, CRM).</li>
+                    </ul>
+                    <p>Disponível em planos flexíveis (<em>Conecta Fácil, Agenda Pro, Gestão Total</em>), a VENDISIA é a prova de que a inteligência artificial já transforma a realidade de milhares de negócios.</p>
+                    <a href="javascript:void(0);" class="cta-button orange" data-chat-target="vendisiaInnerChat">SAIBA MAIS SOBRE VENDISIA</a>
+                    <!-- Chat integrado para o card filho da VENDISIA -->
+                    <div id="vendisiaInnerChat" class="card-chat-modal">
+                        <button class="close-chat-button">&times;</button>
+                        <h3>Converse sobre a VENDISIA!</h3>
+                        <div class="chat-messages">
+                            <div class="chat-message ai">Olá! Quer saber mais sobre como a VENDISIA pode otimizar seus agendamentos e gestão?</div>
+                        </div>
+                        <div class="chat-input-area">
+                            <input type="text" class="chat-input" placeholder="Digite sua mensagem...">
+                            <button class="chat-send-button" id="sendVendisiaChat">Enviar</button>
+                        </div>
+                    </div>
+                </div>
 
-                <h3>2. Atendimento com IA Via WhatsApp: Conexão 24/7 e Personalizada.</h3>
-                <p>Leve a inteligência artificial diretamente para o canal de comunicação preferido dos seus clientes. Nosso agente de IA no WhatsApp responde a dúvidas, realiza agendamentos e envia e-mails 24 horas por dia, 7 dias por semana. Perfeito para:</p>
-                <ul>
-                    <li><strong>Pequenos Comércios & Delivery:</strong> Agilizar pedidos e suporte.</li>
-                    <li><strong>Prestadores de Serviço Autônomos:</strong> Gerenciar demandas e informações.</li>
-                    <li><strong>E-commerce (Suporte):</strong> Automatizar interações e FAQs.</li>
-                </ul>
+                <!-- CARD FILHO 2: Atendimento com IA Via WhatsApp -->
+                <div class="inner-solution-card">
+                    <h3>Atendimento com IA Via WhatsApp: Conexão 24/7 e Personalizada.</h3>
+                    <p>Leve a inteligência artificial diretamente para o canal de comunicação preferido dos seus clientes. Nosso agente de IA no WhatsApp responde a dúvidas, realiza agendamentos e envia e-mails 24 horas por dia, 7 dias por semana. Perfeito para:</p>
+                    <ul>
+                        <li><strong>Pequenos Comércios & Delivery:</strong> Agilizar pedidos e suporte.</li>
+                        <li><strong>Prestadores de Serviço Autônomos:</strong> Gerenciar demandas e informações.</li>
+                        <li><strong>E-commerce (Suporte):</strong> Automatizar interações e FAQs.</li>
+                    </ul>
+                    <a href="javascript:void(0);" class="cta-button green" data-chat-target="whatsappInnerChat">FALE COM NOSSA IA NO WHATSAPP</a>
+                    <!-- Chat integrado para o card filho do WhatsApp -->
+                    <div id="whatsappInnerChat" class="card-chat-modal">
+                        <button class="close-chat-button">&times;</button>
+                        <h3>Converse sobre o Atendimento via WhatsApp!</h3>
+                        <div class="chat-messages">
+                            <div class="chat-message ai">Olá! Como nossa IA pode revolucionar seu atendimento via WhatsApp?</div>
+                        </div>
+                        <div class="chat-input-area">
+                            <input type="text" class="chat-input" placeholder="Digite sua mensagem...">
+                            <button class="chat-send-button" id="sendWhatsappChat">Enviar</button>
+                        </div>
+                    </div>
+                </div>
 
-                <h3>3. Desenvolvimento de Web Sites: Sua Presença Digital Essencial.</h3>
-                <p>Em um mundo conectado, ter um website profissional é a base para a credibilidade e visibilidade da sua marca. Criamos websites modernos, otimizados para SEO e focados na experiência do usuário, ideais para:</p>
-                <ul>
-                    <li><strong>Startups & Empreendedores:</strong> Para lançar sua marca com profissionalismo.</li>
-                    <li><strong>Pequenas e Médias Empresas (PMEs):</strong> Para solidificar sua presença e atrair clientes.</li>
-                    <li><strong>Profissionais Liberais:</strong> Para apresentar seu portfólio e serviços com excelência.</li>
-                </ul>
-
-                <a href="#" class="cta-button green">EXPLORE NOSSAS SOLUÇÕES</a>
+                <!-- CARD FILHO 3: Desenvolvimento de Web Sites -->
+                <div class="inner-solution-card">
+                    <h3>Desenvolvimento de Web Sites: Sua Presença Digital Essencial.</h3>
+                    <p>Em um mundo conectado, ter um website profissional é a base para a credibilidade e visibilidade da sua marca. Criamos websites modernos, otimizados para SEO e focados na experiência do usuário, ideais para:</p>
+                    <ul>
+                        <li><strong>Startups & Empreendedores:</strong> Para lançar sua marca com profissionalismo.</li>
+                        <li><strong>Pequenas e Médias Empresas (PMEs):</strong> Para solidificar sua presença e atrair clientes.</li>
+                        <li><strong>Profissionais Liberais:</strong> Para apresentar seu portfólio e serviços com excelência.</li>
+                    </ul>
+                    <a href="javascript:void(0);" class="cta-button blue" data-chat-target="websiteInnerChat">CRIE SEU WEBSITE</a>
+                    <!-- Chat integrado para o card filho de Websites -->
+                    <div id="websiteInnerChat" class="card-chat-modal">
+                        <button class="close-chat-button">&times;</button>
+                        <h3>Converse sobre Desenvolvimento de Websites!</h3>
+                        <div class="chat-messages">
+                            <div class="chat-message ai">Olá! Pronto para construir seu website dos sonhos com a gente?</div>
+                        </div>
+                        <div class="chat-input-area">
+                            <input type="text" class="chat-input" placeholder="Digite sua mensagem...">
+                            <button class="chat-send-button" id="sendWebsiteChat">Enviar</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <!-- 2º Card: Expandindo Horizontes (TEXTOS AJUSTADOS PARA LINHA ÚNICA) -->
+            <!-- 2º Card (Originalmente o 2º): Expandindo Horizontes -->
             <div class="quantum-card">
                 <div class="quantum-bg-effect-top-left"></div>
                 <div class="quantum-bg-effect-bottom-right"></div>
@@ -79,10 +127,23 @@
                 <p><strong>Tomada de Decisão Estratégica Baseada em Dados:</strong></p>
                 <p>Para qualquer negócio, incluindo Empresas B2B de Consultoria & Tecnologia, que deseja transformar volumes massivos de dados em insights acionáveis, garantindo um diferencial competitivo sustentável.</p>
 
-                <a href="#" class="cta-button blue">SAIBA MAIS</a>
+                <a href="javascript:void(0);" class="cta-button blue" data-chat-target="expandChat">SAIBA MAIS</a>
+
+                <!-- Chat integrado neste card -->
+                <div id="expandChat" class="card-chat-modal">
+                    <button class="close-chat-button">&times;</button>
+                    <h3>Explore as Possibilidades com nossa IA!</h3>
+                    <div class="chat-messages">
+                        <div class="chat-message ai">O que você gostaria de saber sobre as novas fronteiras da IA?</div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" class="chat-input" placeholder="Digite sua mensagem...">
+                        <button class="chat-send-button" id="sendExpandChat">Enviar</button>
+                        </div>
+                </div>
             </div>
 
-            <!-- 3º Card: Nossa IA se Adapta. Sua Empresa Cresce. -->
+            <!-- 3º Card (Originalmente o 3º): Nossa IA se Adapta. Sua Empresa Cresce. -->
             <div class="quantum-card">
                 <div class="quantum-bg-effect-top-left"></div>
                 <div class="quantum-bg-effect-bottom-right"></div>
@@ -90,10 +151,23 @@
                 <h2>Nossa IA se Adapta. Sua Empresa Cresce.</h2>
                 <p>Na RS DESENVOLVIMENTO, não vendemos apenas softwares; criamos inteligência sob medida que se integra perfeitamente à sua visão, seja você uma startup em ascensão, uma PME consolidada ou uma grande corporação buscando a próxima disrupção. Estamos prontos para explorar as possibilidades e construir a solução AI-First que levará seu negócio ao próximo nível.</p>
 
-                <a href="#" class="cta-button">CONHEÇA NOSSAS ABORDAGENS</a>
+                <a href="javascript:void(0);" class="cta-button" data-chat-target="approachesChat">CONHEÇA NOSSAS ABORDAGENS</a>
+
+                <!-- Chat integrado neste card -->
+                <div id="approachesChat" class="card-chat-modal">
+                    <button class="close-chat-button">&times;</button>
+                    <h3>Nossa IA se Adapta. Sua Empresa Cresce.</h3>
+                    <div class="chat-messages">
+                        <div class="chat-message ai">Quer entender como nossas abordagens AI-First podem impulsionar seu crescimento?</div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" class="chat-input" placeholder="Digite sua mensagem...">
+                        <button class="chat-send-button" id="sendApproachesChat">Enviar</button>
+                    </div>
+                </div>
             </div>
 
-            <!-- 4º Card: Pronto para Transformar Seu Negócio? -->
+            <!-- 4º Card (Originalmente o 4º): Pronto para Transformar Seu Negócio? -->
             <div class="quantum-card">
                 <div class="quantum-bg-effect-top-left"></div>
                 <div class="quantum-bg-effect-bottom-right"></div>
@@ -101,42 +175,128 @@
                 <h2>Pronto para Transformar Seu Negócio?</h2>
                 <p>Conecte-se com a RS DESENVOLVIMENTO e descubra como a Inteligência Artificial pode impulsionar sua empresa a novos patamares de eficiência, inovação e sucesso.</p>
 
-                <a href="#" class="cta-button green">FALE CONOSCO</a>
+                <a href="javascript:void(0);" class="cta-button green" data-chat-target="contactChat">FALE CONOSCO</a>
+
+                <!-- Chat integrado neste card -->
+                <div id="contactChat" class="card-chat-modal">
+                    <button class="close-chat-button">&times;</button>
+                    <h3>Fale Conosco via IA!</h3>
+                    <div class="chat-messages">
+                        <div class="chat-message ai">Olá! Como podemos ajudar a transformar seu negócio com IA?</div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" class="chat-input" placeholder="Digite sua mensagem...">
+                        <button class="chat-send-button" id="sendContactChat">Enviar</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // O código do carrossel foi removido, então esta seção de script não terá efeito.
-            // É mantida apenas como um placeholder para futuras implementações, se desejar.
-            const carousel = document.querySelector('.case-studies-carousel');
-            const leftArrow = document.querySelector('.left-arrow');
-            const rightArrow = document.querySelector('.right-arrow');
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('✅ SCRIPT: DOM Content Loaded! O script foi iniciado.');
 
-            if (carousel) {
-                const firstCard = carousel.querySelector('.case-study-card');
-                if (firstCard) {
-                    const cardWidth = firstCard.offsetWidth;
-                    const gap = 20;
-                    const scrollAmount = cardWidth + gap;
+        const ctaButtons = document.querySelectorAll('.cta-button');
+        const closeChatButtons = document.querySelectorAll('.close-chat-button');
+        const chatInputs = document.querySelectorAll('.chat-input');
+        const chatSendButtons = document.querySelectorAll('.chat-send-button');
 
-                    leftArrow.addEventListener('click', () => {
-                        carousel.scrollBy({
-                            left: -scrollAmount,
-                            behavior: 'smooth'
-                        });
-                    });
+        console.log('🔍 SCRIPT: Botões CTA encontrados:', ctaButtons.length);
+        console.log('🔍 SCRIPT: Botões de Fechar Chat encontrados:', closeChatButtons.length);
+        console.log('🔍 SCRIPT: Campos de Input do Chat encontrados:', chatInputs.length);
+        console.log('🔍 SCRIPT: Botões de Enviar Chat encontrados:', chatSendButtons.length);
 
-                    rightArrow.addEventListener('click', () => {
-                        carousel.scrollBy({
-                            left: scrollAmount,
-                            behavior: 'smooth'
-                        });
-                    });
+
+        // Função para adicionar mensagem ao chat
+        function addMessage(chatMessagesContainer, message, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('chat-message', type);
+            messageDiv.textContent = message;
+            chatMessagesContainer.appendChild(messageDiv);
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight; // Auto-scroll
+        }
+
+        // Lógica para abrir chats integrados
+        ctaButtons.forEach(button => {
+            console.log('➡️ SCRIPT: Anexando listener ao botão CTA:', button.textContent);
+            button.addEventListener('click', (event) => {
+                event.preventDefault(); // Evita a navegação padrão da âncora
+                console.log('🎉 SCRIPT: Botão CTA clicado!');
+                const chatTargetId = button.getAttribute('data-chat-target');
+                console.log('💬 SCRIPT: ID do chat alvo:', chatTargetId);
+                const targetChatModal = document.getElementById(chatTargetId);
+                if (targetChatModal) {
+                    console.log('👍 SCRIPT: Modal de chat alvo encontrado:', targetChatModal.id);
+                    targetChatModal.classList.add('show');
+                    // Foca no input do chat assim que ele abre
+                    const chatInput = targetChatModal.querySelector('.chat-input');
+                    if (chatInput) {
+                        chatInput.focus();
+                        console.log('🎯 SCRIPT: Foco no input do chat.');
+                    }
+                } else {
+                    console.warn('⚠️ SCRIPT: Modal de chat alvo NÃO encontrado para o ID:', chatTargetId);
                 }
-            }
+            });
         });
-    </script>
+
+        // Lógica para fechar chats integrados
+        closeChatButtons.forEach(button => {
+            console.log('➡️ SCRIPT: Anexando listener ao botão Fechar Chat.');
+            button.addEventListener('click', () => {
+                console.log('🎉 SCRIPT: Botão Fechar Chat clicado!');
+                const chatModal = button.closest('.card-chat-modal');
+                if (chatModal) {
+                    chatModal.classList.remove('show');
+                    console.log('🔙 SCRIPT: Modal de chat fechado.');
+                }
+            });
+        });
+
+        // Lógica para enviar mensagens (apenas demonstração visual)
+        chatSendButtons.forEach(button => {
+            console.log('➡️ SCRIPT: Anexando listener ao botão Enviar Mensagem.');
+            button.addEventListener('click', () => {
+                console.log('🎉 SCRIPT: Botão Enviar Mensagem clicado!');
+                const chatInput = button.previousElementSibling; // O input é o elemento irmão anterior
+                const chatMessagesContainer = button.closest('.card-chat-modal').querySelector('.chat-messages');
+                const userMessage = chatInput.value.trim();
+
+                // >>> AQUI VOCÊ CAPTURA O ID DO BOTÃO DE ENVIO <<<
+                const sendButtonId = button.id; // Captura o ID do botão "Enviar"
+                console.log('✉️ SCRIPT: ID do botão de envio:', sendButtonId);
+                // Você usaria 'sendButtonId' para informar ao seu backend/API da IA sobre o assunto.
+
+
+                if (userMessage) {
+                    addMessage(chatMessagesContainer, userMessage, 'user');
+                    chatInput.value = ''; // Limpa o input
+                    console.log('✉️ SCRIPT: Mensagem do usuário adicionada.');
+
+                    // Simula uma resposta da IA
+                    setTimeout(() => {
+                        // Aqui, em uma implementação real, você enviaria userMessage e sendButtonId para sua IA.
+                        addMessage(chatMessagesContainer, `Obrigado pela sua mensagem sobre ${sendButtonId.replace('send', '').replace('Chat', '')}! Nossa IA está processando...`, 'ai');
+                        console.log('🤖 SCRIPT: Resposta da IA simulada adicionada.');
+                    }, 1000);
+                }
+            });
+        });
+
+        // Lógica para enviar mensagens com Enter
+        chatInputs.forEach(input => {
+            console.log('➡️ SCRIPT: Anexando listener de "keypress" ao input do chat.');
+            input.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault(); // Evita quebra de linha no input
+                    console.log('🎉 SCRIPT: Tecla Enter pressionada no input do chat!');
+                    const sendButton = input.nextElementSibling; // O botão de enviar é o próximo irmão
+                    sendButton.click(); // Dispara o clique do botão de enviar
+                }
+            });
+        });
+    });
+</script>
 </body>
 </html>
