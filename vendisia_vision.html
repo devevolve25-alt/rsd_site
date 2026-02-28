@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendisia Vision CRM</title>
+    <link rel="stylesheet" href="vendisia_vision.css">
+</head>
+<body>
+    <div id="app-container">
+        <!-- Área de Login - Visível por padrão, escondida após autenticação -->
+        <div id="login-area" class="auth-card">
+            <h2>Bem-vindo ao Vendisia Vision</h2>
+            <p>Por favor, faça login para continuar.</p>
+            <form id="login-form">
+                <input type="email" id="email-input" placeholder="Seu e-mail" required>
+                <input type="password" id="password-input" placeholder="Sua senha" required>
+                <button type="submit" id="login-button">Entrar</button>
+            </form>
+            <p class="auth-switch">
+                Não tem uma conta? <a href="#" id="show-signup">Cadastre-se</a>
+            </p>
+            <!-- Área de Cadastro (Opcional, pode ser ativada ou redirecionada) -->
+            <form id="signup-form" style="display: none;">
+                <h3>Criar Nova Conta</h3>
+                <input type="email" id="signup-email-input" placeholder="Seu e-mail" required>
+                <input type="password" id="signup-password-input" placeholder="Crie uma senha" required>
+                <button type="submit" id="signup-button">Cadastrar</button>
+                <p class="auth-switch">
+                    Já tem uma conta? <a href="#" id="show-login">Fazer Login</a>
+                </p>
+            </form>
+            <div id="auth-message" class="message-area"></div>
+        </div>
+
+        <!-- Área do Aplicativo Principal - Escondida por padrão, visível após autenticação -->
+        <div id="main-app" style="display: none;">
+            <header>
+                <h1>Vendisia Vision CRM</h1>
+                <nav id="tabs-navigation">
+                    <button class="tab-button active" id="leads-tab">Leads</button>
+                    <button class="tab-button" id="contacts-tab">Contatos</button>
+                    <button class="tab-button" id="companies-tab">Empresas</button>
+                    <button class="tab-button" id="deals-tab">Negócios</button>
+                    <button class="tab-button" id="activities-tab">Atividades</button>
+                    <button class="tab-button" id="teams-tab">Equipes</button>
+                    <button class="tab-button" id="settings-tab">Configurações</button>
+                    <button class="logout-button" id="logout-button">Sair</button>
+                </nav>
+            </header>
+
+            <main id="tab-content">
+                <!-- Conteúdo da Aba 'Leads' - Visível por padrão ao carregar o app -->
+                <section id="leads-section" class="tab-section active">
+                    <h2>Gestão de Leads</h2>
+                    <div class="grid-container">
+                        <div class="grid-item form-card">
+                            <h3>Adicionar Novo Lead</h3>
+                            <form id="add-lead-form">
+                                <input type="text" id="lead-name" placeholder="Nome Completo" required>
+                                <input type="email" id="lead-email" placeholder="Email" required>
+                                <input type="tel" id="lead-phone" placeholder="Telefone">
+                                <input type="text" id="lead-company" placeholder="Empresa">
+                                <input type="text" id="lead-origin" placeholder="Origem do Lead" required>
+                                <button type="submit" id="submit-lead-button">Salvar Lead</button>
+                                <div id="lead-message" class="message-area"></div>
+                            </form>
+                        </div>
+                        <div class="grid-item list-card">
+                            <h3>Lista de Leads</h3>
+                            <div id="leads-list">
+                                <!-- Leads serão carregados aqui via JavaScript -->
+                                <p>Carregando leads...</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Outras Seções de Aba (Inicialmente ocultas) -->
+                <section id="contacts-section" class="tab-section" style="display: none;">
+                    <h2>Gestão de Contatos</h2>
+                    <div class="grid-container">
+                        <div class="grid-item form-card">
+                            <h3>Adicionar Novo Contato</h3>
+                            <form id="add-contact-form">
+                                <!-- Campos do formulário de contato -->
+                                <p>Formulário de Contato aqui</p>
+                                <button type="submit">Salvar Contato</button>
+                            </form>
+                        </div>
+                        <div class="grid-item list-card">
+                            <h3>Lista de Contatos</h3>
+                            <div id="contacts-list">
+                                <p>Carregando contatos...</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="companies-section" class="tab-section" style="display: none;">
+                    <h2>Gestão de Empresas</h2>
+                    <div class="grid-container">
+                        <div class="grid-item form-card">
+                            <h3>Adicionar Nova Empresa</h3>
+                            <form id="add-company-form">
+                                <!-- Campos do formulário de empresa -->
+                                <p>Formulário de Empresa aqui</p>
+                                <button type="submit">Salvar Empresa</button>
+                            </form>
+                        </div>
+                        <div class="grid-item list-card">
+                            <h3>Lista de Empresas</h3>
+                            <div id="companies-list">
+                                <p>Carregando empresas...</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Mais seções serão adicionadas para Negócios, Atividades, Equipes, Configurações -->
+
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="vendisia_vision.js"></script>
+</body>
+</html>
