@@ -3,7 +3,7 @@ const mySupabaseClient = supabase.createClient(
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0c29yZ3VrZGJmdXV5cGl1a3NtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3MDQ0NjMsImV4cCI6MjA4NTI4MDQ2M30.MVwsWMW1AX-tTDu5Vz_x9y6anb-DO10rZW2L_2B0NVM'
     );
 
-// 2. Referências aos elementos HTML
+// 2. Referências aos elementos HTML - 1
 // Autenticação
 const loginArea = document.getElementById('login-area');
 const mainApp = document.getElementById('main-app');
