@@ -185,7 +185,7 @@ async function displayLeads() {
         li.className = 'lead-item-card'; // Estilo para cada item de lead
         li.innerHTML = `
             <strong>${lead.nome_completo_lead}</strong><br>
-            Email: ${lead.email_lead}<br>
+            Email: ${lead.email}<br>
             Telefone: ${lead.telefone_lead || 'N/A'}<br>
             Empresa: ${lead.empresa_lead || 'N/A'}<br>
             Origem: ${lead.origem_lead}<br>
@@ -205,13 +205,13 @@ async function handleAddLead(event) {
     leadMessage.style.display = 'none'; // Esconde mensagens anteriores
 
     const nome_completo_lead = leadNameInput.value.trim();
-    const email_lead = leadEmailInput.value.trim();
+    const email = leadEmailInput.value.trim();
     const telefone_lead = leadPhoneInput.value.trim();
     const empresa_lead = leadCompanyInput.value.trim();
     const origem_lead = leadOriginInput.value.trim();
     const status_lead = 'Novo'; // Padrão
 
-    if (!nome_completo_lead || !email_lead || !origem_lead) {
+    if (!nome_completo_lead || !email || !origem_lead) {
         showMessage(leadMessage, 'Por favor, preencha Nome, Email e Origem do Lead.', 'error');
         return;
     }
@@ -232,7 +232,7 @@ async function handleAddLead(event) {
         .from('leads')
         .insert({
             nome_completo_lead,
-            email_lead,
+            email,
             telefone_lead: telefone_lead || null,
             empresa_lead: empresa_lead || null,
             origem_lead,
