@@ -289,6 +289,10 @@ button[type="submit"]:hover {
                     <label for="empresa-contato">Contato:</label>
                     <input type="text" id="empresa-contato">
                 </div>
+                <div class="form-group">
+                    <label for="empresa-oportunidades">Oportunidades:</label>
+                    <input type="text" id="empresa-oportunidades">
+                </div>
                 <button type="submit">Salvar Empresa</button>
                 <div id="empresa-message" class="message" style="display: none;"></div>
             </form>
@@ -450,6 +454,7 @@ button[type="submit"]:hover {
             const endereco = document.getElementById('empresa-endereco').value.trim();
             const responsavel = document.getElementById('empresa-responsavel').value.trim();
             const contato = document.getElementById('empresa-contato').value.trim();
+            const oportunidades = document.getElementById('empresa-oportunidades').value.trim(); // Novo campo
 
 
             if (!nome) {
@@ -466,7 +471,8 @@ button[type="submit"]:hover {
                         telefone_2: telefone_2 || null,
                         endereco: endereco || null,
                         responsavel: responsavel || null,
-                        contato: contato || null
+                        contato: contato || null,
+                        oportunidades: oportunidades || null // Novo campo
                     })
                     .select();
 
@@ -557,6 +563,7 @@ button[type="submit"]:hover {
                                     <li><strong>Endereço:</strong> ${empresa.endereco || 'N/A'}</li>
                                     <li><strong>Responsável:</strong> ${empresa.responsavel || 'N/A'}</li>
                                     <li><strong>Contato:</strong> ${empresa.contato || 'N/A'}</li>
+                                    <li><strong>Oportunidades:</strong> ${empresa.oportunidades || 'N/A'}</li> <!-- Novo campo -->
                                 </ul>
                             </li>
                         `;
