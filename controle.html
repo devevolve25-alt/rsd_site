@@ -28,12 +28,12 @@
             margin-bottom: 30px;
             font-size: 2.2em;
         }
-        .tabs {
+        .tabs, .sub-tabs {
             display: flex;
             margin-bottom: 20px;
             border-bottom: 2px solid #e0e0e0;
         }
-        .tab-button {
+        .tab-button, .sub-tab-button {
             padding: 12px 20px;
             cursor: pointer;
             border: none;
@@ -44,21 +44,21 @@
             border-bottom: 3px solid transparent;
             margin-right: 5px;
         }
-        .tab-button:hover {
+        .tab-button:hover, .sub-tab-button:hover {
             color: #3498db;
             border-color: #aed6f1;
         }
-        .tab-button.active {
+        .tab-button.active, .sub-tab-button.active {
             color: #3498db;
             border-bottom: 3px solid #3498db;
             font-weight: bold;
         }
-        .tab-content {
+        .tab-content, .sub-tab-content {
             display: none;
             padding: 20px 0;
             border-top: none;
         }
-        .tab-content.active {
+        .tab-content.active, .sub-tab-content.active {
             display: block;
         }
         form {
@@ -197,7 +197,6 @@
         <div class="tabs">
             <button class="tab-button active" onclick="showTab('empresas')">Empresas</button>
             <button class="tab-button" onclick="showTab('contratos')">Contratos</button>
-            <button class="tab-button" onclick="showTab('negocios')">Negócios</button>
             <button class="tab-button" onclick="showTab('visualizar')">Visualizar Dados</button>
         </div>
 
@@ -229,6 +228,10 @@
                     <input type="number" id="contrato-valor-mensal" step="0.01" required>
                 </div>
                 <div class="form-group">
+                    <label for="contrato-valor-implementacao">Valor de Implementação:</label>
+                    <input type="number" id="contrato-valor-implementacao" step="0.01" required>
+                </div>
+                <div class="form-group">
                     <label for="contrato-data-inicio">Data Início:</label>
                     <input type="date" id="contrato-data-inicio" required>
                 </div>
@@ -250,38 +253,18 @@
             </form>
         </div>
 
-        <!-- Tab Content: Negócios -->
-        <div id="tab-negocios" class="tab-content">
-            <h2>Cadastrar Novo Negócio</h2>
-            <form id="form-negocio">
-                <div class="form-group">
-                    <label for="negocio-empresa-id">Empresa:</label>
-                    <select id="negocio-empresa-id" required>
-                        <option value="">Selecione uma empresa</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="negocio-lead-id">ID do Lead (UUID):</label>
-                    <input type="text" id="negocio-lead-id" placeholder="Ex: a1b2c3d4-e5f6-7890-1234-567890abcdef" required>
-                </div>
-                <div class="form-group">
-                    <label for="negocio-valor">Valor:</label>
-                    <input type="number" id="negocio-valor" step="0.01" required>
-                </div>
-                <div class="form-group">
-                    <label for="negocio-fechado">Fechado:</label>
-                    <input type="checkbox" id="negocio-fechado">
-                </div>
-                <button type="submit">Salvar Negócio</button>
-                <div id="negocio-message" class="message" style="display: none;"></div>
-            </form>
-        </div>
-
         <!-- Tab Content: Visualizar Dados -->
         <div id="tab-visualizar" class="tab-content">
             <h2>Dados Cadastrados</h2>
-            <div id="data-display-area" class="data-display">
-                <p class="no-data">Carregando dados...</p>
+            <div class="sub-tabs">
+                <button class="sub-tab-button active" onclick="showSubTab('sub-tab-empresas-view')">Empresas</button>
+                <button class="sub-tab-button" onclick="showSubTab('sub-tab-contratos-view')">Contratos</button>
+            </div>
+            <div id="sub-tab-empresas-view" class="sub-tab-content active data-display">
+                <p class="no-data">Carregando empresas...</p>
+            </div>
+            <div id="sub-tab-contratos-view" class="sub-tab-content data-display">
+                <p class="no-data">Carregando contratos...</p>
             </div>
         </div>
     </div>
@@ -321,27 +304,20 @@
             }
 
             const contratoDropdown = document.getElementById('contrato-empresa-id');
-            const negocioDropdown = document.getElementById('negocio-empresa-id');
 
             // Limpa opções existentes, exceto a primeira (placeholder)
             contratoDropdown.innerHTML = '<option value="">Selecione uma empresa</option>';
-            negocioDropdown.innerHTML = '<option value="">Selecione uma empresa</option>';
 
             data.forEach(empresa => {
                 const optionContrato = document.createElement('option');
                 optionContrato.value = empresa.id;
                 optionContrato.textContent = empresa.nome;
                 contratoDropdown.appendChild(optionContrato);
-
-                const optionNegocio = document.createElement('option');
-                optionNegocio.value = empresa.id;
-                optionNegocio.textContent = empresa.nome;
-                negocioDropdown.appendChild(optionNegocio);
             });
         }
 
         // ==========================
-        // LÓGICA DAS ABAS
+        // LÓGICA DAS ABAS PRINCIPAIS
         // ==========================
         function showTab(tabName) {
             // Remove 'active' de todos os botões e conteúdos
@@ -356,13 +332,28 @@
             document.querySelector(`.tab-button[onclick="showTab('${tabName}')"]`).classList.add('active');
             document.getElementById(`tab-${tabName}`).classList.add('active');
 
-            // Se for a aba de visualizar, carrega os dados
+            // Se for a aba de visualizar, carrega os dados e mostra a primeira sub-aba
             if (tabName === 'visualizar') {
                 loadAndDisplayData();
-            } else {
-                // Popula dropdowns sempre que mudar para uma aba de formulário que precise
-                populateEmpresasDropdowns();
+                showSubTab('sub-tab-empresas-view'); // Mostra a sub-aba de empresas por padrão
+            } else if (tabName === 'contratos') {
+                populateEmpresasDropdowns(); // Popula dropdowns para contratos
             }
+        }
+
+        // ==========================
+        // LÓGICA DAS SUB-ABAS (VISUALIZAR DADOS)
+        // ==========================
+        function showSubTab(subTabName) {
+            document.querySelectorAll('.sub-tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            document.querySelectorAll('.sub-tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            document.querySelector(`.sub-tab-button[onclick="showSubTab('${subTabName}')"]`).classList.add('active');
+            document.getElementById(subTabName).classList.add('active');
         }
 
         // ==========================
@@ -402,11 +393,12 @@
             e.preventDefault();
             const empresa_id = document.getElementById('contrato-empresa-id').value;
             const valor_mensal = parseFloat(document.getElementById('contrato-valor-mensal').value);
+            const valor_implementacao = parseFloat(document.getElementById('contrato-valor-implementacao').value);
             const data_inicio = document.getElementById('contrato-data-inicio').value;
             const data_fim = document.getElementById('contrato-data-fim').value;
             const status = document.getElementById('contrato-status').value;
 
-            if (!empresa_id || isNaN(valor_mensal) || !data_inicio || !data_fim || !status) {
+            if (!empresa_id || isNaN(valor_mensal) || isNaN(valor_implementacao) || !data_inicio || !data_fim || !status) {
                 showMessage('contrato-message', 'Por favor, preencha todos os campos corretamente.', 'error');
                 return;
             }
@@ -417,6 +409,7 @@
                     .insert({
                         empresa_id: empresa_id,
                         valor_mensal: valor_mensal,
+                        valor_implementacao: valor_implementacao,
                         data_inicio: data_inicio,
                         data_fim: data_fim,
                         status: status
@@ -434,52 +427,18 @@
             }
         });
 
-        // Form Negócio
-        document.getElementById('form-negocio').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const empresa_id = document.getElementById('negocio-empresa-id').value;
-            const lead_id = document.getElementById('negocio-lead-id').value.trim();
-            const valor = parseFloat(document.getElementById('negocio-valor').value);
-            const fechado = document.getElementById('negocio-fechado').checked;
-
-            // Validação básica de UUID para lead_id
-            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-            if (!empresa_id || !lead_id || !uuidRegex.test(lead_id) || isNaN(valor)) {
-                showMessage('negocio-message', 'Por favor, preencha todos os campos corretamente, incluindo um ID de Lead válido (UUID).', 'error');
-                return;
-            }
-
-            try {
-                const { data, error } = await client
-                    .from('negocios')
-                    .insert({
-                        empresa_id: empresa_id,
-                        lead_id: lead_id,
-                        valor: valor,
-                        fechado: fechado
-                    })
-                    .select();
-
-                if (error) throw error;
-
-                showMessage('negocio-message', `Negócio (ID: ${data[0].id.substring(0, 8)}...) cadastrado com sucesso!`, 'success');
-                e.target.reset(); // Limpa o formulário
-                loadAndDisplayData(); // Atualiza a visualização
-            } catch (error) {
-                console.error("Erro ao cadastrar negócio:", error);
-                showMessage('negocio-message', `Erro ao cadastrar negócio: ${error.message}`, 'error');
-            }
-        });
-
         // ==========================
         // VISUALIZAÇÃO DE DADOS
         // ==========================
         async function loadAndDisplayData() {
-            const displayArea = document.getElementById('data-display-area');
-            displayArea.innerHTML = '<p class="no-data">Carregando dados...</p>';
+            const empresasDisplayArea = document.getElementById('sub-tab-empresas-view');
+            const contratosDisplayArea = document.getElementById('sub-tab-contratos-view');
+
+            empresasDisplayArea.innerHTML = '<p class="no-data">Carregando empresas...</p>';
+            contratosDisplayArea.innerHTML = '<p class="no-data">Carregando contratos...</p>';
 
             try {
-                // Busca todas as empresas
+                // Fetch Empresas
                 const { data: empresas, error: empresasError } = await client
                     .from('empresas')
                     .select('id, nome')
@@ -487,81 +446,53 @@
 
                 if (empresasError) throw empresasError;
 
+                let empresasHtml = '';
                 if (empresas.length === 0) {
-                    displayArea.innerHTML = '<p class="no-data">Nenhuma empresa cadastrada ainda.</p>';
-                    return;
+                    empresasHtml = '<p class="no-data">Nenhuma empresa cadastrada ainda.</p>';
+                } else {
+                    empresas.forEach(empresa => {
+                        empresasHtml += `
+                            <div class="company-card">
+                                <h3>${empresa.nome} (ID: ${empresa.id.substring(0, 8)}...)</h3>
+                            </div>
+                        `;
+                    });
                 }
+                empresasDisplayArea.innerHTML = empresasHtml;
 
-                let htmlContent = '';
+                // Fetch Contratos (with company names)
+                const { data: contratos, error: contratosError } = await client
+                    .from('contratos')
+                    .select('*, empresas(nome)') // Join with empresas to get company name
+                    .order('created_at', { ascending: false });
 
-                for (const empresa of empresas) {
-                    htmlContent += `
-                        <div class="company-card">
-                            <h3>${empresa.nome} (ID: ${empresa.id.substring(0, 8)}...)</h3>
-                    `;
+                if (contratosError) throw contratosError;
 
-                    // Busca contratos da empresa
-                    const { data: contratos, error: contratosError } = await client
-                        .from('contratos')
-                        .select('*')
-                        .eq('empresa_id', empresa.id)
-                        .order('data_inicio', { ascending: false });
-
-                    if (contratosError) throw contratosError;
-
-                    htmlContent += `<h4>Contratos:</h4>`;
-                    if (contratos.length > 0) {
-                        htmlContent += `<ul>`;
-                        contratos.forEach(contrato => {
-                            htmlContent += `
-                                <li>
-                                    <strong>ID:</strong> ${contrato.id.substring(0, 8)}...<br>
-                                    <strong>Valor Mensal:</strong> R$ ${parseFloat(contrato.valor_mensal).toFixed(2).replace('.', ',')}<br>
-                                    <strong>Período:</strong> ${contrato.data_inicio} a ${contrato.data_fim}<br>
-                                    <strong>Status:</strong> ${contrato.status}
-                                </li>
-                            `;
-                        });
-                        htmlContent += `</ul>`;
-                    } else {
-                        htmlContent += `<p>Nenhum contrato para esta empresa.</p>`;
-                    }
-
-                    // Busca negócios da empresa
-                    const { data: negocios, error: negociosError } = await client
-                        .from('negocios')
-                        .select('*')
-                        .eq('empresa_id', empresa.id)
-                        .order('created_at', { ascending: false });
-
-                    if (negociosError) throw negociosError;
-
-                    htmlContent += `<h4>Negócios:</h4>`;
-                    if (negocios.length > 0) {
-                        htmlContent += `<ul>`;
-                        negocios.forEach(negocio => {
-                            htmlContent += `
-                                <li>
-                                    <strong>ID:</strong> ${negocio.id.substring(0, 8)}...<br>
-                                    <strong>Lead ID:</strong> ${negocio.lead_id.substring(0, 8)}...<br>
-                                    <strong>Valor:</strong> R$ ${parseFloat(negocio.valor).toFixed(2).replace('.', ',')}<br>
-                                    <strong>Fechado:</strong> ${negocio.fechado ? 'Sim' : 'Não'}
-                                </li>
-                            `;
-                        });
-                        htmlContent += `</ul>`;
-                    } else {
-                        htmlContent += `<p>Nenhum negócio para esta empresa.</p>`;
-                    }
-
-                    htmlContent += `</div>`; // Fecha company-card
+                let contratosHtml = '';
+                if (contratos.length === 0) {
+                    contratosHtml = '<p class="no-data">Nenhum contrato cadastrado ainda.</p>';
+                } else {
+                    contratosHtml += `<ul>`;
+                    contratos.forEach(contrato => {
+                        contratosHtml += `
+                            <li>
+                                <strong>Empresa:</strong> ${contrato.empresas.nome}<br>
+                                <strong>ID Contrato:</strong> ${contrato.id.substring(0, 8)}...<br>
+                                <strong>Valor Mensal:</strong> R$ ${parseFloat(contrato.valor_mensal).toFixed(2).replace('.', ',')}<br>
+                                <strong>Valor Implementação:</strong> R$ ${parseFloat(contrato.valor_implementacao || 0).toFixed(2).replace('.', ',')}<br>
+                                <strong>Período:</strong> ${contrato.data_inicio} a ${contrato.data_fim}<br>
+                                <strong>Status:</strong> ${contrato.status}
+                            </li>
+                        `;
+                    });
+                    contratosHtml += `</ul>`;
                 }
-
-                displayArea.innerHTML = htmlContent;
+                contratosDisplayArea.innerHTML = contratosHtml;
 
             } catch (error) {
                 console.error("Erro ao carregar dados para visualização:", error);
-                displayArea.innerHTML = `<p class="no-data error">Erro ao carregar dados: ${error.message}</p>`;
+                empresasDisplayArea.innerHTML = `<p class="no-data error">Erro ao carregar empresas: ${error.message}</p>`;
+                contratosDisplayArea.innerHTML = `<p class="no-data error">Erro ao carregar contratos: ${error.message}</p>`;
             }
         }
 
