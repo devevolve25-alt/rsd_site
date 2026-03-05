@@ -220,6 +220,14 @@
                     <label for="empresa-endereco">Endereço:</label>
                     <input type="text" id="empresa-endereco">
                 </div>
+                <div class="form-group">
+                    <label for="empresa-responsavel">Responsável:</label>
+                    <input type="text" id="empresa-responsavel">
+                </div>
+                <div class="form-group">
+                    <label for="empresa-contato">Contato:</label>
+                    <input type="text" id="empresa-contato">
+                </div>
                 <button type="submit">Salvar Empresa</button>
                 <div id="empresa-message" class="message" style="display: none;"></div>
             </form>
@@ -379,6 +387,8 @@
             const telefone_1 = document.getElementById('empresa-telefone-1').value.trim();
             const telefone_2 = document.getElementById('empresa-telefone-2').value.trim();
             const endereco = document.getElementById('empresa-endereco').value.trim();
+            const responsavel = document.getElementById('empresa-responsavel').value.trim();
+            const contato = document.getElementById('empresa-contato').value.trim();
 
 
             if (!nome) {
@@ -391,11 +401,13 @@
                     .from('empresas')
                     .insert({ 
                         nome: nome,
-                        telefone_1: telefone_1 || null, // Envia null se o campo estiver vazio
-                        telefone_2: telefone_2 || null, // Envia null se o campo estiver vazio
-                        endereco: endereco || null      // Envia null se o campo estiver vazio
+                        telefone_1: telefone_1 || null,
+                        telefone_2: telefone_2 || null,
+                        endereco: endereco || null,
+                        responsavel: responsavel || null, // Novo campo
+                        contato: contato || null          // Novo campo
                     })
-                    .select(); // Adiciona .select() para retornar os dados inseridos
+                    .select();
 
                 if (error) throw error;
 
@@ -459,10 +471,10 @@
             contratosDisplayArea.innerHTML = '<p class="no-data">Carregando contratos...</p>';
 
             try {
-                // Fetch Empresas
+                // Fetch Empresas - Seleciona todos os campos para exibição completa
                 const { data: empresas, error: empresasError } = await client
                     .from('empresas')
-                    .select('id, nome, telefone_1, telefone_2, endereco') // Inclui os novos campos
+                    .select('*') // Seleciona todos os campos
                     .order('nome', { ascending: true });
 
                 if (empresasError) throw empresasError;
@@ -479,6 +491,8 @@
                                     ${empresa.telefone_1 ? `<li><strong>Telefone 1:</strong> ${empresa.telefone_1}</li>` : ''}
                                     ${empresa.telefone_2 ? `<li><strong>Telefone 2:</strong> ${empresa.telefone_2}</li>` : ''}
                                     ${empresa.endereco ? `<li><strong>Endereço:</strong> ${empresa.endereco}</li>` : ''}
+                                    ${empresa.responsavel ? `<li><strong>Responsável:</strong> ${empresa.responsavel}</li>` : ''}
+                                    ${empresa.contato ? `<li><strong>Contato:</strong> ${empresa.contato}</li>` : ''}
                                 </ul>
                             </div>
                         `;
