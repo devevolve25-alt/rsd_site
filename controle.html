@@ -208,6 +208,18 @@
                     <label for="empresa-nome">Nome da Empresa:</label>
                     <input type="text" id="empresa-nome" required>
                 </div>
+                <div class="form-group">
+                    <label for="empresa-telefone-1">Telefone 1:</label>
+                    <input type="text" id="empresa-telefone-1">
+                </div>
+                <div class="form-group">
+                    <label for="empresa-telefone-2">Telefone 2:</label>
+                    <input type="text" id="empresa-telefone-2">
+                </div>
+                <div class="form-group">
+                    <label for="empresa-endereco">Endereço:</label>
+                    <input type="text" id="empresa-endereco">
+                </div>
                 <button type="submit">Salvar Empresa</button>
                 <div id="empresa-message" class="message" style="display: none;"></div>
             </form>
@@ -364,6 +376,10 @@
         document.getElementById('form-empresa').addEventListener('submit', async (e) => {
             e.preventDefault();
             const nome = document.getElementById('empresa-nome').value.trim();
+            const telefone_1 = document.getElementById('empresa-telefone-1').value.trim();
+            const telefone_2 = document.getElementById('empresa-telefone-2').value.trim();
+            const endereco = document.getElementById('empresa-endereco').value.trim();
+
 
             if (!nome) {
                 showMessage('empresa-message', 'O nome da empresa é obrigatório.', 'error');
@@ -373,13 +389,18 @@
             try {
                 const { data, error } = await client
                     .from('empresas')
-                    .insert({ nome: nome })
+                    .insert({ 
+                        nome: nome,
+                        telefone_1: telefone_1 || null, // Envia null se o campo estiver vazio
+                        telefone_2: telefone_2 || null, // Envia null se o campo estiver vazio
+                        endereco: endereco || null      // Envia null se o campo estiver vazio
+                    })
                     .select(); // Adiciona .select() para retornar os dados inseridos
 
                 if (error) throw error;
 
                 showMessage('empresa-message', `Empresa "${data[0].nome}" cadastrada com sucesso!`, 'success');
-                document.getElementById('empresa-nome').value = ''; // Limpa o campo
+                e.target.reset(); // Limpa o formulário
                 populateEmpresasDropdowns(); // Atualiza os dropdowns
                 loadAndDisplayData(); // Atualiza a visualização
             } catch (error) {
@@ -441,7 +462,7 @@
                 // Fetch Empresas
                 const { data: empresas, error: empresasError } = await client
                     .from('empresas')
-                    .select('id, nome')
+                    .select('id, nome, telefone_1, telefone_2, endereco') // Inclui os novos campos
                     .order('nome', { ascending: true });
 
                 if (empresasError) throw empresasError;
@@ -454,6 +475,11 @@
                         empresasHtml += `
                             <div class="company-card">
                                 <h3>${empresa.nome} (ID: ${empresa.id.substring(0, 8)}...)</h3>
+                                <ul>
+                                    ${empresa.telefone_1 ? `<li><strong>Telefone 1:</strong> ${empresa.telefone_1}</li>` : ''}
+                                    ${empresa.telefone_2 ? `<li><strong>Telefone 2:</strong> ${empresa.telefone_2}</li>` : ''}
+                                    ${empresa.endereco ? `<li><strong>Endereço:</strong> ${empresa.endereco}</li>` : ''}
+                                </ul>
                             </div>
                         `;
                     });
@@ -474,9 +500,11 @@
                 } else {
                     contratosHtml += `<ul>`;
                     contratos.forEach(contrato => {
+                        // Adicionado verificação para 'empresas' e 'nome' para evitar erros se a relação falhar
+                        const empresaNome = contrato.empresas && contrato.empresas.nome ? contrato.empresas.nome : 'Empresa Desconhecida';
                         contratosHtml += `
                             <li>
-                                <strong>Empresa:</strong> ${contrato.empresas.nome}<br>
+                                <strong>Empresa:</strong> ${empresaNome}<br>
                                 <strong>ID Contrato:</strong> ${contrato.id.substring(0, 8)}...<br>
                                 <strong>Valor Mensal:</strong> R$ ${parseFloat(contrato.valor_mensal).toFixed(2).replace('.', ',')}<br>
                                 <strong>Valor Implementação:</strong> R$ ${parseFloat(contrato.valor_implementacao || 0).toFixed(2).replace('.', ',')}<br>
