@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Relatórios - Máquina de Pacientes</title>
+    <link rel="stylesheet" href="gestao.css">
+    <!-- Inclua as bibliotecas do Supabase e jsPDF -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Dashboard de Relatórios</h1>
+        <p class="subtitle">Máquina de Pacientes - Otimizando Seus Resultados</p>
+
+        <div class="form-section">
+            <div class="input-group">
+                <label for="empresaNome">Nome da Clínica:</label>
+                <input type="text" id="empresaNome" placeholder="Ex: Clínica Sorriso Feliz">
+            </div>
+            <div class="date-group">
+                <div class="input-group">
+                    <label for="dataInicio">Data Início:</label>
+                    <input type="date" id="dataInicio" value="2026-03-01">
+                </div>
+                <div class="input-group">
+                    <label for="dataFim">Data Fim:</label>
+                    <input type="date" id="dataFim" value="2026-03-31">
+                </div>
+            </div>
+            <button id="gerarRelatorioBtn">Gerar Relatório e PDF</button>
+        </div>
+
+        <div id="loading" class="message loading-message">Carregando dados...</div>
+        <div id="errorMessage" class="message error-message"></div>
+
+        <div class="dashboard-metrics">
+            <h2>Resultados Operacionais</h2>
+            <div class="metric-card">
+                <h3>Leads Gerados</h3>
+                <p id="totalLeads">0</p>
+            </div>
+            <div class="metric-card">
+                <h3>Agendamentos</h3>
+                <p id="totalAgendamentos">0</p>
+            </div>
+            <div class="metric-card">
+                <h3>Comparecimentos</h3>
+                <p id="comparecimentos">0</p>
+            </div>
+            <div class="metric-card">
+                <h3>Fechamentos</h3>
+                <p id="totalFechamentos">0</p>
+            </div>
+        </div>
+
+        <div class="dashboard-metrics">
+            <h2>Resultados Financeiros</h2>
+            <div class="metric-card">
+                <h3>Faturamento Gerado</h3>
+                <p id="faturamento">R$ 0,00</p>
+            </div>
+            <div class="metric-card">
+                <h3>Ticket Médio</h3>
+                <p id="ticketMedio">R$ 0,00</p>
+            </div>
+        </div>
+
+        <div class="dashboard-metrics">
+            <h2>Indicadores</h2>
+            <div class="metric-card">
+                <h3>Taxa de Agendamento</h3>
+                <p id="taxaAgendamento">0.00%</p>
+            </div>
+            <div class="metric-card">
+                <h3>Taxa de Comparecimento</h3>
+                <p id="taxaComparecimento">0.00%</p>
+            </div>
+            <div class="metric-card">
+                <h3>Taxa de Conversão</h3>
+                <p id="taxaConversao">0.00%</p>
+            </div>
+        </div>
+
+        <div id="pdfOutput" class="pdf-output-section" style="display: none;">
+            <h2>Visualização do Relatório (PDF)</h2>
+            <a id="downloadPdfBtn" class="download-button" download="relatorio_clinica.pdf">Download PDF</a>
+            <iframe id="pdfViewer" class="pdf-viewer" style="width:100%; height:700px; border:1px solid #ddd; border-radius: 8px;"></iframe>
+        </div>
+    </div>
+
+    <!-- Seu arquivo JavaScript customizado -->
+    <script src="gestao.js"></script>
+</body>
+</html>
