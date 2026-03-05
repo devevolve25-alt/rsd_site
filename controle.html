@@ -404,8 +404,8 @@
                         telefone_1: telefone_1 || null,
                         telefone_2: telefone_2 || null,
                         endereco: endereco || null,
-                        responsavel: responsavel || null, // Novo campo
-                        contato: contato || null          // Novo campo
+                        responsavel: responsavel || null,
+                        contato: contato || null
                     })
                     .select();
 
@@ -483,20 +483,24 @@
                 if (empresas.length === 0) {
                     empresasHtml = '<p class="no-data">Nenhuma empresa cadastrada ainda.</p>';
                 } else {
+                    empresasHtml += `<ul>`; // Inicia a lista de empresas
                     empresas.forEach(empresa => {
                         empresasHtml += `
-                            <div class="company-card">
-                                <h3>${empresa.nome} (ID: ${empresa.id.substring(0, 8)}...)</h3>
+                            <li class="company-card">
+                                <h3>${empresa.nome}</h3>
                                 <ul>
-                                    ${empresa.telefone_1 ? `<li><strong>Telefone 1:</strong> ${empresa.telefone_1}</li>` : ''}
-                                    ${empresa.telefone_2 ? `<li><strong>Telefone 2:</strong> ${empresa.telefone_2}</li>` : ''}
-                                    ${empresa.endereco ? `<li><strong>Endereço:</strong> ${empresa.endereco}</li>` : ''}
-                                    ${empresa.responsavel ? `<li><strong>Responsável:</strong> ${empresa.responsavel}</li>` : ''}
-                                    ${empresa.contato ? `<li><strong>Contato:</strong> ${empresa.contato}</li>` : ''}
+                                    <li><strong>ID:</strong> ${empresa.id}</li>
+                                    <li><strong>Nome:</strong> ${empresa.nome || 'N/A'}</li>
+                                    <li><strong>Telefone 1:</strong> ${empresa.telefone_1 || 'N/A'}</li>
+                                    <li><strong>Telefone 2:</strong> ${empresa.telefone_2 || 'N/A'}</li>
+                                    <li><strong>Endereço:</strong> ${empresa.endereco || 'N/A'}</li>
+                                    <li><strong>Responsável:</strong> ${empresa.responsavel || 'N/A'}</li>
+                                    <li><strong>Contato:</strong> ${empresa.contato || 'N/A'}</li>
                                 </ul>
-                            </div>
+                            </li>
                         `;
                     });
+                    empresasHtml += `</ul>`; // Fecha a lista de empresas
                 }
                 empresasDisplayArea.innerHTML = empresasHtml;
 
@@ -514,7 +518,6 @@
                 } else {
                     contratosHtml += `<ul>`;
                     contratos.forEach(contrato => {
-                        // Adicionado verificação para 'empresas' e 'nome' para evitar erros se a relação falhar
                         const empresaNome = contrato.empresas && contrato.empresas.nome ? contrato.empresas.nome : 'Empresa Desconhecida';
                         contratosHtml += `
                             <li>
