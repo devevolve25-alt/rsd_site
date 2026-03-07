@@ -177,52 +177,41 @@ button[type="submit"]:hover {
 .data-display {
     margin-top: 30px;
 }
-.company-card {
-    background-color: #f7faff; /* Um azul quase branco, bem clarinho */
-    border: 1px solid #d4e3f5; /* Borda suave */
-    border-radius: 12px; /* Bordas arredondadas */
-    padding: 25px 30px;
-    margin-bottom: 25px;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06); /* Sombra elegante */
-    transition: transform 0.2s ease;
-}
-.company-card:hover {
-    transform: translateY(-5px); /* Efeito sutil de elevação no hover */
-}
-.company-card h3 {
-    color: #3b5a7a;
-    margin-top: 0;
-    margin-bottom: 15px;
-    font-size: 1.8em;
-    border-bottom: 2px solid #eef2f6; /* Borda inferior mais suave */
-    padding-bottom: 10px;
-}
-.company-card h4 {
-    color: #5d748f;
+/* Estilos para a tabela */
+.data-table {
+    width: 100%;
+    border-collapse: collapse; /* Colapsa as bordas da tabela */
     margin-top: 20px;
-    margin-bottom: 10px;
-    font-size: 1.3em;
+    background-color: #ffffff;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    border-radius: 12px;
+    overflow: hidden; /* Garante que bordas arredondadas se apliquem */
 }
-.company-card ul {
-    list-style: none;
-    padding-left: 0;
-    margin-top: 10px;
+
+.data-table th, .data-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #eef2f6; /* Borda suave entre as linhas */
 }
-.company-card ul li {
-    background-color: #eff6fc; /* Fundo suave para cada item da lista */
-    border: 1px solid #dce8f7;
-    padding: 10px 15px;
-    margin-bottom: 8px;
-    border-radius: 6px;
-    font-size: 0.98em;
-    display: flex; /* Para alinhar melhor o strong e o texto */
-    align-items: center;
-}
-.company-card ul li strong {
+
+.data-table th {
+    background-color: #eef4f9; /* Fundo para o cabeçalho */
     color: #4a6fa3;
-    min-width: 100px; /* Garante alinhamento dos labels */
-    margin-right: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.9em;
+    letter-spacing: 0.5px;
 }
+
+.data-table tbody tr:hover {
+    background-color: #f6faff; /* Efeito de hover nas linhas */
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: none; /* Remove a borda da última linha */
+}
+
+
 .no-data {
     text-align: center;
     color: #8c9cb0;
@@ -235,8 +224,8 @@ button[type="submit"]:hover {
     font-size: 1.1em;
 }
 
-/* Para contratos na visualização */
-#sub-tab-contratos-view ul li {
+/* Os estilos para company-card e para contratos na visualização não serão mais usados */
+/* #sub-tab-contratos-view ul li {
     background-color: #f7faff;
     border: 1px solid #d4e3f5;
     padding: 15px 20px;
@@ -248,7 +237,7 @@ button[type="submit"]:hover {
 #sub-tab-contratos-view ul li strong {
     color: #3f4a56;
     margin-right: 5px;
-}
+} */
     </style>
 </head>
 <body>
@@ -528,7 +517,7 @@ button[type="submit"]:hover {
         });
 
         // ==========================
-        // VISUALIZAÇÃO DE DADOS
+        // VISUALIZAÇÃO DE DADOS - MODIFICADA PARA TABELAS
         // ==========================
         async function loadAndDisplayData() {
             const empresasDisplayArea = document.getElementById('sub-tab-empresas-view');
@@ -550,25 +539,40 @@ button[type="submit"]:hover {
                 if (empresas.length === 0) {
                     empresasHtml = '<p class="no-data">Nenhuma empresa cadastrada ainda.</p>';
                 } else {
-                    empresasHtml += `<ul>`; // Inicia a lista de empresas
+                    empresasHtml += `
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nome</th>
+                                    <th>Telefone 1</th>
+                                    <th>Telefone 2</th>
+                                    <th>Endereço</th>
+                                    <th>Responsável</th>
+                                    <th>Contato</th>
+                                    <th>Oportunidades</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
                     empresas.forEach(empresa => {
                         empresasHtml += `
-                            <li class="company-card">
-                                <h3>${empresa.nome}</h3>
-                                <ul>
-                                    <li><strong>ID:</strong> ${empresa.id}</li>
-                                    <li><strong>Nome:</strong> ${empresa.nome || 'N/A'}</li>
-                                    <li><strong>Telefone 1:</strong> ${empresa.telefone_1 || 'N/A'}</li>
-                                    <li><strong>Telefone 2:</strong> ${empresa.telefone_2 || 'N/A'}</li>
-                                    <li><strong>Endereço:</strong> ${empresa.endereco || 'N/A'}</li>
-                                    <li><strong>Responsável:</strong> ${empresa.responsavel || 'N/A'}</li>
-                                    <li><strong>Contato:</strong> ${empresa.contato || 'N/A'}</li>
-                                    <li><strong>Oportunidades:</strong> ${empresa.oportunidades || 'N/A'}</li> <!-- Novo campo -->
-                                </ul>
-                            </li>
+                                <tr>
+                                    <td>${empresa.id.substring(0, 8)}...</td>
+                                    <td>${empresa.nome || 'N/A'}</td>
+                                    <td>${empresa.telefone_1 || 'N/A'}</td>
+                                    <td>${empresa.telefone_2 || 'N/A'}</td>
+                                    <td>${empresa.endereco || 'N/A'}</td>
+                                    <td>${empresa.responsavel || 'N/A'}</td>
+                                    <td>${empresa.contato || 'N/A'}</td>
+                                    <td>${empresa.oportunidades || 'N/A'}</td>
+                                </tr>
                         `;
                     });
-                    empresasHtml += `</ul>`; // Fecha a lista de empresas
+                    empresasHtml += `
+                            </tbody>
+                        </table>
+                    `;
                 }
                 empresasDisplayArea.innerHTML = empresasHtml;
 
@@ -584,21 +588,39 @@ button[type="submit"]:hover {
                 if (contratos.length === 0) {
                     contratosHtml = '<p class="no-data">Nenhum contrato cadastrado ainda.</p>';
                 } else {
-                    contratosHtml += `<ul>`;
+                    contratosHtml += `
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Empresa</th>
+                                    <th>ID Contrato</th>
+                                    <th>Valor Mensal</th>
+                                    <th>Valor Impl.</th>
+                                    <th>Início</th>
+                                    <th>Fim</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
                     contratos.forEach(contrato => {
                         const empresaNome = contrato.empresas && contrato.empresas.nome ? contrato.empresas.nome : 'Empresa Desconhecida';
                         contratosHtml += `
-                            <li>
-                                <strong>Empresa:</strong> ${empresaNome}<br>
-                                <strong>ID Contrato:</strong> ${contrato.id.substring(0, 8)}...<br>
-                                <strong>Valor Mensal:</strong> R$ ${parseFloat(contrato.valor_mensal).toFixed(2).replace('.', ',')}<br>
-                                <strong>Valor Implementação:</strong> R$ ${parseFloat(contrato.valor_implementacao || 0).toFixed(2).replace('.', ',')}<br>
-                                <strong>Período:</strong> ${contrato.data_inicio} a ${contrato.data_fim}<br>
-                                <strong>Status:</strong> ${contrato.status}
-                            </li>
+                                <tr>
+                                    <td>${empresaNome}</td>
+                                    <td>${contrato.id.substring(0, 8)}...</td>
+                                    <td>R$ ${parseFloat(contrato.valor_mensal).toFixed(2).replace('.', ',')}</td>
+                                    <td>R$ ${parseFloat(contrato.valor_implementacao || 0).toFixed(2).replace('.', ',')}</td>
+                                    <td>${contrato.data_inicio}</td>
+                                    <td>${contrato.data_fim}</td>
+                                    <td>${contrato.status}</td>
+                                </tr>
                         `;
                     });
-                    contratosHtml += `</ul>`;
+                    contratosHtml += `
+                            </tbody>
+                        </table>
+                    `;
                 }
                 contratosDisplayArea.innerHTML = contratosHtml;
 
