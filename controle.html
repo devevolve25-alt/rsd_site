@@ -16,7 +16,14 @@ body {
   line-height: 1.6;
 }
 
-/* REMOVIDO .container para espalhar conteúdo pela tela toda */
+.container {
+  max-width: 1200px;
+  margin: 30px auto;
+  background-color: #ffffff;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  padding: 40px;
+}
 
 h1 {
   color: #3b5a7a;
@@ -205,25 +212,8 @@ button[type="submit"]:hover {
   border-bottom: none;
 }
 
-/* Inputs inline na tabela */
-.data-table input[type="text"] {
-  width: 100%;
-  padding: 6px 8px;
-  font-size: 0.95em;
-  border: 1px solid #dbe2e8;
-  border-radius: 6px;
-  box-sizing: border-box;
-  background-color: #fff;
-  transition: border-color 0.3s ease;
-}
-.data-table input[type="text"]:focus {
-  border-color: #4a90e2;
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.3);
-}
-
-/* Botão salvar inline */
-.btn-save-inline {
+/* Botão editar */
+.btn-edit {
   padding: 6px 12px;
   background-color: #4a90e2;
   color: white;
@@ -234,122 +224,214 @@ button[type="submit"]:hover {
   font-size: 0.9em;
   transition: background-color 0.3s ease;
 }
-.btn-save-inline:hover {
+.btn-edit:hover {
   background-color: #357bd8;
 }
 
-/* Mensagem inline */
-.inline-message {
-  font-size: 0.9em;
-  margin-top: 6px;
-  color: #28a745;
-  font-weight: 600;
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
-
-/* Mensagem de erro inline */
-.inline-message.error {
+.modal-overlay.active {
+  display: flex;
+}
+.modal {
+  background-color: white;
+  border-radius: 12px;
+  padding: 30px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  position: relative;
+}
+.modal h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #4a6fa3;
+}
+.modal label {
+  font-weight: 600;
+  color: #5d748f;
+  display: block;
+  margin-bottom: 8px;
+}
+.modal input[type="text"] {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 1em;
+  border: 1px solid #dbe2e8;
+  border-radius: 8px;
+  box-sizing: border-box;
+  margin-bottom: 20px;
+  transition: border-color 0.3s ease;
+}
+.modal input[type="text"]:focus {
+  border-color: #4a90e2;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+}
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+}
+.modal-buttons button {
+  padding: 10px 20px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background-color 0.3s ease;
+}
+.modal-buttons .btn-cancel {
+  background-color: #ccc;
+  color: #333;
+}
+.modal-buttons .btn-cancel:hover {
+  background-color: #b3b3b3;
+}
+.modal-buttons .btn-save {
+  background-color: #4a90e2;
+  color: white;
+}
+.modal-buttons .btn-save:hover {
+  background-color: #357bd8;
+}
+.modal-message {
+  margin-top: 10px;
+  font-weight: 600;
+  color: #28a745;
+  display: none;
+}
+.modal-message.error {
   color: #dc3545;
 }
 </style>
 </head>
 <body>
-<h1>Gestão de Dados Supabase</h1>
+<div class="container">
+  <h1>Gestão de Dados Supabase</h1>
 
-<div class="tabs">
-  <button class="tab-button active" onclick="showTab('empresas')">Empresas</button>
-  <button class="tab-button" onclick="showTab('contratos')">Contratos</button>
-  <button class="tab-button" onclick="showTab('visualizar')">Visualizar Dados</button>
-</div>
-
-<!-- Tab Content: Empresas -->
-<div id="tab-empresas" class="tab-content active">
-  <h2>Cadastrar Nova Empresa</h2>
-  <form id="form-empresa">
-    <div class="form-group">
-      <label for="empresa-nome">Nome da Empresa:</label>
-      <input type="text" id="empresa-nome" required />
-    </div>
-    <div class="form-group">
-      <label for="empresa-telefone-1">Telefone 1:</label>
-      <input type="text" id="empresa-telefone-1" />
-    </div>
-    <div class="form-group">
-      <label for="empresa-telefone-2">Telefone 2:</label>
-      <input type="text" id="empresa-telefone-2" />
-    </div>
-    <div class="form-group">
-      <label for="empresa-endereco">Endereço:</label>
-      <input type="text" id="empresa-endereco" />
-    </div>
-    <div class="form-group">
-      <label for="empresa-responsavel">Responsável:</label>
-      <input type="text" id="empresa-responsavel" />
-    </div>
-    <div class="form-group">
-      <label for="empresa-contato">Contato:</label>
-      <input type="text" id="empresa-contato" />
-    </div>
-    <div class="form-group">
-      <label for="empresa-oportunidades">Oportunidades:</label>
-      <input type="text" id="empresa-oportunidades" />
-    </div>
-    <button type="submit">Salvar Empresa</button>
-    <div id="empresa-message" class="message" style="display: none;"></div>
-  </form>
-</div>
-
-<!-- Tab Content: Contratos -->
-<div id="tab-contratos" class="tab-content">
-  <h2>Cadastrar Novo Contrato</h2>
-  <form id="form-contrato">
-    <div class="form-group">
-      <label for="contrato-empresa-id">Empresa:</label>
-      <select id="contrato-empresa-id" required>
-        <option value="">Selecione uma empresa</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label for="contrato-valor-mensal">Valor Mensal:</label>
-      <input type="number" id="contrato-valor-mensal" step="0.01" required />
-    </div>
-    <div class="form-group">
-      <label for="contrato-valor-implementacao">Valor de Implementação:</label>
-      <input type="number" id="contrato-valor-implementacao" step="0.01" required />
-    </div>
-    <div class="form-group">
-      <label for="contrato-data-inicio">Data Início:</label>
-      <input type="date" id="contrato-data-inicio" required />
-    </div>
-    <div class="form-group">
-      <label for="contrato-data-fim">Data Fim:</label>
-      <input type="date" id="contrato-data-fim" required />
-    </div>
-    <div class="form-group">
-      <label for="contrato-status">Status:</label>
-      <select id="contrato-status" required>
-        <option value="ativo">Ativo</option>
-        <option value="inativo">Inativo</option>
-        <option value="pendente">Pendente</option>
-        <option value="cancelado">Cancelado</option>
-      </select>
-    </div>
-    <button type="submit">Salvar Contrato</button>
-    <div id="contrato-message" class="message" style="display: none;"></div>
-  </form>
-</div>
-
-<!-- Tab Content: Visualizar Dados -->
-<div id="tab-visualizar" class="tab-content">
-  <h2>Dados Cadastrados</h2>
-  <div class="sub-tabs">
-    <button class="sub-tab-button active" onclick="showSubTab('sub-tab-empresas-view')">Empresas</button>
-    <button class="sub-tab-button" onclick="showSubTab('sub-tab-contratos-view')">Contratos</button>
+  <div class="tabs">
+    <button class="tab-button active" onclick="showTab('empresas')">Empresas</button>
+    <button class="tab-button" onclick="showTab('contratos')">Contratos</button>
+    <button class="tab-button" onclick="showTab('visualizar')">Visualizar Dados</button>
   </div>
-  <div id="sub-tab-empresas-view" class="sub-tab-content active data-display">
-    <p class="no-data">Carregando empresas...</p>
+
+  <!-- Tab Content: Empresas -->
+  <div id="tab-empresas" class="tab-content active">
+    <h2>Cadastrar Nova Empresa</h2>
+    <form id="form-empresa">
+      <div class="form-group">
+        <label for="empresa-nome">Nome da Empresa:</label>
+        <input type="text" id="empresa-nome" required />
+      </div>
+      <div class="form-group">
+        <label for="empresa-telefone-1">Telefone 1:</label>
+        <input type="text" id="empresa-telefone-1" />
+      </div>
+      <div class="form-group">
+        <label for="empresa-telefone-2">Telefone 2:</label>
+        <input type="text" id="empresa-telefone-2" />
+      </div>
+      <div class="form-group">
+        <label for="empresa-endereco">Endereço:</label>
+        <input type="text" id="empresa-endereco" />
+      </div>
+      <div class="form-group">
+        <label for="empresa-responsavel">Responsável:</label>
+        <input type="text" id="empresa-responsavel" />
+      </div>
+      <div class="form-group">
+        <label for="empresa-contato">Contato:</label>
+        <input type="text" id="empresa-contato" />
+      </div>
+      <div class="form-group">
+        <label for="empresa-oportunidades">Oportunidades:</label>
+        <input type="text" id="empresa-oportunidades" />
+      </div>
+      <button type="submit">Salvar Empresa</button>
+      <div id="empresa-message" class="message" style="display: none;"></div>
+    </form>
   </div>
-  <div id="sub-tab-contratos-view" class="sub-tab-content data-display">
-    <p class="no-data">Carregando contratos...</p>
+
+  <!-- Tab Content: Contratos -->
+  <div id="tab-contratos" class="tab-content">
+    <h2>Cadastrar Novo Contrato</h2>
+    <form id="form-contrato">
+      <div class="form-group">
+        <label for="contrato-empresa-id">Empresa:</label>
+        <select id="contrato-empresa-id" required>
+          <option value="">Selecione uma empresa</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="contrato-valor-mensal">Valor Mensal:</label>
+        <input type="number" id="contrato-valor-mensal" step="0.01" required />
+      </div>
+      <div class="form-group">
+        <label for="contrato-valor-implementacao">Valor de Implementação:</label>
+        <input type="number" id="contrato-valor-implementacao" step="0.01" required />
+      </div>
+      <div class="form-group">
+        <label for="contrato-data-inicio">Data Início:</label>
+        <input type="date" id="contrato-data-inicio" required />
+      </div>
+      <div class="form-group">
+        <label for="contrato-data-fim">Data Fim:</label>
+        <input type="date" id="contrato-data-fim" required />
+      </div>
+      <div class="form-group">
+        <label for="contrato-status">Status:</label>
+        <select id="contrato-status" required>
+          <option value="ativo">Ativo</option>
+          <option value="inativo">Inativo</option>
+          <option value="pendente">Pendente</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+      </div>
+      <button type="submit">Salvar Contrato</button>
+      <div id="contrato-message" class="message" style="display: none;"></div>
+    </form>
+  </div>
+
+  <!-- Tab Content: Visualizar Dados -->
+  <div id="tab-visualizar" class="tab-content">
+    <h2>Dados Cadastrados</h2>
+    <div class="sub-tabs">
+      <button class="sub-tab-button active" onclick="showSubTab('sub-tab-empresas-view')">Empresas</button>
+      <button class="sub-tab-button" onclick="showSubTab('sub-tab-contratos-view')">Contratos</button>
+    </div>
+    <div id="sub-tab-empresas-view" class="sub-tab-content active data-display">
+      <p class="no-data">Carregando empresas...</p>
+    </div>
+    <div id="sub-tab-contratos-view" class="sub-tab-content data-display">
+      <p class="no-data">Carregando contratos...</p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para edição de oportunidades -->
+<div id="modal-oportunidades" class="modal-overlay">
+  <div class="modal">
+    <h3>Editar Oportunidades</h3>
+    <label for="input-oportunidades-modal">Oportunidades:</label>
+    <input type="text" id="input-oportunidades-modal" />
+    <div class="modal-message" id="modal-message"></div>
+    <div class="modal-buttons">
+      <button class="btn-cancel" id="btn-cancel-modal">Cancelar</button>
+      <button class="btn-save" id="btn-save-modal">Salvar</button>
+    </div>
   </div>
 </div>
 
@@ -389,7 +471,6 @@ async function populateEmpresasDropdowns() {
 
   const contratoDropdown = document.getElementById('contrato-empresa-id');
 
-  // Limpa opções existentes, exceto a primeira (placeholder)
   contratoDropdown.innerHTML = '<option value="">Selecione uma empresa</option>';
 
   data.forEach(empresa => {
@@ -404,7 +485,6 @@ async function populateEmpresasDropdowns() {
 // LÓGICA DAS ABAS PRINCIPAIS
 // ==========================
 function showTab(tabName) {
-  // Remove 'active' de todos os botões e conteúdos
   document.querySelectorAll('.tab-button').forEach(button => {
     button.classList.remove('active');
   });
@@ -412,16 +492,14 @@ function showTab(tabName) {
     content.classList.remove('active');
   });
 
-  // Adiciona 'active' ao botão e conteúdo da aba clicada
   document.querySelector(`.tab-button[onclick="showTab('${tabName}')"]`).classList.add('active');
   document.getElementById(`tab-${tabName}`).classList.add('active');
 
-  // Se for a aba de visualizar, carrega os dados e mostra a primeira sub-aba
   if (tabName === 'visualizar') {
     loadAndDisplayData();
-    showSubTab('sub-tab-empresas-view'); // Mostra a sub-aba de empresas por padrão
+    showSubTab('sub-tab-empresas-view');
   } else if (tabName === 'contratos') {
-    populateEmpresasDropdowns(); // Popula dropdowns para contratos
+    populateEmpresasDropdowns();
   }
 }
 
@@ -443,8 +521,6 @@ function showSubTab(subTabName) {
 // ==========================
 // FORMULÁRIOS DE INSERÇÃO
 // ==========================
-
-// Form Empresa
 document.getElementById('form-empresa').addEventListener('submit', async (e) => {
   e.preventDefault();
   const nome = document.getElementById('empresa-nome').value.trim();
@@ -464,7 +540,7 @@ document.getElementById('form-empresa').addEventListener('submit', async (e) => 
     const { data, error } = await client
       .from('empresas')
       .insert({
-        nome: nome,
+        nome,
         telefone_1: telefone_1 || null,
         telefone_2: telefone_2 || null,
         endereco: endereco || null,
@@ -486,7 +562,6 @@ document.getElementById('form-empresa').addEventListener('submit', async (e) => 
   }
 });
 
-// Form Contrato
 document.getElementById('form-contrato').addEventListener('submit', async (e) => {
   e.preventDefault();
   const empresa_id = document.getElementById('contrato-empresa-id').value;
@@ -505,12 +580,12 @@ document.getElementById('form-contrato').addEventListener('submit', async (e) =>
     const { data, error } = await client
       .from('contratos')
       .insert({
-        empresa_id: empresa_id,
-        valor_mensal: valor_mensal,
-        valor_implementacao: valor_implementacao,
-        data_inicio: data_inicio,
-        data_fim: data_fim,
-        status: status
+        empresa_id,
+        valor_mensal,
+        valor_implementacao,
+        data_inicio,
+        data_fim,
+        status
       })
       .select();
 
@@ -526,7 +601,7 @@ document.getElementById('form-contrato').addEventListener('submit', async (e) =>
 });
 
 // ==========================
-// VISUALIZAÇÃO DE DADOS COM EDIÇÃO INLINE
+// VISUALIZAÇÃO DE DADOS COM MODAL DE EDIÇÃO
 // ==========================
 async function loadAndDisplayData() {
   const empresasDisplayArea = document.getElementById('sub-tab-empresas-view');
@@ -569,17 +644,14 @@ async function loadAndDisplayData() {
         empresasHtml += `
           <tr data-id="${empresa.id}">
             <td>${empresa.id.substring(0, 8)}...</td>
-            <td><input type="text" class="input-nome" value="${empresa.nome || ''}" /></td>
-            <td><input type="text" class="input-telefone-1" value="${empresa.telefone_1 || ''}" /></td>
-            <td><input type="text" class="input-telefone-2" value="${empresa.telefone_2 || ''}" /></td>
-            <td><input type="text" class="input-endereco" value="${empresa.endereco || ''}" /></td>
-            <td><input type="text" class="input-responsavel" value="${empresa.responsavel || ''}" /></td>
-            <td><input type="text" class="input-contato" value="${empresa.contato || ''}" /></td>
-            <td><input type="text" class="input-oportunidades" value="${empresa.oportunidades || ''}" /></td>
-            <td>
-              <button class="btn-save-inline">Salvar</button>
-              <div class="inline-message" style="display:none;"></div>
-            </td>
+            <td>${empresa.nome || 'N/A'}</td>
+            <td>${empresa.telefone_1 || 'N/A'}</td>
+            <td>${empresa.telefone_2 || 'N/A'}</td>
+            <td>${empresa.endereco || 'N/A'}</td>
+            <td>${empresa.responsavel || 'N/A'}</td>
+            <td>${empresa.contato || 'N/A'}</td>
+            <td>${empresa.oportunidades || 'N/A'}</td>
+            <td><button class="btn-edit">Editar</button></td>
           </tr>
         `;
       });
@@ -590,59 +662,14 @@ async function loadAndDisplayData() {
     }
     empresasDisplayArea.innerHTML = empresasHtml;
 
-    // Adiciona event listeners para botões salvar inline
-    document.querySelectorAll('.btn-save-inline').forEach(button => {
-      button.addEventListener('click', async (e) => {
+    // Adiciona event listeners para botões editar
+    document.querySelectorAll('.btn-edit').forEach(button => {
+      button.addEventListener('click', (e) => {
         const tr = e.target.closest('tr');
         const id = tr.getAttribute('data-id');
-        const messageDiv = tr.querySelector('.inline-message');
+        const oportunidades = tr.children[7].textContent === 'N/A' ? '' : tr.children[7].textContent;
 
-        // Coleta valores dos inputs
-        const nome = tr.querySelector('.input-nome').value.trim();
-        const telefone_1 = tr.querySelector('.input-telefone-1').value.trim();
-        const telefone_2 = tr.querySelector('.input-telefone-2').value.trim();
-        const endereco = tr.querySelector('.input-endereco').value.trim();
-        const responsavel = tr.querySelector('.input-responsavel').value.trim();
-        const contato = tr.querySelector('.input-contato').value.trim();
-        const oportunidades = tr.querySelector('.input-oportunidades').value.trim();
-
-        if (!nome) {
-          messageDiv.textContent = 'Nome é obrigatório.';
-          messageDiv.className = 'inline-message error';
-          messageDiv.style.display = 'block';
-          return;
-        }
-
-        try {
-          const { error } = await client
-            .from('empresas')
-            .update({
-              nome,
-              telefone_1: telefone_1 || null,
-              telefone_2: telefone_2 || null,
-              endereco: endereco || null,
-              responsavel: responsavel || null,
-              contato: contato || null,
-              oportunidades: oportunidades || null
-            })
-            .eq('id', id);
-
-          if (error) throw error;
-
-          messageDiv.textContent = 'Atualizado com sucesso!';
-          messageDiv.className = 'inline-message';
-          messageDiv.style.display = 'block';
-
-          // Atualiza dropdowns e dados visualizados
-          populateEmpresasDropdowns();
-          loadAndDisplayData();
-
-        } catch (err) {
-          console.error('Erro ao atualizar empresa:', err);
-          messageDiv.textContent = `Erro: ${err.message}`;
-          messageDiv.className = 'inline-message error';
-          messageDiv.style.display = 'block';
-        }
+        openModal(id, oportunidades);
       });
     });
 
@@ -700,6 +727,77 @@ async function loadAndDisplayData() {
     contratosDisplayArea.innerHTML = `<p class="no-data error">Erro ao carregar contratos: ${error.message}</p>`;
   }
 }
+
+// ==========================
+// MODAL DE EDIÇÃO DE OPORTUNIDADES
+// ==========================
+const modal = document.getElementById('modal-oportunidades');
+const inputOportunidades = document.getElementById('input-oportunidades-modal');
+const modalMessage = document.getElementById('modal-message');
+const btnCancelModal = document.getElementById('btn-cancel-modal');
+const btnSaveModal = document.getElementById('btn-save-modal');
+
+let currentEditId = null;
+
+function openModal(id, oportunidades) {
+  currentEditId = id;
+  inputOportunidades.value = oportunidades;
+  modalMessage.style.display = 'none';
+  modalMessage.textContent = '';
+  modal.classList.add('active');
+  inputOportunidades.focus();
+}
+
+function closeModal() {
+  modal.classList.remove('active');
+  currentEditId = null;
+  inputOportunidades.value = '';
+  modalMessage.style.display = 'none';
+  modalMessage.textContent = '';
+}
+
+btnCancelModal.addEventListener('click', () => {
+  closeModal();
+});
+
+btnSaveModal.addEventListener('click', async () => {
+  const newOportunidades = inputOportunidades.value.trim();
+
+  if (currentEditId === null) {
+    modalMessage.textContent = 'Erro interno: ID inválido.';
+    modalMessage.className = 'modal-message error';
+    modalMessage.style.display = 'block';
+    return;
+  }
+
+  try {
+    const { error } = await client
+      .from('empresas')
+      .update({ oportunidades: newOportunidades || null })
+      .eq('id', currentEditId);
+
+    if (error) throw error;
+
+    modalMessage.textContent = 'Oportunidades atualizadas com sucesso!';
+    modalMessage.className = 'modal-message';
+    modalMessage.style.display = 'block';
+
+    // Atualiza a tabela e dropdowns
+    populateEmpresasDropdowns();
+    loadAndDisplayData();
+
+    // Fecha modal após breve delay para mostrar mensagem
+    setTimeout(() => {
+      closeModal();
+    }, 1200);
+
+  } catch (err) {
+    console.error('Erro ao atualizar oportunidades:', err);
+    modalMessage.textContent = `Erro: ${err.message}`;
+    modalMessage.className = 'modal-message error';
+    modalMessage.style.display = 'block';
+  }
+});
 
 // ==========================
 // INICIALIZAÇÃO
