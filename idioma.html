@@ -5,52 +5,166 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Chat IA e Dados Supabase Hierárquico</title>
 <style>
+  /* Reset básico */
   body, html {
-    margin: 0; padding: 0; height: 100vh; font-family: Arial, sans-serif;
-    display: flex; overflow: hidden;
+    margin: 0; padding: 0; height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex; overflow: hidden; background: #f0f4f8;
+    color: #333;
   }
+
+  /* Container do chat */
   #chat-container {
-    width: 40%; border-right: 1px solid #ccc; display: flex; flex-direction: column;
-    background: #f9f9f9;
+    width: 40%; 
+    border-right: 1px solid #d1d9e6;
+    display: flex; flex-direction: column;
+    background: #ffffff;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.05);
   }
+
+  /* Área de mensagens */
   #chat-messages {
-    flex-grow: 1; padding: 10px; overflow-y: auto;
+    flex-grow: 1; padding: 20px; overflow-y: auto;
+    scrollbar-width: thin; scrollbar-color: #a0aec0 transparent;
   }
+  #chat-messages::-webkit-scrollbar {
+    width: 8px;
+  }
+  #chat-messages::-webkit-scrollbar-thumb {
+    background-color: #a0aec0;
+    border-radius: 4px;
+  }
+
+  /* Mensagens */
   .message {
-    margin-bottom: 10px; max-width: 80%; padding: 8px 12px; border-radius: 15px; white-space: pre-wrap;
+    margin-bottom: 14px; max-width: 75%; padding: 12px 18px; border-radius: 20px; white-space: pre-wrap;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+    font-size: 15px;
+    line-height: 1.4;
+    word-wrap: break-word;
+    transition: background-color 0.3s ease;
   }
   .message.user {
-    background-color: #007bff; color: white; align-self: flex-end; text-align: right;
+    background-color: #3b82f6;
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+    text-align: right;
   }
   .message.ia {
-    background-color: #e5e5ea; color: black; align-self: flex-start; text-align: left;
+    background-color: #e2e8f0;
+    color: #2d3748;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+    text-align: left;
   }
+
+  /* Input do chat */
   #chat-input {
-    width: 100%; box-sizing: border-box; border: none; border-top: 1px solid #ccc;
-    padding: 10px; font-size: 14px; resize: none; height: 60px;
+    width: 100%; box-sizing: border-box; border: none; 
+    border-top: 1px solid #d1d9e6; padding: 16px 20px;
+    font-size: 16px; resize: none; height: 70px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #2d3748;
+    background-color: #f7fafc;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
   }
+  #chat-input:focus {
+    outline: none;
+    background-color: #ffffff;
+    border-top: 1px solid #3b82f6;
+    box-shadow: 0 -2px 4px rgba(59,130,246,0.3);
+  }
+  #chat-input::placeholder {
+    color: #94a3b8;
+    font-style: italic;
+  }
+
+  /* Container dos dados */
   #data-container {
-    width: 60%; padding: 10px; overflow-y: auto;
+    width: 60%; padding: 30px 25px; overflow-y: auto;
+    background: #ffffff;
+    box-shadow: -2px 0 8px rgba(0,0,0,0.05);
   }
+
+  /* Títulos */
   h2 {
-    margin-top: 20px; margin-bottom: 5px;
+    margin-top: 0; margin-bottom: 15px;
+    font-weight: 700;
+    font-size: 24px;
+    color: #334155;
+    border-bottom: 2px solid #3b82f6;
+    padding-bottom: 5px;
+    user-select: none;
   }
+
+  h3 {
+    margin-top: 20px; margin-bottom: 10px;
+    color: #475569;
+    font-weight: 600;
+    font-size: 18px;
+  }
+
+  /* Tabelas */
   table {
-    width: 100%; border-collapse: collapse; margin-bottom: 10px;
+    width: 100%; border-collapse: separate; border-spacing: 0 8px; margin-bottom: 20px;
+    font-size: 15px;
+    color: #334155;
   }
+
   th, td {
-    border: 1px solid #999; padding: 5px; text-align: left;
-    word-break: break-word;
+    padding: 12px 15px;
   }
-  tr.clickable:hover {
-    background-color: #eef;
+
+  thead th {
+    background-color: #e0e7ff;
+    font-weight: 700;
+    color: #1e40af;
+    text-align: left;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+  }
+
+  tbody tr {
+    background-color: #f8fafc;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
+    border-radius: 8px;
+  }
+
+  tbody tr.clickable:hover {
+    background-color: #dbeafe;
     cursor: pointer;
+    box-shadow: 0 3px 6px rgba(59, 130, 246, 0.25);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
   }
+
+  tbody tr td:first-child {
+    border-radius: 8px 0 0 8px;
+  }
+  tbody tr td:last-child {
+    border-radius: 0 8px 8px 0;
+  }
+
+  /* Nested container */
   .nested-table-container {
     margin-left: 20px;
-    margin-bottom: 15px;
-    border-left: 2px solid #ccc;
-    padding-left: 10px;
+    margin-bottom: 25px;
+    border-left: 3px solid #93c5fd;
+    padding-left: 15px;
+    background: #f1f5f9;
+    border-radius: 8px;
+  }
+
+  /* Scrollbar para data container */
+  #data-container {
+    scrollbar-width: thin;
+    scrollbar-color: #a0aec0 transparent;
+  }
+  #data-container::-webkit-scrollbar {
+    width: 8px;
+  }
+  #data-container::-webkit-scrollbar-thumb {
+    background-color: #a0aec0;
+    border-radius: 4px;
   }
 </style>
 </head>
@@ -70,6 +184,7 @@
 </div>
 
 <script>
+  // Seu script permanece inalterado para manter funcionalidades
   const SUPABASE_URL = 'https://htsorgukdbfuuypiuksm.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_8bpn_JEYZU2YzVMC5UK3CA_9Kn4LPdm';
   const WEBHOOK_IA = 'https://powerfulkiwi-n8n.cloudfy.live/webhook/english_page';
@@ -80,7 +195,6 @@
     'Content-Type': 'application/json',
   };
 
-  // Função para buscar dados de uma tabela no Supabase com filtro opcional
   async function fetchTable(table, columns, filter = null) {
     let url = `${SUPABASE_URL}/rest/v1/${table}?select=${columns.join(',')}`;
     if (filter) {
@@ -96,7 +210,6 @@
     }
   }
 
-  // Função para criar tabela HTML simples
   function createTable(columns, data, rowClickHandler = null) {
     const table = document.createElement('table');
     const thead = document.createElement('thead');
@@ -128,16 +241,13 @@
     return table;
   }
 
-  // Limpa todos os filhos de um elemento
   function clearElement(el) {
     while (el.firstChild) el.removeChild(el.firstChild);
   }
 
-  // Estado para controlar linhas abertas para evitar múltiplas aberturas
-  const openedStudentRows = new Map(); // key: tr element, value: container div with class plans
-  const openedClassPlanRows = new Map(); // key: tr element, value: container div with classes+exercises
+  const openedStudentRows = new Map();
+  const openedClassPlanRows = new Map();
 
-  // Carrega e exibe lista de students na inicialização
   async function loadStudents() {
     const students = await fetchTable('student', ['id', 'nome', 'level']);
     const tbody = document.querySelector('#table-student tbody');
@@ -156,13 +266,11 @@
       `;
 
       tr.addEventListener('click', async () => {
-        // Se já aberto, fecha
         if (openedStudentRows.has(tr)) {
           openedStudentRows.get(tr).remove();
           openedStudentRows.delete(tr);
           return;
         }
-        // Fecha outros abertos para simplicidade (opcional)
         for (const [row, container] of openedStudentRows.entries()) {
           container.remove();
           openedStudentRows.delete(row);
@@ -172,10 +280,7 @@
           openedClassPlanRows.delete(row);
         }
 
-        // Busca class plans relacionados
         const classPlans = await fetchTable('class_plan', ['id', 'description'], `id_student=eq.${student.id}`);
-
-        // Cria container para class plans
         const container = document.createElement('div');
         container.className = 'nested-table-container';
 
@@ -183,22 +288,18 @@
           container.textContent = 'Nenhum class_plan encontrado para este estudante.';
         } else {
           const tableCP = createTable(['id', 'description'], classPlans, async (classPlanRow, cpTr) => {
-            // Toggle exibição classes + exercises para este class plan
             if (openedClassPlanRows.has(cpTr)) {
               openedClassPlanRows.get(cpTr).remove();
               openedClassPlanRows.delete(cpTr);
               return;
             }
-            // Fecha outros abertos de class plan
             for (const [row, container] of openedClassPlanRows.entries()) {
               container.remove();
               openedClassPlanRows.delete(row);
             }
 
-            // Busca classes relacionados ao class plan
             const classes = await fetchTable('classes', ['id', 'type', 'title', 'description'], `id_class_plan=eq.${classPlanRow.id}`);
 
-            // Buscar exercises relacionados às classes do class plan
             const classIds = classes.map(c => c.id);
             let exercisesFiltered = [];
             if (classIds.length > 0) {
@@ -214,24 +315,21 @@
               }
             }
 
-            // Cria container para classes e exercises
             const nestedContainer = document.createElement('div');
             nestedContainer.className = 'nested-table-container';
 
-            // Tabela classes
             if (classes.length === 0) {
               const p = document.createElement('p');
               p.textContent = 'Nenhuma classe encontrada para este class_plan.';
               nestedContainer.appendChild(p);
             } else {
-              const tableClasses = createTable(['id', 'type', 'title', 'description'], classes);
               const h3Classes = document.createElement('h3');
               h3Classes.textContent = 'classes';
               nestedContainer.appendChild(h3Classes);
+              const tableClasses = createTable(['id', 'type', 'title', 'description'], classes);
               nestedContainer.appendChild(tableClasses);
             }
 
-            // Tabela exercises
             if (exercisesFiltered.length === 0) {
               const p = document.createElement('p');
               p.textContent = 'Nenhum exercício encontrado para as classes deste class_plan.';
@@ -244,14 +342,12 @@
               nestedContainer.appendChild(tableExercises);
             }
 
-            // Insere nestedContainer logo após a linha clicada (cpTr)
             cpTr.parentNode.insertBefore(nestedContainer, cpTr.nextSibling);
             openedClassPlanRows.set(cpTr, nestedContainer);
           });
           container.appendChild(tableCP);
         }
 
-        // Insere container logo após a linha clicada (tr)
         tr.parentNode.insertBefore(container, tr.nextSibling);
         openedStudentRows.set(tr, container);
       });
@@ -260,7 +356,6 @@
     });
   }
 
-  // Chat funcionalidade
   const chatMessagesDiv = document.getElementById('chat-messages');
   const chatInput = document.getElementById('chat-input');
 
@@ -303,7 +398,6 @@
     }
   });
 
-  // Inicializa dados ao carregar a página
   window.onload = loadStudents;
 </script>
 
