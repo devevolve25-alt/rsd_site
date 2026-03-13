@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chat IA e Dados Supabase Hierárquico</title>
+<style>
+  body, html {
+    margin: 0; padding: 0; height: 100vh; font-family: Arial, sans-serif;
+    display: flex; overflow: hidden;
+  }
+  #chat-container {
+    width: 40%; border-right: 1px solid #ccc; display: flex; flex-direction: column;
+    background: #f9f9f9;
+  }
+  #chat-messages {
+    flex-grow: 1; padding: 10px; overflow-y: auto;
+  }
+  .message {
+    margin-bottom: 10px; max-width: 80%; padding: 8px 12px; border-radius: 15px; white-space: pre-wrap;
+  }
+  .message.user {
+    background-color: #007bff; color: white; align-self: flex-end; text-align: right;
+  }
+  .message.ia {
+    background-color: #e5e5ea; color: black; align-self: flex-start; text-align: left;
+  }
+  #chat-input {
+    width: 100%; box-sizing: border-box; border: none; border-top: 1px solid #ccc;
+    padding: 10px; font-size: 14px; resize: none; height: 60px;
+  }
+  #data-container {
+    width: 60%; padding: 10px; overflow-y: auto;
+  }
+  h2 {
+    margin-top: 20px; margin-bottom: 5px;
+  }
+  table {
+    width: 100%; border-collapse: collapse; margin-bottom: 10px;
+  }
+  th, td {
+    border: 1px solid #999; padding: 5px; text-align: left;
+    word-break: break-word;
+  }
+  tr.clickable:hover {
+    background-color: #eef;
+    cursor: pointer;
+  }
+  .nested-table-container {
+    margin-left: 20px;
+    margin-bottom: 15px;
+    border-left: 2px solid #ccc;
+    padding-left: 10px;
+  }
+</style>
+</head>
+<body>
+
+<div id="chat-container">
+  <div id="chat-messages"></div>
+  <textarea id="chat-input" placeholder="Digite sua mensagem (Shift+Enter para nova linha)..."></textarea>
+</div>
+
+<div id="data-container">
+  <h2>STUDENT</h2>
+  <table id="table-student">
+    <thead><tr><th>id</th><th>nome</th><th>level</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://htsorgukdbfuuypiuksm.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_8bpn_JEYZU2YzVMC5UK3CA_9Kn4LPdm';
+  const WEBHOOK_IA = 'https://powerfulkiwi-n8n.cloudfy.live/webhook/english_page';
+
+  const headersSupabase = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_KEY,
+    'Content-Type': 'application/json',
+  };
+
+  // Função para buscar dados de uma tabela no Supabase com filtro opcional
+  async function fetchTable(table, columns, filter = null) {
+    let url = `${SUPABASE_URL}/rest/v1/${table}?select=${columns.join(',')}`;
+    if (filter) {
+      // filter é string no formato: coluna=eq.valor
+      url += `&${filter}`;
+    }
+    try {
+      const res = await fetch(url, { headers: headersSupabase });
+      if (!res.ok) throw new Error(`Erro ao buscar ${table}: ${res.status}`);
+      return await res.json();
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
+  }
+
+  // Função para criar tabela HTML simples
+  function createTable(columns, data, rowClickHandler = null) {
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    const trHead = document.createElement('tr');
+    columns.forEach(col => {
+      const th = document.createElement('th');
+      th.textContent = col;
+      trHead.appendChild(th);
+    });
+    thead.appendChild(trHead);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    data.forEach(row => {
+      const tr = document.createElement('tr');
+      if (rowClickHandler) {
+        tr.classList.add('clickable');
+        tr.style.userSelect = 'none';
+        tr.addEventListener('click', () => rowClickHandler(row, tr));
+      }
+      columns.forEach(col => {
+        const td = document.createElement('td');
+        td.textContent = row[col] ?? '';
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    return table;
+  }
+
+  // Limpa todos os filhos de um elemento
+  function clearElement(el) {
+    while (el.firstChild) el.removeChild(el.firstChild);
+  }
+
+  // Estado para controlar linhas abertas para evitar múltiplas aberturas
+  const openedStudentRows = new Map(); // key: tr element, value: container div with class plans
+  const openedClassPlanRows = new Map(); // key: tr element, value: container div with classes+exercises
+
+  // Carrega e exibe lista de students na inicialização
+  async function loadStudents() {
+    const students = await fetchTable('STUDENT', ['id', 'nome', 'level']);
+    const tbody = document.querySelector('#table-student tbody');
+    clearElement(tbody);
+
+    students.forEach(student => {
+      const tr = document.createElement('tr');
+      tr.classList.add('clickable');
+      tr.style.userSelect = 'none';
+      tr.dataset.studentId = student.id;
+
+      tr.innerHTML = `
+        <td>${student.id}</td>
+        <td>${student.nome}</td>
+        <td>${student.level}</td>
+      `;
+
+      tr.addEventListener('click', async () => {
+        // Se já aberto, fecha
+        if (openedStudentRows.has(tr)) {
+          openedStudentRows.get(tr).remove();
+          openedStudentRows.delete(tr);
+          return;
+        }
+        // Fecha outros abertos para simplicidade (opcional)
+        for (const [row, container] of openedStudentRows.entries()) {
+          container.remove();
+          openedStudentRows.delete(row);
+        }
+        for (const [row, container] of openedClassPlanRows.entries()) {
+          container.remove();
+          openedClassPlanRows.delete(row);
+        }
+
+        // Busca class plans relacionados
+        const classPlans = await fetchTable('CLASS_PLAN', ['id', 'description'], `id_student=eq.${student.id}`);
+
+        // Cria container para class plans
+        const container = document.createElement('div');
+        container.className = 'nested-table-container';
+
+        if (classPlans.length === 0) {
+          container.textContent = 'Nenhum Class Plan encontrado para este estudante.';
+        } else {
+          const tableCP = createTable(['id', 'description'], classPlans, async (classPlanRow, cpTr) => {
+            // Toggle exibição classes + exercises para este class plan
+            if (openedClassPlanRows.has(cpTr)) {
+              openedClassPlanRows.get(cpTr).remove();
+              openedClassPlanRows.delete(cpTr);
+              return;
+            }
+            // Fecha outros abertos de class plan
+            for (const [row, container] of openedClassPlanRows.entries()) {
+              container.remove();
+              openedClassPlanRows.delete(row);
+            }
+
+            // Busca classes e exercises relacionados ao class plan
+            const [classes, exercises] = await Promise.all([
+              fetchTable('CLASSES', ['id', 'type', 'title', 'description'], `id_class_plan=eq.${classPlanRow.id}`),
+              fetchTable('EXERCISES', ['id', 'type'], `id_class=eq.${classPlanRow.id}`) // Atenção: id_class_plan não existe em EXERCISES, mas id_class sim. 
+              // Porém, EXERCISES tem FK id_class, não id_class_plan. Então para buscar exercises relacionados ao class plan, precisamos buscar exercises cujo id_class está em classes do class plan.
+              // Ajuste: buscar exercises cujo id_class está em classes do class plan.
+            ]);
+
+            // Se exercises não corretos, vamos buscar exercises filtrando por id_class em classes do class plan:
+            // Para isso, vamos buscar primeiro as classes, pegar seus ids e buscar exercises com id_class in (ids)
+            // Já buscamos classes acima, então vamos buscar exercises com filtro id_class=in.(ids)
+            // Refatorar para isso:
+
+            // Refatoração para buscar exercises corretamente:
+            // 1. Buscar classes do class plan
+            // 2. Extrair ids das classes
+            // 3. Buscar exercises com id_class in (ids)
+
+            // Implementar refatoração:
+            // Já temos classes, extrair ids:
+            const classIds = classes.map(c => c.id);
+            let exercisesFiltered = [];
+            if (classIds.length > 0) {
+              const filterIds = classIds.map(id => `"${id}"`).join(',');
+              const urlExercises = `${SUPABASE_URL}/rest/v1/EXERCISES?select=id,type&id_class=in.(${filterIds})`;
+              try {
+                const resEx = await fetch(urlExercises, { headers: headersSupabase });
+                if (resEx.ok) {
+                  exercisesFiltered = await resEx.json();
+                }
+              } catch (e) {
+                console.error('Erro ao buscar exercises filtrados:', e);
+              }
+            }
+
+            // Cria container para classes e exercises
+            const nestedContainer = document.createElement('div');
+            nestedContainer.className = 'nested-table-container';
+
+            // Tabela classes
+            if (classes.length === 0) {
+              const p = document.createElement('p');
+              p.textContent = 'Nenhuma Classe encontrada para este Class Plan.';
+              nestedContainer.appendChild(p);
+            } else {
+              const tableClasses = createTable(['id', 'type', 'title', 'description'], classes);
+              nestedContainer.appendChild(document.createElement('h3')).textContent = 'CLASSES';
+              nestedContainer.appendChild(tableClasses);
+            }
+
+            // Tabela exercises
+            if (exercisesFiltered.length === 0) {
+              const p = document.createElement('p');
+              p.textContent = 'Nenhum Exercício encontrado para as Classes deste Class Plan.';
+              nestedContainer.appendChild(p);
+            } else {
+              nestedContainer.appendChild(document.createElement('h3')).textContent = 'EXERCISES';
+              const tableExercises = createTable(['id', 'type'], exercisesFiltered);
+              nestedContainer.appendChild(tableExercises);
+            }
+
+            // Insere nestedContainer logo após a linha clicada (cpTr)
+            cpTr.parentNode.insertBefore(nestedContainer, cpTr.nextSibling);
+            openedClassPlanRows.set(cpTr, nestedContainer);
+          });
+          container.appendChild(tableCP);
+        }
+
+        // Insere container logo após a linha clicada (tr)
+        tr.parentNode.insertBefore(container, tr.nextSibling);
+        openedStudentRows.set(tr, container);
+      });
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Chat funcionalidade
+  const chatMessagesDiv = document.getElementById('chat-messages');
+  const chatInput = document.getElementById('chat-input');
+
+  function addMessage(sender, text) {
+    const div = document.createElement('div');
+    div.className = 'message ' + sender;
+    div.textContent = text;
+    chatMessagesDiv.appendChild(div);
+    chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+  }
+
+  async function sendMessage() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+    addMessage('user', text);
+    chatInput.value = '';
+
+    try {
+      const res = await fetch(WEBHOOK_IA, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text }),
+      });
+      if (!res.ok) {
+        addMessage('ia', 'Erro na resposta do agente IA.');
+        return;
+      }
+      const data = await res.json();
+      const reply = data.reply || 'Resposta vazia do agente IA.';
+      addMessage('ia', reply);
+    } catch (e) {
+      addMessage('ia', 'Falha na comunicação com o agente IA.');
+    }
+  }
+
+  chatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  // Inicializa dados ao carregar a página
+  window.onload = loadStudents;
+</script>
+
+</body>
+</html>
