@@ -62,7 +62,7 @@
 </div>
 
 <div id="data-container">
-  <h2>STUDENT</h2>
+  <h2>student</h2>
   <table id="table-student">
     <thead><tr><th>id</th><th>nome</th><th>level</th></tr></thead>
     <tbody></tbody>
@@ -84,7 +84,6 @@
   async function fetchTable(table, columns, filter = null) {
     let url = `${SUPABASE_URL}/rest/v1/${table}?select=${columns.join(',')}`;
     if (filter) {
-      // filter é string no formato: coluna=eq.valor
       url += `&${filter}`;
     }
     try {
@@ -140,7 +139,7 @@
 
   // Carrega e exibe lista de students na inicialização
   async function loadStudents() {
-    const students = await fetchTable('STUDENT', ['id', 'nome', 'level']);
+    const students = await fetchTable('student', ['id', 'nome', 'level']);
     const tbody = document.querySelector('#table-student tbody');
     clearElement(tbody);
 
@@ -174,14 +173,14 @@
         }
 
         // Busca class plans relacionados
-        const classPlans = await fetchTable('CLASS_PLAN', ['id', 'description'], `id_student=eq.${student.id}`);
+        const classPlans = await fetchTable('class_plan', ['id', 'description'], `id_student=eq.${student.id}`);
 
         // Cria container para class plans
         const container = document.createElement('div');
         container.className = 'nested-table-container';
 
         if (classPlans.length === 0) {
-          container.textContent = 'Nenhum Class Plan encontrado para este estudante.';
+          container.textContent = 'Nenhum class_plan encontrado para este estudante.';
         } else {
           const tableCP = createTable(['id', 'description'], classPlans, async (classPlanRow, cpTr) => {
             // Toggle exibição classes + exercises para este class plan
@@ -196,31 +195,15 @@
               openedClassPlanRows.delete(row);
             }
 
-            // Busca classes e exercises relacionados ao class plan
-            const [classes, exercises] = await Promise.all([
-              fetchTable('CLASSES', ['id', 'type', 'title', 'description'], `id_class_plan=eq.${classPlanRow.id}`),
-              fetchTable('EXERCISES', ['id', 'type'], `id_class=eq.${classPlanRow.id}`) // Atenção: id_class_plan não existe em EXERCISES, mas id_class sim. 
-              // Porém, EXERCISES tem FK id_class, não id_class_plan. Então para buscar exercises relacionados ao class plan, precisamos buscar exercises cujo id_class está em classes do class plan.
-              // Ajuste: buscar exercises cujo id_class está em classes do class plan.
-            ]);
+            // Busca classes relacionados ao class plan
+            const classes = await fetchTable('classes', ['id', 'type', 'title', 'description'], `id_class_plan=eq.${classPlanRow.id}`);
 
-            // Se exercises não corretos, vamos buscar exercises filtrando por id_class em classes do class plan:
-            // Para isso, vamos buscar primeiro as classes, pegar seus ids e buscar exercises com id_class in (ids)
-            // Já buscamos classes acima, então vamos buscar exercises com filtro id_class=in.(ids)
-            // Refatorar para isso:
-
-            // Refatoração para buscar exercises corretamente:
-            // 1. Buscar classes do class plan
-            // 2. Extrair ids das classes
-            // 3. Buscar exercises com id_class in (ids)
-
-            // Implementar refatoração:
-            // Já temos classes, extrair ids:
+            // Buscar exercises relacionados às classes do class plan
             const classIds = classes.map(c => c.id);
             let exercisesFiltered = [];
             if (classIds.length > 0) {
               const filterIds = classIds.map(id => `"${id}"`).join(',');
-              const urlExercises = `${SUPABASE_URL}/rest/v1/EXERCISES?select=id,type&id_class=in.(${filterIds})`;
+              const urlExercises = `${SUPABASE_URL}/rest/v1/exercises?select=id,type&id_class=in.(${filterIds})`;
               try {
                 const resEx = await fetch(urlExercises, { headers: headersSupabase });
                 if (resEx.ok) {
@@ -238,21 +221,25 @@
             // Tabela classes
             if (classes.length === 0) {
               const p = document.createElement('p');
-              p.textContent = 'Nenhuma Classe encontrada para este Class Plan.';
+              p.textContent = 'Nenhuma classe encontrada para este class_plan.';
               nestedContainer.appendChild(p);
             } else {
               const tableClasses = createTable(['id', 'type', 'title', 'description'], classes);
-              nestedContainer.appendChild(document.createElement('h3')).textContent = 'CLASSES';
+              const h3Classes = document.createElement('h3');
+              h3Classes.textContent = 'classes';
+              nestedContainer.appendChild(h3Classes);
               nestedContainer.appendChild(tableClasses);
             }
 
             // Tabela exercises
             if (exercisesFiltered.length === 0) {
               const p = document.createElement('p');
-              p.textContent = 'Nenhum Exercício encontrado para as Classes deste Class Plan.';
+              p.textContent = 'Nenhum exercício encontrado para as classes deste class_plan.';
               nestedContainer.appendChild(p);
             } else {
-              nestedContainer.appendChild(document.createElement('h3')).textContent = 'EXERCISES';
+              const h3Exercises = document.createElement('h3');
+              h3Exercises.textContent = 'exercises';
+              nestedContainer.appendChild(h3Exercises);
               const tableExercises = createTable(['id', 'type'], exercisesFiltered);
               nestedContainer.appendChild(tableExercises);
             }
