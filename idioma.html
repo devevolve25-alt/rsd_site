@@ -14,19 +14,27 @@
 
   /* Container do chat */
   #chat-container {
-  flex: 0 0 25%; /* Não cresce, não encolhe, base de 25% */
-  border-right: 1px solid #d1d9e6;
-  display: flex;
-  flex-direction: column;
-  background: #ffffff;
-  box-shadow: 2px 0 8px rgba(0,0,0,0.05);
-}
-
+    flex: 0 0 25%;
+    max-width: 25%;
+    min-width: 25%;
+    border-right: 1px solid #d1d9e6;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+    overflow: hidden;
+  }
 
   /* Área de mensagens */
   #chat-messages {
-    flex-grow: 1; padding: 20px; overflow-y: auto;
-    scrollbar-width: thin; scrollbar-color: #a0aec0 transparent;
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    max-width: 100%;
+    word-wrap: break-word;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: #a0aec0 transparent;
   }
   #chat-messages::-webkit-scrollbar {
     width: 8px;
@@ -38,11 +46,17 @@
 
   /* Mensagens */
   .message {
-    margin-bottom: 14px; max-width: 75%; padding: 12px 18px; border-radius: 20px; white-space: pre-wrap;
+    margin-bottom: 14px;
+    max-width: 100%;
+    padding: 12px 18px;
+    border-radius: 20px;
+    white-space: pre-wrap;
     box-shadow: 0 2px 6px rgba(0,0,0,0.07);
     font-size: 15px;
     line-height: 1.4;
     word-wrap: break-word;
+    word-break: break-word;
+    box-sizing: border-box;
     transition: background-color 0.3s ease;
   }
   .message.user {
@@ -62,13 +76,20 @@
 
   /* Input do chat */
   #chat-input {
-    width: 100%; box-sizing: border-box; border: none; 
-    border-top: 1px solid #d1d9e6; padding: 16px 20px;
-    font-size: 16px; resize: none; height: 70px;
+    width: 100%;
+    box-sizing: border-box;
+    border: none;
+    border-top: 1px solid #d1d9e6;
+    padding: 16px 20px;
+    font-size: 16px;
+    resize: none;
+    height: 70px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: #2d3748;
     background-color: #f7fafc;
     transition: background-color 0.3s ease, border-color 0.3s ease;
+    max-width: 100%;
+    overflow-wrap: break-word;
   }
   #chat-input:focus {
     outline: none;
@@ -83,16 +104,29 @@
 
   /* Container dos dados */
   #data-container {
-  flex: 1 1 auto; /* cresce para ocupar o resto */
-  padding: 30px 25px;
-  overflow-y: auto;
-  background: #ffffff;
-  box-shadow: -2px 0 8px rgba(0,0,0,0.05);
-}
+    flex: 1 1 auto;
+    max-width: 75%;
+    min-width: 75%;
+    padding: 30px 25px;
+    overflow-y: auto;
+    background: #ffffff;
+    box-shadow: -2px 0 8px rgba(0,0,0,0.05);
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: #a0aec0 transparent;
+  }
+  #data-container::-webkit-scrollbar {
+    width: 8px;
+  }
+  #data-container::-webkit-scrollbar-thumb {
+    background-color: #a0aec0;
+    border-radius: 4px;
+  }
 
   /* Títulos */
   h2 {
-    margin-top: 0; margin-bottom: 15px;
+    margin-top: 0;
+    margin-bottom: 15px;
     font-weight: 700;
     font-size: 24px;
     color: #334155;
@@ -102,7 +136,8 @@
   }
 
   h3 {
-    margin-top: 20px; margin-bottom: 10px;
+    margin-top: 20px;
+    margin-bottom: 10px;
     color: #475569;
     font-weight: 600;
     font-size: 18px;
@@ -110,13 +145,20 @@
 
   /* Tabelas */
   table {
-    width: 100%; border-collapse: separate; border-spacing: 0 8px; margin-bottom: 20px;
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+    margin-bottom: 20px;
     font-size: 15px;
     color: #334155;
+    word-wrap: break-word;
+    word-break: break-word;
   }
 
   th, td {
     padding: 12px 15px;
+    overflow-wrap: break-word;
   }
 
   thead th {
@@ -156,19 +198,6 @@
     padding-left: 15px;
     background: #f1f5f9;
     border-radius: 8px;
-  }
-
-  /* Scrollbar para data container */
-  #data-container {
-    scrollbar-width: thin;
-    scrollbar-color: #a0aec0 transparent;
-  }
-  #data-container::-webkit-scrollbar {
-    width: 8px;
-  }
-  #data-container::-webkit-scrollbar-thumb {
-    background-color: #a0aec0;
-    border-radius: 4px;
   }
 </style>
 </head>
