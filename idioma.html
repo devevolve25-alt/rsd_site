@@ -441,7 +441,7 @@ th, td {
       }
       const data = await res.json();
       const reply = data.output || 'Resposta vazia do agente IA.';
-      addMessage('ia', reply);
+      addMessage('ia', output);
     } catch (e) {
       addMessage('ia', 'Falha na comunicação com o agente IA.');
     }
