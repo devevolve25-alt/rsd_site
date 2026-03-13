@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Chat IA e Dados Supabase Hierárquico</title>
+<title>Chat IA e Dados Supabase Hierárquico - Layout Fixo</title>
 <style>
   /* Reset básico */
   body, html {
@@ -145,17 +145,17 @@
 
   /* Tabelas */
   table {
-  width: 100%;
-  /* Remova ou comente essa linha: */
-  /* table-layout: fixed; */
-  border-collapse: separate;
-  border-spacing: 0 8px;
-  margin-bottom: 20px;
-  font-size: 15px;
-  color: #334155;
-  word-wrap: break-word;
-  word-break: break-word;
-}
+    width: 100%;
+    /* Permitir colunas expansíveis */
+    table-layout: auto;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+    margin-bottom: 20px;
+    font-size: 15px;
+    color: #334155;
+    word-wrap: break-word;
+    word-break: break-word;
+  }
 
   th, td {
     padding: 12px 15px;
@@ -191,15 +191,17 @@
     border-radius: 0 8px 8px 0;
   }
 
-  /* Nested container */
-  .nested-table-container {
-    margin-left: 20px;
-    margin-bottom: 25px;
-    border-left: 3px solid #93c5fd;
-    padding-left: 15px;
-    background: #f1f5f9;
+  /* Containers separados para hierarquia - sem aninhamento */
+  .hierarchy-container {
+    width: 100%;
+    margin-bottom: 30px;
+    border: 2px solid #93c5fd;
     border-radius: 8px;
+    padding: 15px 20px;
+    background: #f1f5f9;
+    box-sizing: border-box;
   }
+
 </style>
 </head>
 <body>
@@ -211,14 +213,31 @@
 
 <div id="data-container">
   <h2>student</h2>
-  <table id="table-student">
-    <thead><tr><th>id</th><th>nome</th><th>level</th></tr></thead>
-    <tbody></tbody>
-  </table>
+  <div id="student-table-container" class="hierarchy-container">
+    <table id="table-student">
+      <thead><tr><th>id</th><th>nome</th><th>level</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Containers separados para tabelas hierárquicas -->
+  <div id="class-plan-container" class="hierarchy-container" style="display:none;">
+    <h3>class_plan</h3>
+    <!-- Tabela class_plan será inserida aqui -->
+  </div>
+
+  <div id="classes-container" class="hierarchy-container" style="display:none;">
+    <h3>classes</h3>
+    <!-- Tabela classes será inserida aqui -->
+  </div>
+
+  <div id="exercises-container" class="hierarchy-container" style="display:none;">
+    <h3>exercises</h3>
+    <!-- Tabela exercises será inserida aqui -->
+  </div>
 </div>
 
 <script>
-  // Seu script permanece inalterado para manter funcionalidades
   const SUPABASE_URL = 'https://htsorgukdbfuuypiuksm.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_8bpn_JEYZU2YzVMC5UK3CA_9Kn4LPdm';
   const WEBHOOK_IA = 'https://powerfulkiwi-n8n.cloudfy.live/webhook/english_page';
@@ -279,13 +298,20 @@
     while (el.firstChild) el.removeChild(el.firstChild);
   }
 
-  const openedStudentRows = new Map();
-  const openedClassPlanRows = new Map();
+  // Limpa e oculta containers hierárquicos
+  function clearHierarchyContainers() {
+    ['class-plan-container', 'classes-container', 'exercises-container'].forEach(id => {
+      const container = document.getElementById(id);
+      clearElement(container);
+      container.style.display = 'none';
+    });
+  }
 
   async function loadStudents() {
     const students = await fetchTable('student', ['id', 'nome', 'level']);
     const tbody = document.querySelector('#table-student tbody');
     clearElement(tbody);
+    clearHierarchyContainers();
 
     students.forEach(student => {
       const tr = document.createElement('tr');
@@ -300,90 +326,84 @@
       `;
 
       tr.addEventListener('click', async () => {
-        if (openedStudentRows.has(tr)) {
-          openedStudentRows.get(tr).remove();
-          openedStudentRows.delete(tr);
-          return;
-        }
-        for (const [row, container] of openedStudentRows.entries()) {
-          container.remove();
-          openedStudentRows.delete(row);
-        }
-        for (const [row, container] of openedClassPlanRows.entries()) {
-          container.remove();
-          openedClassPlanRows.delete(row);
-        }
-
+        clearHierarchyContainers();
+        // Carregar class_plan do estudante clicado
         const classPlans = await fetchTable('class_plan', ['id', 'description'], `id_student=eq.${student.id}`);
-        const container = document.createElement('div');
-        container.className = 'nested-table-container';
+        const containerCP = document.getElementById('class-plan-container');
+        clearElement(containerCP);
+        containerCP.style.display = 'block';
+
+        const h3 = document.createElement('h3');
+        h3.textContent = 'class_plan';
+        containerCP.appendChild(h3);
 
         if (classPlans.length === 0) {
-          container.textContent = 'Nenhum class_plan encontrado para este estudante.';
-        } else {
-          const tableCP = createTable(['id', 'description'], classPlans, async (classPlanRow, cpTr) => {
-            if (openedClassPlanRows.has(cpTr)) {
-              openedClassPlanRows.get(cpTr).remove();
-              openedClassPlanRows.delete(cpTr);
-              return;
-            }
-            for (const [row, container] of openedClassPlanRows.entries()) {
-              container.remove();
-              openedClassPlanRows.delete(row);
-            }
+          const p = document.createElement('p');
+          p.textContent = 'Nenhum class_plan encontrado para este estudante.';
+          containerCP.appendChild(p);
+          document.getElementById('classes-container').style.display = 'none';
+          document.getElementById('exercises-container').style.display = 'none';
+          return;
+        }
 
-            const classes = await fetchTable('classes', ['id', 'type', 'title', 'description'], `id_class_plan=eq.${classPlanRow.id}`);
+        const tableCP = createTable(['id', 'description'], classPlans, async (classPlanRow) => {
+          // Ao clicar em class_plan, carregar classes
+          const classes = await fetchTable('classes', ['id', 'type', 'title', 'description'], `id_class_plan=eq.${classPlanRow.id}`);
+          const containerClasses = document.getElementById('classes-container');
+          clearElement(containerClasses);
+          containerClasses.style.display = 'block';
 
-            const classIds = classes.map(c => c.id);
+          const h3Classes = document.createElement('h3');
+          h3Classes.textContent = 'classes';
+          containerClasses.appendChild(h3Classes);
+
+          if (classes.length === 0) {
+            const p = document.createElement('p');
+            p.textContent = 'Nenhuma classe encontrada para este class_plan.';
+            containerClasses.appendChild(p);
+            document.getElementById('exercises-container').style.display = 'none';
+            return;
+          }
+
+          const tableClasses = createTable(['id', 'type', 'title', 'description'], classes, async (classRow) => {
+            // Ao clicar em classe, carregar exercises
+            const urlExercises = `${SUPABASE_URL}/rest/v1/exercises?select=id,type&id_class=eq.${classRow.id}`;
             let exercisesFiltered = [];
-            if (classIds.length > 0) {
-              const filterIds = classIds.map(id => `"${id}"`).join(',');
-              const urlExercises = `${SUPABASE_URL}/rest/v1/exercises?select=id,type&id_class=in.(${filterIds})`;
-              try {
-                const resEx = await fetch(urlExercises, { headers: headersSupabase });
-                if (resEx.ok) {
-                  exercisesFiltered = await resEx.json();
-                }
-              } catch (e) {
-                console.error('Erro ao buscar exercises filtrados:', e);
+            try {
+              const resEx = await fetch(urlExercises, { headers: headersSupabase });
+              if (resEx.ok) {
+                exercisesFiltered = await resEx.json();
               }
+            } catch (e) {
+              console.error('Erro ao buscar exercises:', e);
             }
 
-            const nestedContainer = document.createElement('div');
-            nestedContainer.className = 'nested-table-container';
+            const containerExercises = document.getElementById('exercises-container');
+            clearElement(containerExercises);
+            containerExercises.style.display = 'block';
 
-            if (classes.length === 0) {
-              const p = document.createElement('p');
-              p.textContent = 'Nenhuma classe encontrada para este class_plan.';
-              nestedContainer.appendChild(p);
-            } else {
-              const h3Classes = document.createElement('h3');
-              h3Classes.textContent = 'classes';
-              nestedContainer.appendChild(h3Classes);
-              const tableClasses = createTable(['id', 'type', 'title', 'description'], classes);
-              nestedContainer.appendChild(tableClasses);
-            }
+            const h3Exercises = document.createElement('h3');
+            h3Exercises.textContent = 'exercises';
+            containerExercises.appendChild(h3Exercises);
 
             if (exercisesFiltered.length === 0) {
               const p = document.createElement('p');
-              p.textContent = 'Nenhum exercício encontrado para as classes deste class_plan.';
-              nestedContainer.appendChild(p);
-            } else {
-              const h3Exercises = document.createElement('h3');
-              h3Exercises.textContent = 'exercises';
-              nestedContainer.appendChild(h3Exercises);
-              const tableExercises = createTable(['id', 'type'], exercisesFiltered);
-              nestedContainer.appendChild(tableExercises);
+              p.textContent = 'Nenhum exercício encontrado para esta classe.';
+              containerExercises.appendChild(p);
+              return;
             }
 
-            cpTr.parentNode.insertBefore(nestedContainer, cpTr.nextSibling);
-            openedClassPlanRows.set(cpTr, nestedContainer);
+            const tableExercises = createTable(['id', 'type'], exercisesFiltered);
+            containerExercises.appendChild(tableExercises);
           });
-          container.appendChild(tableCP);
-        }
 
-        tr.parentNode.insertBefore(container, tr.nextSibling);
-        openedStudentRows.set(tr, container);
+          containerClasses.appendChild(tableClasses);
+          document.getElementById('exercises-container').style.display = 'none';
+        });
+
+        containerCP.appendChild(tableCP);
+        document.getElementById('classes-container').style.display = 'none';
+        document.getElementById('exercises-container').style.display = 'none';
       });
 
       tbody.appendChild(tr);
