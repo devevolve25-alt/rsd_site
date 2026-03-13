@@ -104,17 +104,16 @@
 
   /* Container dos dados */
   #data-container {
-    flex: 1 1 auto;
-    max-width: 75%;
-    min-width: 75%;
-    padding: 30px 25px;
-    overflow-y: auto;
-    background: #ffffff;
-    box-shadow: -2px 0 8px rgba(0,0,0,0.05);
-    box-sizing: border-box;
-    scrollbar-width: thin;
-    scrollbar-color: #a0aec0 transparent;
-  }
+  flex: 1 1 auto;
+  max-width: 75%;
+  min-width: 75%;
+  padding: 30px 25px;
+  overflow-y: auto;
+  overflow-x: hidden; /* bloqueia scroll horizontal */
+  background: #ffffff;
+  box-shadow: -2px 0 8px rgba(0,0,0,0.05);
+  box-sizing: border-box;
+}
   #data-container::-webkit-scrollbar {
     width: 8px;
   }
@@ -145,22 +144,25 @@
 
   /* Tabelas */
   table {
-    width: 100%;
-    /* Permitir colunas expansíveis */
-    table-layout: auto;
-    border-collapse: separate;
-    border-spacing: 0 8px;
-    margin-bottom: 20px;
-    font-size: 15px;
-    color: #334155;
-    word-wrap: break-word;
-    word-break: break-word;
-  }
+  width: 100%;
+  table-layout: fixed; /* largura fixa das colunas proporcional ao container */
+  border-collapse: separate;
+  border-spacing: 0 8px;
+  margin-bottom: 20px;
+  font-size: 15px;
+  color: #334155;
+  word-wrap: break-word;
+  word-break: break-word;
+}
 
-  th, td {
-    padding: 12px 15px;
-    overflow-wrap: break-word;
-  }
+th, td {
+  padding: 12px 15px;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+  white-space: normal; /* permite quebra de linha */
+}
 
   thead th {
     background-color: #e0e7ff;
