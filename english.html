@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chat IA e Conteúdo Hierárquico</title>
+<style>
+  body, html {
+    margin: 0; padding: 0; height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex; overflow: hidden; background: #f0f4f8; color: #333;
+  }
+  #chat-container {
+    flex: 0 0 25%; max-width: 25%; min-width: 25%;
+    border-right: 1px solid #d1d9e6;
+    display: flex; flex-direction: column;
+    background: #fff; box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+    overflow: hidden;
+  }
+  #chat-messages {
+    flex-grow: 1; padding: 20px; overflow-y: auto;
+    max-width: 100%; word-wrap: break-word; box-sizing: border-box;
+    scrollbar-width: thin; scrollbar-color: #a0aec0 transparent;
+  }
+  #chat-messages::-webkit-scrollbar {
+    width: 8px;
+  }
+  #chat-messages::-webkit-scrollbar-thumb {
+    background-color: #a0aec0; border-radius: 4px;
+  }
+  .message {
+    margin-bottom: 14px; max-width: 100%; padding: 12px 18px;
+    border-radius: 20px; white-space: pre-wrap;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+    font-size: 15px; line-height: 1.4; word-wrap: break-word;
+    word-break: break-word; box-sizing: border-box;
+    transition: background-color 0.3s ease;
+  }
+  .message.user {
+    background-color: #3b82f6; color: white;
+    align-self: flex-end; border-bottom-right-radius: 4px;
+    text-align: right;
+  }
+  .message.ia {
+    background-color: #e2e8f0; color: #2d3748;
+    align-self: flex-start; border-bottom-left-radius: 4px;
+    text-align: left;
+  }
+  #chat-input {
+    width: 100%; box-sizing: border-box;
+    border: none; border-top: 1px solid #d1d9e6;
+    padding: 16px 20px; font-size: 16px; resize: none;
+    height: 70px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #2d3748; background-color: #f7fafc;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+    max-width: 100%; overflow-wrap: break-word;
+  }
+  #chat-input:focus {
+    outline: none; background-color: #fff;
+    border-top: 1px solid #3b82f6;
+    box-shadow: 0 -2px 4px rgba(59,130,246,0.3);
+  }
+  #chat-input::placeholder {
+    color: #94a3b8; font-style: italic;
+  }
+  #data-container {
+    flex: 1 1 auto; max-width: 75%; min-width: 75%;
+    padding: 20px 25px; overflow-y: auto; overflow-x: hidden;
+    background: #fff; box-shadow: -2px 0 8px rgba(0,0,0,0.05);
+    box-sizing: border-box;
+    display: flex; flex-direction: column;
+  }
+  /* Header aluno + class plan */
+  #header-info {
+    border-bottom: 2px solid #3b82f6;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+  }
+  #header-info h2, #header-info p {
+    margin: 0;
+    user-select: none;
+  }
+  #header-info h2 {
+    font-size: 24px; font-weight: 700; color: #334155;
+  }
+  #header-info p {
+    font-size: 16px; color: #475569;
+  }
+  /* Abas principais */
+  .tabs {
+    display: flex;
+    border-bottom: 2px solid #cbd5e1;
+    margin-bottom: 10px;
+  }
+  .tab {
+    padding: 10px 20px;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 3px solid transparent;
+    font-weight: 600;
+    color: #64748b;
+    transition: border-color 0.3s ease, color 0.3s ease;
+  }
+  .tab.active {
+    border-bottom-color: #3b82f6;
+    color: #1e40af;
+  }
+  /* Sub-abas */
+  .sub-tabs {
+    display: flex;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 10px;
+  }
+  .sub-tab {
+    padding: 6px 14px;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 2px solid transparent;
+    font-weight: 600;
+    color: #475569;
+    transition: border-color 0.3s ease, color 0.3s ease;
+  }
+  .sub-tab.active {
+    border-bottom-color: #2563eb;
+    color: #1e40af;
+  }
+  /* Conteúdo das abas */
+  #tab-content {
+    flex-grow: 1;
+    overflow-y: auto;
+  }
+  /* Listas e tabelas */
+  .class-list, .exercise-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+  }
+  .class-item, .exercise-item {
+    padding: 10px 15px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    background: #f8fafc;
+    transition: background-color 0.3s ease;
+  }
+  .class-item:hover, .exercise-item:hover {
+    background-color: #dbeafe;
+  }
+  .class-item.active, .exercise-item.active {
+    background-color: #bfdbfe;
+    border-color: #3b82f6;
+  }
+  /* Player e upload */
+  #audio-player {
+    width: 100%;
+    margin-top: 10px;
+    outline: none;
+  }
+  #upload-section {
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  #upload-section input[type="text"] {
+    flex-grow: 1;
+    padding: 8px 10px;
+    font-size: 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+  }
+  #upload-section input[type="file"] {
+    font-size: 14px;
+  }
+  #upload-button {
+    padding: 8px 16px;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+  }
+  #upload-button:disabled {
+    background-color: #93c5fd;
+    cursor: not-allowed;
+  }
+  #upload-button:hover:not(:disabled) {
+    background-color: #2563eb;
+  }
+  /* Mensagem de status upload */
+  #upload-status {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #2563eb;
+  }
+</style>
+</head>
+<body>
+
+<div id="chat-container">
+  <div id="chat-messages"></div>
+  <textarea id="chat-input" placeholder="Digite sua mensagem (Shift+Enter para nova linha)..."></textarea>
+</div>
+
+<div id="data-container">
+  <div id="header-info" style="display:none;">
+    <h2 id="student-name"></h2>
+    <p id="class-plan-description"></p>
+  </div>
+
+  <div class="tabs" id="main-tabs" style="display:none;">
+    <div class="tab" data-type="grammar">Grammar</div>
+    <div class="tab" data-type="reading">Reading</div>
+    <div class="tab" data-type="writing">Writing</div>
+    <div class="tab" data-type="listening">Listening</div>
+  </div>
+
+  <div id="tab-content"></div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://htsorgukdbfuuypiuksm.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_8bpn_JEYZU2YzVMC5UK3CA_9Kn4LPdm';
+  const headersSupabase = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_KEY,
+    'Content-Type': 'application/json',
+  };
+
+  let selectedStudent = null;
+  let selectedClassPlan = null;
+  let classesByType = {};
+  let selectedMainTab = null;
+  let selectedClass = null;
+  let exercisesByClass = {};
+  let selectedExercise = null;
+
+  async function fetchTable(table, columns, filter = null) {
+    let url = `${SUPABASE_URL}/rest/v1/${table}?select=${columns.join(',')}`;
+    if (filter) url += `&${filter}`;
+    try {
+      const res = await fetch(url, { headers: headersSupabase });
+      if (!res.ok) throw new Error(`Erro ao buscar ${table}: ${res.status}`);
+      return await res.json();
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
+  }
+
+  async function loadStudents() {
+    const students = await fetchTable('student', ['id', 'nome', 'level']);
+    const chatMessagesDiv = document.getElementById('chat-messages');
+    chatMessagesDiv.innerHTML = '';
+
+    const studentListDiv = document.createElement('div');
+    studentListDiv.style.padding = '10px';
+    studentListDiv.style.borderBottom = '1px solid #d1d9e6';
+    studentListDiv.style.maxHeight = '150px';
+    studentListDiv.style.overflowY = 'auto';
+    studentListDiv.style.backgroundColor = '#f9fafb';
+
+    students.forEach(student => {
+      const btn = document.createElement('button');
+      btn.textContent = student.nome + ` (${student.level})`;
+      btn.style.display = 'block';
+      btn.style.width = '100%';
+      btn.style.marginBottom = '4px';
+      btn.style.padding = '6px 8px';
+      btn.style.border = 'none';
+      btn.style.background = '#e2e8f0';
+      btn.style.cursor = 'pointer';
+      btn.style.borderRadius = '4px';
+      btn.style.textAlign = 'left';
+      btn.addEventListener('click', () => selectStudent(student));
+      studentListDiv.appendChild(btn);
+    });
+
+    chatMessagesDiv.prepend(studentListDiv);
+  }
+
+  async function selectStudent(student) {
+    selectedStudent = student;
+    selectedClassPlan = null;
+    selectedMainTab = null;
+    selectedClass = null;
+    selectedExercise = null;
+    classesByType = {};
+    exercisesByClass = {};
+
+    const classPlans = await fetchTable('class_plan', ['id', 'description'], `id_student=eq.${student.id}`);
+    if (classPlans.length === 0) {
+      alert('Nenhum class plan encontrado para este aluno.');
+      clearDataContainer();
+      return;
+    }
+    selectedClassPlan = classPlans[0];
+
+    document.getElementById('student-name').textContent = student.nome;
+    document.getElementById('class-plan-description').textContent = selectedClassPlan.description;
+    document.getElementById('header-info').style.display = 'block';
+
+    const classes = await fetchTable('classes', ['id', 'type', 'title', 'description', 'audio_url'], `id_class_plan=eq.${selectedClassPlan.id}`);
+
+    classesByType = { grammar: [], reading: [], writing: [], listening: [] };
+    classes.forEach(c => {
+      if (classesByType[c.type]) classesByType[c.type].push(c);
+    });
+
+    const mainTabs = document.getElementById('main-tabs');
+    mainTabs.style.display = 'flex';
+
+    selectedMainTab = null;
+    selectedClass = null;
+    selectedExercise = null;
+    exercisesByClass = {};
+
+    renderMainTabs();
+  }
+
+  function clearDataContainer() {
+    document.getElementById('header-info').style.display = 'none';
+    document.getElementById('main-tabs').style.display = 'none';
+    document.getElementById('tab-content').innerHTML = '';
+  }
+
+  function renderMainTabs() {
+    const mainTabs = document.getElementById('main-tabs');
+    Array.from(mainTabs.children).forEach(tab => {
+      tab.classList.remove('active');
+      tab.onclick = () => {
+        if (selectedMainTab === tab.dataset.type) return;
+        selectedMainTab = tab.dataset.type;
+        selectedClass = null;
+        selectedExercise = null;
+        renderMainTabs();
+        renderTabContent();
+      };
+    });
+    if (!selectedMainTab) {
+      selectedMainTab = 'grammar';
+    }
+    const activeTab = Array.from(mainTabs.children).find(t => t.dataset.type === selectedMainTab);
+    if (activeTab) activeTab.classList.add('active');
+    renderTabContent();
+  }
+
+  function renderTabContent() {
+    const container = document.getElementById('tab-content');
+    container.innerHTML = '';
+
+    const classes = classesByType[selectedMainTab] || [];
+    if (classes.length === 0) {
+      container.textContent = 'Nenhuma classe encontrada para esta categoria.';
+      return;
+    }
+
+    const classList = document.createElement('ul');
+    classList.className = 'class-list';
+
+    classes.forEach(c => {
+      const li = document.createElement('li');
+      li.className = 'class-item' + (selectedClass && selectedClass.id === c.id ? ' active' : '');
+      li.textContent = c.title + ' - ' + c.description;
+      li.onclick = () => {
+        if (selectedClass && selectedClass.id === c.id) return;
+        selectedClass = c;
+        selectedExercise = null;
+        renderMainTabs();
+        renderTabContent();
+      };
+      classList.appendChild(li);
+    });
+
+    container.appendChild(classList);
+
+    if (!selectedClass) return;
+
+    const subTabs = document.createElement('div');
+    subTabs.className = 'sub-tabs';
+
+    const exercisesTab = document.createElement('div');
+    exercisesTab.className = 'sub-tab active';
+    exercisesTab.textContent = 'Exercises';
+    subTabs.appendChild(exercisesTab);
+
+    container.appendChild(subTabs);
+
+    renderExercises(container);
+  }
+
+  async function renderExercises(container) {
+    if (!exercisesByClass[selectedClass.id]) {
+      const exercises = await fetchTable('exercises', ['id', 'type', 'question_1', 'question_2', 'question_3', 'question_4', 'question_5', 'question_6', 'question_7', 'question_8', 'question_9', 'question_10'], `id_class=eq.${selectedClass.id}`);
+      exercisesByClass[selectedClass.id] = exercises;
+    }
+    const exercises = exercisesByClass[selectedClass.id];
+
+    if (exercises.length === 0) {
+      const p = document.createElement('p');
+      p.textContent = 'Nenhum exercício encontrado para esta classe.';
+      container.appendChild(p);
+      return;
+    }
+
+    const exerciseList = document.createElement('ul');
+    exerciseList.className = 'exercise-list';
+
+    exercises.forEach(ex => {
+      const li = document.createElement('li');
+      li.className = 'exercise-item';
+      li.textContent = `Exercise ID: ${ex.id} - Type: ${ex.type}`;
+      li.onclick = () => {
+        selectedExercise = ex;
+        renderExerciseDetails(container);
+      };
+      exerciseList.appendChild(li);
+    });
+
+    container.appendChild(exerciseList);
+  }
+
+  function renderExerciseDetails(container) {
+    const oldDetails = document.getElementById('exercise-details');
+    if (oldDetails) oldDetails.remove();
+
+    if (!selectedExercise) return;
+
+    const detailsDiv = document.createElement('div');
+    detailsDiv.id = 'exercise-details';
+    detailsDiv.style.marginTop = '15px';
+    detailsDiv.style.border = '1px solid #cbd5e1';
+    detailsDiv.style.borderRadius = '6px';
+    detailsDiv.style.padding = '10px';
+    detailsDiv.style.background = '#f8fafc';
+
+    const questionsTitle = document.createElement('h4');
+    questionsTitle.textContent = 'Perguntas do Exercício';
+    detailsDiv.appendChild(questionsTitle);
+
+    const ul = document.createElement('ul');
+    for (let i = 1; i <= 10; i++) {
+      const qKey = `question_${i}`;
+      const qText = selectedExercise[qKey] || '(vazio)';
+      const li = document.createElement('li');
+      li.textContent = `${qKey}: ${qText}`;
+      ul.appendChild(li);
+    }
+    detailsDiv.appendChild(ul);
+
+    if (selectedMainTab === 'listening') {
+      const audio = document.createElement('audio');
+      audio.id = 'audio-player';
+      audio.controls = true;
+      audio.src = selectedClass.audio_url || '';
+      detailsDiv.appendChild(audio);
+
+      const uploadSection = document.createElement('div');
+      uploadSection.id = 'upload-section';
+
+      const inputFile = document.createElement('input');
+      inputFile.type = 'file';
+      inputFile.accept = 'audio/*';
+
+      const inputName = document.createElement('input');
+      inputName.type = 'text';
+      inputName.placeholder = 'Nome do arquivo (ex: audio_renomeado.mp3)';
+      inputName.value = '';
+
+      const uploadButton = document.createElement('button');
+      uploadButton.id = 'upload-button';
+      uploadButton.textContent = 'Upload para Bucket';
+      uploadButton.disabled = true;
+
+      const statusMsg = document.createElement('div');
+      statusMsg.id = 'upload-status';
+
+      inputFile.onchange = () => {
+        uploadButton.disabled = !inputFile.files.length || !inputName.value.trim();
+      };
+      inputName.oninput = () => {
+        uploadButton.disabled = !inputFile.files.length || !inputName.value.trim();
+      };
+
+      uploadButton.onclick = async () => {
+        if (!inputFile.files.length) return;
+        const file = inputFile.files[0];
+        const fileName = inputName.value.trim();
+        if (!fileName) {
+          alert('Informe um nome válido para o arquivo.');
+          return;
+        }
+        uploadButton.disabled = true;
+        statusMsg.textContent = 'Enviando arquivo...';
+
+        try {
+          await uploadAudioFile(file, fileName);
+          statusMsg.textContent = 'Upload realizado com sucesso!';
+          await updateClassAudioUrl(selectedClass.id, fileName);
+          selectedClass.audio_url = generatePublicUrl(fileName);
+          audio.src = selectedClass.audio_url;
+        } catch (e) {
+          console.error(e);
+          statusMsg.textContent = 'Erro no upload: ' + e.message;
+        } finally {
+          uploadButton.disabled = false;
+        }
+      };
+
+      uploadSection.appendChild(inputFile);
+      uploadSection.appendChild(inputName);
+      uploadSection.appendChild(uploadButton);
+      detailsDiv.appendChild(uploadSection);
+      detailsDiv.appendChild(statusMsg);
+    }
+
+    container.appendChild(detailsDiv);
+  }
+
+  function generatePublicUrl(fileName) {
+    const bucket = 'mybucket'; // ajuste para seu bucket real
+    return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${encodeURIComponent(fileName)}`;
+  }
+
+  async function uploadAudioFile(file, fileName) {
+    const bucket = 'mybucket'; // ajuste para seu bucket real
+    const url = `${SUPABASE_URL}/storage/v1/object/${bucket}/${encodeURIComponent(fileName)}`;
+
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': file.type,
+      },
+      body: file,
+    });
+    if (!res.ok) {
+      throw new Error(`Falha no upload: ${res.statusText}`);
+    }
+  }
+
+  async function updateClassAudioUrl(classId, fileName) {
+    const publicUrl = generatePublicUrl(fileName);
+    const url = `${SUPABASE_URL}/rest/v1/classes?id=eq.${classId}`;
+    const body = JSON.stringify({ audio_url: publicUrl });
+
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: headersSupabase,
+      body,
+    });
+    if (!res.ok) {
+      throw new Error(`Falha ao atualizar audio_url: ${res.statusText}`);
+    }
+  }
+
+  const chatMessagesDiv = document.getElementById('chat-messages');
+  const chatInput = document.getElementById('chat-input');
+
+  function addMessage(sender, text) {
+    const div = document.createElement('div');
+    div.className = 'message ' + sender;
+    div.textContent = text;
+    chatMessagesDiv.appendChild(div);
+    chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+  }
+
+  async function sendMessage() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+    addMessage('user', text);
+    chatInput.value = '';
+
+    // Simulação de resposta IA (substituir por chamada real)
+    setTimeout(() => {
+      addMessage('ia', 'Resposta simulada do agente IA para: ' + text);
+    }, 1000);
+  }
+
+  chatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  window.onload = () => {
+    loadStudents();
+  };
+</script>
+
+</body>
+</html>
