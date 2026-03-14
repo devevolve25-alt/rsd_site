@@ -210,6 +210,35 @@ td.id-copyable {
     box-sizing: border-box;
   }
 
+  /* Novo card para perguntas */
+  #exercise-questions-card {
+    border: 2px solid #60a5fa;
+    border-radius: 8px;
+    background: #e0f2fe;
+    padding: 15px 20px;
+    margin-top: 10px;
+    max-width: 600px;
+    box-sizing: border-box;
+  }
+  #exercise-questions-card h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #1e40af;
+    font-weight: 700;
+    font-size: 18px;
+  }
+  #exercise-questions-card ul {
+    list-style-type: none;
+    padding-left: 0;
+    margin: 0;
+  }
+  #exercise-questions-card ul li {
+    padding: 6px 0;
+    border-bottom: 1px solid #bae6fd;
+    color: #1e3a8a;
+    font-size: 15px;
+    word-break: break-word;
+  }
 </style>
 </head>
 <body>
@@ -242,6 +271,7 @@ td.id-copyable {
   <div id="exercises-container" class="hierarchy-container" style="display:none;">
     <h3>exercises</h3>
     <!-- Tabela exercises será inserida aqui -->
+    <!-- Card para perguntas será inserido aqui -->
   </div>
 </div>
 
@@ -288,17 +318,13 @@ td.id-copyable {
       const tr = document.createElement('tr');
       if (rowClickHandler) {
         tr.classList.add('clickable');
-        // Removido userSelect none para permitir seleção parcial
-        // tr.style.userSelect = 'none';
         tr.addEventListener('click', () => rowClickHandler(row, tr));
       }
       columns.forEach(col => {
         const td = document.createElement('td');
         td.textContent = row[col] ?? '';
-        // Adiciona classe para permitir seleção e cópia do ID
         if (col === 'id') {
           td.classList.add('id-copyable');
-          // Evento para copiar o ID ao clicar na célula, sem disparar clique da linha
           td.addEventListener('click', (e) => {
             e.stopPropagation();
             navigator.clipboard.writeText(td.textContent).then(() => {
@@ -337,8 +363,6 @@ td.id-copyable {
     students.forEach(student => {
       const tr = document.createElement('tr');
       tr.classList.add('clickable');
-      // Removido userSelect none para permitir seleção parcial
-      // tr.style.userSelect = 'none';
       tr.dataset.studentId = student.id;
 
       tr.innerHTML = `
@@ -347,7 +371,6 @@ td.id-copyable {
         <td>${student.level}</td>
       `;
 
-      // Evento para copiar o ID na célula do ID na tabela principal
       const tdId = tr.querySelector('td.id-copyable');
       tdId.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -399,7 +422,7 @@ td.id-copyable {
 
           const tableClasses = createTable(['id', 'type', 'title', 'description'], classes, async (classRow) => {
             // Ao clicar em classe, carregar exercises
-            const urlExercises = `${SUPABASE_URL}/rest/v1/exercises?select=id,type&id_class=eq.${classRow.id}`;
+            const urlExercises = `${SUPABASE_URL}/rest/v1/exercises?select=id,type,question_1,question_2,question_3,question_4,question_5,question_6,question_7,question_8,question_9,question_10&id_class=eq.${classRow.id}`;
             let exercisesFiltered = [];
             try {
               const resEx = await fetch(urlExercises, { headers: headersSupabase });
@@ -425,8 +448,15 @@ td.id-copyable {
               return;
             }
 
-            const tableExercises = createTable(['id', 'type'], exercisesFiltered);
+            // Criar tabela com colunas id e type
+            const tableExercises = createTable(['id', 'type'], exercisesFiltered, (exerciseRow) => {
+              // Ao clicar em exercício, mostrar card com perguntas
+              showExerciseQuestionsCard(exerciseRow);
+            });
             containerExercises.appendChild(tableExercises);
+
+            // Remover card anterior se existir
+            removeExerciseQuestionsCard();
           });
 
           containerClasses.appendChild(tableClasses);
@@ -440,6 +470,39 @@ td.id-copyable {
 
       tbody.appendChild(tr);
     });
+  }
+
+  function removeExerciseQuestionsCard() {
+    const oldCard = document.getElementById('exercise-questions-card');
+    if (oldCard) {
+      oldCard.remove();
+    }
+  }
+
+  function showExerciseQuestionsCard(exercise) {
+    removeExerciseQuestionsCard();
+
+    const containerExercises = document.getElementById('exercises-container');
+
+    const card = document.createElement('div');
+    card.id = 'exercise-questions-card';
+
+    const title = document.createElement('h4');
+    title.textContent = `Perguntas do exercício ID: ${exercise.id}`;
+    card.appendChild(title);
+
+    const ul = document.createElement('ul');
+
+    for (let i = 1; i <= 10; i++) {
+      const questionKey = `question_${i}`;
+      const questionText = exercise[questionKey] ?? '(vazio)';
+      const li = document.createElement('li');
+      li.textContent = `${questionKey}: ${questionText}`;
+      ul.appendChild(li);
+    }
+
+    card.appendChild(ul);
+    containerExercises.appendChild(card);
   }
 
   const chatMessagesDiv = document.getElementById('chat-messages');
