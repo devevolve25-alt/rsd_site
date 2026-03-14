@@ -164,6 +164,12 @@ th, td {
   white-space: normal; /* permite quebra de linha */
 }
 
+/* Permitir seleção e cursor texto apenas na célula do ID */
+td.id-copyable {
+  user-select: text;
+  cursor: text;
+}
+
   thead th {
     background-color: #e0e7ff;
     font-weight: 700;
@@ -282,12 +288,25 @@ th, td {
       const tr = document.createElement('tr');
       if (rowClickHandler) {
         tr.classList.add('clickable');
-        tr.style.userSelect = 'none';
+        // Removido userSelect none para permitir seleção parcial
+        // tr.style.userSelect = 'none';
         tr.addEventListener('click', () => rowClickHandler(row, tr));
       }
       columns.forEach(col => {
         const td = document.createElement('td');
         td.textContent = row[col] ?? '';
+        // Adiciona classe para permitir seleção e cópia do ID
+        if (col === 'id') {
+          td.classList.add('id-copyable');
+          // Evento para copiar o ID ao clicar na célula, sem disparar clique da linha
+          td.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navigator.clipboard.writeText(td.textContent).then(() => {
+              td.style.backgroundColor = '#dbeafe';
+              setTimeout(() => td.style.backgroundColor = '', 300);
+            });
+          });
+        }
         tr.appendChild(td);
       });
       tbody.appendChild(tr);
@@ -318,14 +337,25 @@ th, td {
     students.forEach(student => {
       const tr = document.createElement('tr');
       tr.classList.add('clickable');
-      tr.style.userSelect = 'none';
+      // Removido userSelect none para permitir seleção parcial
+      // tr.style.userSelect = 'none';
       tr.dataset.studentId = student.id;
 
       tr.innerHTML = `
-        <td>${student.id}</td>
+        <td class="id-copyable">${student.id}</td>
         <td>${student.nome}</td>
         <td>${student.level}</td>
       `;
+
+      // Evento para copiar o ID na célula do ID na tabela principal
+      const tdId = tr.querySelector('td.id-copyable');
+      tdId.addEventListener('click', (e) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(tdId.textContent).then(() => {
+          tdId.style.backgroundColor = '#dbeafe';
+          setTimeout(() => tdId.style.backgroundColor = '', 300);
+        });
+      });
 
       tr.addEventListener('click', async () => {
         clearHierarchyContainers();
