@@ -273,7 +273,7 @@ td.id-copyable {
 </div>
 
 <script>
-  const SUPABASE_URL = 'https://htsorgukdbfuuypiuksm.supabase.co';
+  const SUPABASE_URL = 'https://htsorgukdbfuuypiuksm.supabase.co/rest/v1';
   const SUPABASE_KEY = 'sb_publishable_8bpn_JEYZU2YzVMC5UK3CA_9Kn4LPdm';
   const WEBHOOK_IA = 'https://powerfulkiwi-n8n.cloudfy.live/webhook/english_page';
 
@@ -284,13 +284,17 @@ td.id-copyable {
   };
 
   async function fetchTable(table, columns, filter = null) {
-    let url = `${SUPABASE_URL}/rest/v1/${table}?select=${columns.join(',')}`;
+    let url = `${SUPABASE_URL}/${table}?select=${columns.join(',')}`;
     if (filter) {
       url += `&${filter}`;
     }
     try {
       const res = await fetch(url, { headers: headersSupabase });
-      if (!res.ok) throw new Error(`Erro ao buscar ${table}: ${res.status}`);
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error(`Erro ao buscar ${table}: ${res.status} ${res.statusText} - ${errorText}`);
+        throw new Error(`Erro ao buscar ${table}: ${res.status}`);
+      }
       return await res.json();
     } catch (e) {
       console.error(e);
@@ -489,12 +493,6 @@ td.id-copyable {
     }
     container.appendChild(ul);
 
-    // Inserir o card abaixo da linha da tabela de exercises (última linha de exercises expansion)
-    // Procurar a linha 'expansion-row' logo depois da última linha clicada
-    // Como a tabela de exercises está dentro de linha expansão de classes, que está dentro de linha expansão de class_plan, que está dentro de linha expansão de aluno,
-    // vamos inserir logo após a linha de exercises expansion, no tbody da tabela de exercises.
-
-    // Para facilitar, vamos procurar última linha expansion que contenha tabela exercises e inserir após ela
     const exercisesContainer = document.getElementById('data-container');
     removeExerciseQuestionsCard();
     exercisesContainer.appendChild(container);
@@ -548,7 +546,40 @@ td.id-copyable {
     }
   });
 
-  window.onload = loadstudents;
+  async function loadStudents() {
+    const students = await fetchTable('student', ['id', 'nome', 'level']);
+    const tbody = document.querySelector('#table-student tbody');
+    tbody.innerHTML = '';
+    removeExerciseQuestionsCard();
+
+    students.forEach(student => {
+      const tr = document.createElement('tr');
+      tr.classList.add('clickable');
+      tr.dataset.studentId = student.id;
+
+      tr.innerHTML = `
+        <td class="id-copyable">${student.id}</td>
+        <td>${student.nome}</td>
+        <td>${student.level}</td>
+      `;
+
+      tr.querySelector('td.id-copyable').addEventListener('click', (e) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(student.id).then(() => {
+          e.target.style.backgroundColor = '#dbeafe';
+          setTimeout(() => e.target.style.backgroundColor = '', 300);
+        });
+      });
+
+      tr.addEventListener('click', () => {
+        toggleClassPlans(tr, student.id);
+      });
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  window.onload = loadStudents;
 </script>
 
 </body>
