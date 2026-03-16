@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chat IA e Dados Supabase Hierárquico - Layout Fixo com Abas</title>
+<style>
+  /* Reset básico */
+  body, html {
+    margin: 0; padding: 0; height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex; flex-direction: column; background: #f0f4f8;
+    color: #333;
+    overflow: hidden;
+  }
+
+  /* Container superior dividido em 2 partes */
+  #top-container {
+    display: flex;
+    flex: 1 1 auto;
+    height: calc(100vh - 380px); /* altura total menos altura do chat fixo aumentado para área maior */
+    overflow: hidden;
+  }
+
+  /* Parte 1 esquerda - lista de alunos e dropdown */
+  #students-container {
+    flex: 0 0 30%;
+    max-width: 30%;
+    min-width: 30%;
+    background: #ffffff;
+    border-right: 1px solid #d1d9e6;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+    overflow-y: scroll; /* forçar scroll sempre */
+    min-height: 0;
+    padding: 10px;
+    box-sizing: border-box;
+    font-size: 12px;
+  }
+
+  /* Linha de aluno */
+  .student-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    margin-bottom: 8px;
+  }
+
+  /* Campos fixos com overflow oculto */
+  .student-field {
+    flex-shrink: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border: 1px solid #ccc;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #f9fafb;
+  }
+  .field-id { width: 90px; }
+  .field-nome { width: 120px; }
+  .field-level { width: 24px; } /* Ajustado para conter 2 caracteres */
+
+  /* Dropdown class plans */
+  .classplan-dropdown {
+    flex-shrink: 0;
+    width: 150px;
+    font-size: 12px;
+    padding: 2px 4px;
+  }
+
+  /* Botão enviar */
+  .send-classplan-btn {
+    flex-shrink: 0;
+    padding: 4px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid #3b82f6;
+    background-color: #3b82f6;
+    color: white;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+  }
+  .send-classplan-btn:hover {
+    background-color: #2563eb;
+  }
+
+  /* Parte 2 direita - container das abas */
+  #classplan-display {
+    flex: 0 0 70%;
+    max-width: 70%;
+    min-width: 70%;
+    background: #ffffff;
+    padding: 15px;
+    box-sizing: border-box;
+    overflow: hidden;
+    box-shadow: -2px 0 8px rgba(0,0,0,0.05);
+    font-size: 14px;
+    color: #334155;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Abas */
+  .tabs {
+    display: flex;
+    border-bottom: 2px solid #3b82f6;
+    margin-bottom: 10px;
+  }
+  .tab {
+    padding: 8px 16px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    color: #334155;
+    border: 2px solid transparent;
+    border-bottom: none;
+    user-select: none;
+  }
+  .tab.active {
+    border-color: #3b82f6 #3b82f6 white #3b82f6;
+    background-color: white;
+    color: #1e40af;
+  }
+
+  /* Conteúdo das abas */
+  .tab-content {
+    flex: 1 1 auto;
+    display: none;
+    overflow: hidden;
+    height: 100%;
+  }
+  .tab-content.active {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+  }
+
+  /* Área esquerda e direita dentro das abas CLASSES e EXERCISES */
+  .tab-left, .tab-right {
+    overflow-y: scroll; /* forçar scroll sempre */
+    min-height: 0;
+    box-sizing: border-box;
+  }
+  .tab-left {
+    flex: 2 1 0;
+    padding-right: 15px;
+    border-right: 1px solid #d1d9e6;
+  }
+  .tab-right {
+    flex: 1 1 0;
+    padding-left: 15px;
+    font-size: 12px;
+  }
+
+  /* Correção específica para #exercise-detail-container */
+  #exercise-detail-container {
+    min-height: 0;
+    overflow-y: scroll; /* forçar scroll sempre */
+  }
+
+  /* Lista direita das aulas e exercícios */
+  .list-item {
+    padding: 6px 8px;
+    border-bottom: 1px solid #e2e8f0;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .list-item:hover {
+    background-color: #dbeafe;
+  }
+  .list-item.selected {
+    background-color: #3b82f6;
+    color: white;
+  }
+
+  /* Tabela simplificada para lista direita */
+  .list-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .list-table th, .list-table td {
+    padding: 4px 6px;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .list-table th {
+    background-color: #e0e7ff;
+    color: #1e40af;
+    font-weight: 700;
+    text-align: left;
+  }
+
+  /* Header pequeno para descrição e statement */
+  .small-header {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #1e40af;
+  }
+
+  /* Conteúdo para leitura confortável */
+  .content-textarea {
+    width: 100%;
+    height: calc(100% - 30px);
+    resize: vertical;
+    font-size: 16px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid #d1d9e6;
+    border-radius: 6px;
+    background-color: #f7fafc;
+    color: #2d3748;
+  }
+
+  /* Botão editar para exercises */
+  .edit-btn {
+    margin-left: 8px;
+    padding: 2px 6px;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid #3b82f6;
+    background-color: #3b82f6;
+    color: white;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+  }
+  .edit-btn:hover {
+    background-color: #2563eb;
+  }
+
+  /* Campo chat fixo no bottom, largura 100%, altura aumentada e padding inferior */
+  #chat-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 380px; /* aumentado consideravelmente para melhor leitura e troca de mensagens */
+    background: #ffffff;
+    border-top: 1px solid #d1d9e6;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    padding: 10px 10px 20px 10px; /* padding bottom para evitar sumir no bottom */
+    box-sizing: border-box;
+  }
+
+  #chat-messages {
+    flex: 1;
+    overflow-y: scroll; /* forçar scroll sempre */
+    margin-bottom: 8px;
+    font-size: 14px;
+    border: 1px solid #d1d9e6;
+    border-radius: 6px;
+    padding: 10px;
+    background-color: #f7fafc;
+  }
+
+  #chat-input {
+    width: 100%;
+    height: 100px;
+    resize: none;
+    border: 1px solid #d1d9e6;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 16px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #2d3748;
+    background-color: #ffffff;
+    overflow-wrap: break-word;
+  }
+  #chat-input:focus {
+    outline: none;
+    background-color: #ffffff;
+    border-color: #3b82f6;
+    box-shadow: 0 0 6px rgba(59,130,246,0.5);
+  }
+  #chat-input::placeholder {
+    color: #94a3b8;
+    font-style: italic;
+  }
+
+  /* Player audio */
+  #audio-player {
+    width: 100%;
+    outline: none;
+  }
+
+  /* Container para áudio e botão download */
+  #audio-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  #download-audio-btn {
+    width: 120px;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    border: 1px solid #3b82f6;
+    background-color: #3b82f6;
+    color: white;
+    border-radius: 4px;
+    align-self: flex-start;
+    transition: background-color 0.3s ease;
+  }
+  #download-audio-btn:hover {
+    background-color: #2563eb;
+  }
+</style>
+</head>
+<body>
+
+<div id="top-container">
+  <div id="students-container">
+    <!-- Lista de alunos com dropdown e botão será inserida aqui -->
+  </div>
+  <div id="classplan-display">
+    <!-- Abas e conteúdos serão inseridos aqui -->
+    <div class="tabs">
+      <div class="tab active" data-tab="classes-tab">CLASSES</div>
+      <div class="tab" data-tab="exercises-tab">EXERCISES</div>
+      <div class="tab" data-tab="audio-tab">AUDIO</div>
+    </div>
+    <div id="classes-tab" class="tab-content active">
+      <div class="tab-left" id="class-description-container">
+        <p>Selecione uma aula para visualizar e editar aqui.</p>
+      </div>
+      <div class="tab-right" id="class-list-container">
+        <p>Lista de aulas será exibida aqui.</p>
+      </div>
+    </div>
+    <div id="exercises-tab" class="tab-content">
+      <div class="tab-left" id="exercise-detail-container">
+        <p>Selecione um exercício para visualizar e editar aqui.</p>
+      </div>
+      <div class="tab-right" id="exercise-list-container">
+        <p>Lista de exercícios será exibida aqui.</p>
+      </div>
+    </div>
+    <div id="audio-tab" class="tab-content">
+      <div id="audio-container">
+        <audio id="audio-player" controls></audio>
+        <button id="download-audio-btn" disabled>Download Áudio</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="chat-container">
+  <div id="chat-messages"></div>
+  <textarea id="chat-input" placeholder="Digite sua mensagem (Shift+Enter para nova linha)..."></textarea>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://htsorgukdbfuuypiuksm.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_8bpn_JEYZU2YzVMC5UK3CA_9Kn4LPdm';
+  const WEBHOOK_IA = 'https://powerfulkiwi-n8n.cloudfy.live/webhook/english_page';
+  
+  const headersSupabase = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_KEY,
+    'Content-Type': 'application/json',
+  };
+
+  // Estado global para armazenar dados selecionados
+  let currentClassPlanId = null;
+  let currentClassId = null;
+  let currentExerciseId = null;
+  let classesData = [];
+  let exercisesData = [];
+
+  async function fetchTable(table, columns, filter = null) {
+    let url = `${SUPABASE_URL}/rest/v1/${table}?select=${columns.join(',')}`;
+    if (filter) {
+      url += `&${filter}`;
+    }
+    try {
+      const res = await fetch(url, { headers: headersSupabase });
+      if (!res.ok) throw new Error(`Erro ao buscar ${table}: ${res.status}`);
+      return await res.json();
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
+  }
+
+  // Carrega alunos e para cada aluno carrega seus class plans para dropdown
+  async function loadStudentsWithClassPlans() {
+    const students = await fetchTable('student', ['id', 'nome', 'level']);
+    const container = document.getElementById('students-container');
+    container.innerHTML = '';
+
+    for (const student of students) {
+      // Criar linha do aluno
+      const row = document.createElement('div');
+      row.className = 'student-row';
+
+      // Campos fixos
+      const idField = document.createElement('div');
+      idField.className = 'student-field field-id';
+      idField.textContent = student.id;
+      row.appendChild(idField);
+
+      const nomeField = document.createElement('div');
+      nomeField.className = 'student-field field-nome';
+      nomeField.textContent = student.nome;
+      row.appendChild(nomeField);
+
+      const levelField = document.createElement('div');
+      levelField.className = 'student-field field-level';
+      levelField.textContent = student.level;
+      row.appendChild(levelField);
+
+      // Dropdown class plans
+      const classPlans = await fetchTable('class_plan', ['id', 'description'], `id_student=eq.${student.id}`);
+      const dropdown = document.createElement('select');
+      dropdown.className = 'classplan-dropdown';
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.textContent = 'Selecione class plan';
+      dropdown.appendChild(defaultOption);
+      for (const cp of classPlans) {
+        const option = document.createElement('option');
+        option.value = cp.id;
+        option.textContent = cp.description;
+        dropdown.appendChild(option);
+      }
+      row.appendChild(dropdown);
+
+      // Botão enviar
+      const btn = document.createElement('button');
+      btn.className = 'send-classplan-btn';
+      btn.textContent = 'Enviar';
+      btn.disabled = true; // desabilitado até selecionar class plan
+      row.appendChild(btn);
+
+      // Habilitar botão se dropdown selecionado
+      dropdown.addEventListener('change', () => {
+        btn.disabled = dropdown.value === '';
+      });
+
+      // Ao clicar no botão, carregar dados do class plan na parte 2
+      btn.addEventListener('click', async () => {
+        if (!dropdown.value) return;
+        currentClassPlanId = dropdown.value;
+        await loadClassPlanTabs(currentClassPlanId);
+        switchTab('classes-tab');
+      });
+
+      container.appendChild(row);
+    }
+  }
+
+  // Gerenciar abas
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      switchTab(tab.dataset.tab);
+    });
+  });
+
+  function switchTab(tabId) {
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
+    document.querySelectorAll('.tab-content').forEach(tc => {
+      tc.classList.toggle('active', tc.id === tabId);
+    });
+  }
+
+  // Carregar dados para as abas CLASSES e EXERCISES
+  async function loadClassPlanTabs(classPlanId) {
+    // Limpar seleções anteriores
+    currentClassId = null;
+    currentExerciseId = null;
+    classesData = [];
+    exercisesData = [];
+
+    // Buscar classes associadas
+    classesData = await fetchTable('classes', ['id', 'type', 'title', 'description', 'content', 'audio_url'], `id_class_plan=eq.${classPlanId}`);
+
+    // Popular lista direita da aba CLASSES
+    populateClassList();
+
+    // Limpar visualização esquerda da aba CLASSES
+    clearClassDescription();
+
+    // Limpar aba EXERCISES
+    clearExerciseList();
+    clearExerciseDetail();
+
+    // Limpar aba AUDIO
+    clearAudioTab();
+  }
+
+  // Popula lista direita da aba CLASSES (sem campo id)
+  function populateClassList() {
+    const container = document.getElementById('class-list-container');
+    container.innerHTML = '';
+
+    if (classesData.length === 0) {
+      container.textContent = 'Nenhuma aula encontrada para este class plan.';
+      return;
+    }
+
+    classesData.forEach(cls => {
+      const div = document.createElement('div');
+      div.className = 'list-item';
+      div.title = `${cls.type} | ${cls.title}`;
+      div.textContent = `${cls.type} | ${cls.title}`;
+      div.dataset.classId = cls.id;
+      div.addEventListener('click', () => {
+        selectClass(cls.id);
+      });
+      container.appendChild(div);
+    });
+  }
+
+  // Seleciona uma aula e exibe seu conteúdo na parte esquerda da aba CLASSES
+  function selectClass(classId) {
+    currentClassId = classId;
+
+    // Atualiza seleção visual na lista
+    const items = document.querySelectorAll('#class-list-container .list-item');
+    items.forEach(item => {
+      item.classList.toggle('selected', item.dataset.classId === classId);
+    });
+
+    const cls = classesData.find(c => c.id === classId);
+    if (!cls) return;
+
+    const container = document.getElementById('class-description-container');
+    container.innerHTML = '';
+
+    // Description como header pequeno
+    const descHeader = document.createElement('div');
+    descHeader.className = 'small-header';
+    descHeader.textContent = cls.description || '(Sem descrição)';
+    container.appendChild(descHeader);
+
+    // Content como textarea para leitura e edição
+    const contentArea = document.createElement('textarea');
+    contentArea.className = 'content-textarea';
+    contentArea.value = cls.content || '';
+    contentArea.placeholder = 'Conteúdo da aula...';
+    contentArea.addEventListener('input', (e) => {
+      cls.content = e.target.value;
+    });
+    container.appendChild(contentArea);
+
+    // Ao selecionar uma classe, carregar exercícios relacionados e limpar exercício selecionado
+    loadExercisesForClass(classId);
+    clearExerciseDetail();
+
+    // Carregar áudio da aula selecionada
+    loadAudioForClass(classId);
+  }
+
+  // Limpa visualização esquerda da aba CLASSES
+  function clearClassDescription() {
+    const container = document.getElementById('class-description-container');
+    container.innerHTML = '<p>Selecione uma aula para visualizar e editar aqui.</p>';
+  }
+
+  // Carrega exercícios para a classe selecionada e popula lista direita da aba EXERCISES
+  async function loadExercisesForClass(classId) {
+    exercisesData = await fetchTable('exercises', ['id', 'type', 'statement', 'question_1', 'question_2', 'question_3', 'question_4', 'question_5', 'question_6', 'question_7', 'question_8', 'question_9', 'question_10'], `id_class=eq.${classId}`);
+
+    populateExerciseList();
+  }
+
+  // Popula lista direita da aba EXERCISES
+  function populateExerciseList() {
+    const container = document.getElementById('exercise-list-container');
+    container.innerHTML = '';
+
+    if (exercisesData.length === 0) {
+      container.textContent = 'Nenhum exercício encontrado para esta aula.';
+      return;
+    }
+
+    exercisesData.forEach(ex => {
+      const div = document.createElement('div');
+      div.className = 'list-item';
+      div.title = `${ex.type} | ${ex.statement}`;
+      div.textContent = `${ex.type} | ${ex.statement}`;
+      div.dataset.exerciseId = ex.id;
+
+      // Botão editar
+      const btnEdit = document.createElement('button');
+      btnEdit.className = 'edit-btn';
+      btnEdit.textContent = 'Editar';
+      btnEdit.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectExercise(ex.id);
+      });
+
+      div.appendChild(btnEdit);
+
+      div.addEventListener('click', () => {
+        selectExercise(ex.id);
+      });
+
+      container.appendChild(div);
+    });
+  }
+
+  // Seleciona um exercício e exibe seu conteúdo na parte esquerda da aba EXERCISES
+  function selectExercise(exerciseId) {
+    currentExerciseId = exerciseId;
+
+    // Atualiza seleção visual na lista
+    const items = document.querySelectorAll('#exercise-list-container .list-item');
+    items.forEach(item => {
+      item.classList.toggle('selected', item.dataset.exerciseId === exerciseId);
+    });
+
+    const ex = exercisesData.find(e => e.id === exerciseId);
+    if (!ex) return;
+
+    const container = document.getElementById('exercise-detail-container');
+    container.innerHTML = '';
+
+    // Statement como header pequeno
+    const statementHeader = document.createElement('div');
+    statementHeader.className = 'small-header';
+    statementHeader.textContent = ex.statement || '(Sem statement)';
+    container.appendChild(statementHeader);
+
+    // Perguntas question_1 a question_10 exibidas em textareas para leitura e edição
+    for (let i = 1; i <= 10; i++) {
+      const key = `question_${i}`;
+      const label = document.createElement('label');
+      label.textContent = `Question ${i}:`;
+      label.style.fontWeight = '600';
+      label.style.marginTop = '8px';
+      container.appendChild(label);
+
+      const textarea = document.createElement('textarea');
+      textarea.className = 'content-textarea';
+      textarea.style.height = '60px';
+      textarea.value = ex[key] || '';
+      textarea.placeholder = `Pergunta ${i}...`;
+      textarea.addEventListener('input', (e) => {
+        ex[key] = e.target.value;
+      });
+      container.appendChild(textarea);
+    }
+  }
+
+  // Limpa lista direita da aba EXERCISES
+  function clearExerciseList() {
+    const container = document.getElementById('exercise-list-container');
+    container.innerHTML = '<p>Lista de exercícios será exibida aqui.</p>';
+  }
+
+  // Limpa visualização esquerda da aba EXERCISES
+  function clearExerciseDetail() {
+    const container = document.getElementById('exercise-detail-container');
+    container.innerHTML = '<p>Selecione um exercício para visualizar e editar aqui.</p>';
+  }
+
+  // Limpa aba AUDIO
+  function clearAudioTab() {
+    const audioPlayer = document.getElementById('audio-player');
+    audioPlayer.src = '';
+    const btnDownload = document.getElementById('download-audio-btn');
+    btnDownload.disabled = true;
+    btnDownload.onclick = null;
+  }
+
+  // Função para carregar áudio da aula selecionada (se existir URL)
+  async function loadAudioForClass(classId) {
+    const cls = classesData.find(c => c.id === classId);
+    if (!cls || !cls.audio_url) {
+      clearAudioTab();
+      return;
+    }
+
+    try {
+      const res = await fetch(cls.audio_url, { headers: headersSupabase });
+      if (!res.ok) throw new Error('Erro ao carregar áudio');
+      const blob = await res.blob();
+      setAudioBlob(blob);
+    } catch (e) {
+      console.error(e);
+      clearAudioTab();
+    }
+  }
+
+  // Define o áudio no player e botão download a partir de Blob
+  function setAudioBlob(blob) {
+    const audioUrl = URL.createObjectURL(blob);
+    const audioPlayer = document.getElementById('audio-player');
+    audioPlayer.src = audioUrl;
+
+    const btnDownload = document.getElementById('download-audio-btn');
+    btnDownload.disabled = false;
+    btnDownload.onclick = () => {
+      const a = document.createElement('a');
+      a.href = audioUrl;
+      a.download = `audio_${currentClassPlanId || 'unknown'}.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    };
+  }
+
+  // Chat message container and input
+  const chatMessagesDiv = document.getElementById('chat-messages');
+  const chatInput = document.getElementById('chat-input');
+
+  function addMessage(sender, text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    div.style.padding = '4px 8px';
+    div.style.marginBottom = '4px';
+    div.style.borderRadius = '8px';
+    div.style.maxWidth = '80%';
+    div.style.wordWrap = 'break-word';
+    if (sender === 'user') {
+      div.style.backgroundColor = '#3b82f6';
+      div.style.color = 'white';
+      div.style.alignSelf = 'flex-end';
+    } else {
+      div.style.backgroundColor = '#e2e8f0';
+      div.style.color = '#2d3748';
+      div.style.alignSelf = 'flex-start';
+    }
+    chatMessagesDiv.appendChild(div);
+    chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+  }
+
+  // Função para enviar mensagem e receber texto + áudio binário do webhook
+  async function sendMessage() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+
+    if (!currentClassPlanId) {
+      addMessage('ia', 'Por favor, selecione um class plan antes de enviar a mensagem.');
+      return;
+    }
+
+    addMessage('user', text);
+    chatInput.value = '';
+
+    try {
+      // Enviar mensagem para webhook IA
+      const res = await fetch(WEBHOOK_IA, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, class_plan_id: currentClassPlanId }),
+      });
+
+      if (!res.ok) {
+        addMessage('ia', 'Erro na resposta do agente IA.');
+        return;
+      }
+
+      // Tentar interpretar resposta como JSON (texto IA)
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await res.json();
+        const output = data.output || 'Resposta vazia do agente IA.';
+        addMessage('ia', output);
+
+        // Se houver campo audio_base64 (não usado aqui, mas pode ser adaptado)
+        if (data.audio_base64) {
+          // Caso queira suportar base64, implementar aqui
+        }
+
+      } else if (contentType.startsWith('audio/')) {
+        // Resposta é áudio binário puro
+        const audioBlob = await res.blob();
+        setAudioBlob(audioBlob);
+        addMessage('ia', 'Áudio recebido e carregado na aba AUDIO.');
+        // Trocar para aba AUDIO para facilitar audição
+        switchTab('audio-tab');
+      } else {
+        // Resposta inesperada
+        const textResp = await res.text();
+        addMessage('ia', `Resposta inesperada: ${textResp}`);
+      }
+
+    } catch (e) {
+      addMessage('ia', 'Falha na comunicação com o agente IA.');
+      console.error(e);
+    }
+  }
+
+  chatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  window.onload = () => {
+    loadStudentsWithClassPlans();
+  };
+</script>
+
+</body>
+</html>
