@@ -75,7 +75,7 @@
       flex-direction: column;
       height: calc(100vh - 160px);
       box-sizing: border-box;
-      font-size: 18px; /* Aumenta tamanho da fonte do conteúdo da aba */
+      font-size: 18px;
       line-height: 1.6;
     }
     #content-classplan h2 {
@@ -85,7 +85,7 @@
       text-shadow: 0.5px 0.5px 2px rgba(53, 122, 189, 0.2);
     }
     #content-classplan p {
-      font-size: 18px; /* Aumenta tamanho da fonte do parágrafo */
+      font-size: 18px;
       color: #2e3b56;
       margin-bottom: 25px;
       line-height: 1.6;
@@ -177,7 +177,7 @@
       overflow-y: auto;
       transition: box-shadow 0.3s ease;
       box-sizing: border-box;
-      font-size: 18px; /* Aumenta tamanho da fonte do conteúdo da lição */
+      font-size: 18px;
       line-height: 1.6;
     }
     #content-classplan > div.wrapper > .lesson-content:hover {
@@ -211,7 +211,7 @@
       transform: translateY(-2px);
     }
     #content-classplan > div.lesson-content .content-text {
-      font-size: 18px; /* Aumenta tamanho da fonte do texto da sub-aba content */
+      font-size: 18px;
       line-height: 1.6;
       color: #34495e;
       flex: 1;
@@ -225,7 +225,7 @@
       display: block;
       margin-bottom: 6px;
       font-weight: 600;
-      font-size: 18px; /* Aumenta tamanho da fonte da pergunta */
+      font-size: 18px;
       color: #2c3e50;
     }
     .exercise-question input[type="text"] {
@@ -274,7 +274,7 @@
       padding: 20px;
       box-sizing: border-box;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      font-size: 18px; /* Aumenta tamanho da fonte da aba homework */
+      font-size: 18px;
       line-height: 1.5;
     }
     .chat-container h3 {
@@ -434,6 +434,38 @@
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
+    /* Writing tab textarea and button */
+    #writing-textarea {
+      flex: 1;
+      width: 100%;
+      resize: none;
+      font-size: 16px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1.5px solid #357ABD;
+      box-shadow: 0 2px 10px rgba(53, 122, 189, 0.25);
+      box-sizing: border-box;
+      margin-bottom: 20px;
+      min-height: 300px;
+    }
+    #btn-submit-writing {
+      padding: 14px 28px;
+      font-size: 18px;
+      font-weight: 700;
+      background-color: #357ABD;
+      color: white;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(53, 122, 189, 0.6);
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      align-self: flex-start;
+    }
+    #btn-submit-writing:hover {
+      background-color: #285a8f;
+      box-shadow: 0 8px 24px rgba(40, 90, 143, 0.8);
+    }
   </style>
 </head>
 <body>
@@ -475,6 +507,7 @@
             <button data-tab="exercises" role="tab" aria-selected="false" tabindex="-1" class="subtab-button">Exercises</button>
             <button data-tab="homework" role="tab" aria-selected="false" tabindex="-1" class="subtab-button">Homework</button>
             <button data-tab="listening" role="tab" aria-selected="false" tabindex="-1" class="subtab-button">Listening</button>
+            <button data-tab="writing" role="tab" aria-selected="false" tabindex="-1" class="subtab-button">Writing</button>
           </nav>
           <div id="tab-content-area" tabindex="0" style="margin-top: 20px; height: 100%; display: flex; flex-direction: column;">
             <!-- Conteúdo da sub-aba será renderizado aqui -->
@@ -657,7 +690,8 @@
         audioPlayer.pause();
         audioPlayer.src = '';
         audioPlayerContainer.style.display = 'none';
-        tabContentArea.style.display = 'block';
+        tabContentArea.style.display = 'flex';
+        tabContentArea.style.flexDirection = 'column';
 
         switch (tabName) {
           case 'content':
@@ -672,6 +706,11 @@
           case 'listening':
             renderListeningTab();
             break;
+          case 'writing':
+            renderWritingTab();
+            break;
+          default:
+            tabContentArea.innerHTML = '<p>Tab not implemented.</p>';
         }
       }
 
@@ -762,7 +801,6 @@
         }
       }
 
-      // Nova função para renderizar chat funcional e estilizado na aba homework
       function renderHomeworkTab() {
         tabContentArea.innerHTML = `
           <div class="chat-container" aria-label="Chat with AI Agent" style="flex: 1; display: flex; flex-direction: column;">
@@ -779,7 +817,6 @@
         const input = tabContentArea.querySelector('.chat-input');
         const sendButton = tabContentArea.querySelector('.send-button');
 
-        // Histórico simples de mensagens
         const chatHistory = [];
 
         function addMessage(text, sender) {
@@ -824,7 +861,6 @@
           }
         });
 
-        // Mensagem inicial do assistente
         addMessage('Hi! I am your AI homework assistant. Please send me your name.', 'agent');
       }
 
@@ -838,6 +874,52 @@
         audioPlayerContainer.style.display = 'block';
         audioPlayer.src = currentLesson.audio_url;
         audioPlayer.load();
+      }
+
+      // Writing tab render function
+      function renderWritingTab() {
+        if (!currentLesson) {
+          tabContentArea.innerHTML = '<p>Select a lesson to write text.</p>';
+          return;
+        }
+        tabContentArea.innerHTML = `
+          <textarea id="writing-textarea" placeholder="Enter your writing text here..."></textarea>
+          <button id="btn-submit-writing">Submit</button>
+        `;
+
+        const textarea = document.getElementById('writing-textarea');
+        const btnSubmitWriting = document.getElementById('btn-submit-writing');
+
+        // Load existing writing_text if any
+        if (currentLesson.writing_text) {
+          textarea.value = currentLesson.writing_text;
+        }
+
+        btnSubmitWriting.addEventListener('click', async () => {
+          const text = textarea.value.trim();
+          if (!text) {
+            alert('Please enter some text before submitting.');
+            return;
+          }
+          if (!currentLesson || !currentLesson.id) {
+            alert('No lesson selected.');
+            return;
+          }
+          try {
+            // PATCH request to update writing_text column in classes table for currentLesson.id
+            await fetchSupabase(`classes?id=eq.${currentLesson.id}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ writing_text: text }),
+              headers: { 'Content-Type': 'application/json' }
+            });
+            alert('Writing text saved successfully.');
+            // Update local object to keep in sync
+            currentLesson.writing_text = text;
+          } catch (error) {
+            console.error('Error saving writing text:', error);
+            alert('Failed to save writing text. See console for details.');
+          }
+        });
       }
 
       function clearTabContent() {
