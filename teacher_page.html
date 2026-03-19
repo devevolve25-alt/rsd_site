@@ -749,11 +749,24 @@
     chatInput.value = '';
 
     try {
+      // Construir payload com class_plan_id e opcionalmente class_id
+      const payload = {
+        message: text,
+        class_plan_id: currentClassPlanId,
+      };
+      if (currentClassId) {
+        payload.class_id = currentClassId;
+      }
+
+      // Exibir payload no console e na tela para verificação
+      console.log('Payload enviado ao webhook IA:', payload);
+      addMessage('ia', `Payload enviado: ${JSON.stringify(payload)}`);
+
       // Enviar mensagem para webhook IA
       const res = await fetch(WEBHOOK_IA, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, class_plan_id: currentClassPlanId }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
