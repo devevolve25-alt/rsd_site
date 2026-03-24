@@ -715,17 +715,23 @@
       }
 
       function renderContentTab() {
-        if (!currentLesson) {
-          tabContentArea.innerHTML = '<p>Select a lesson to see content.</p>';
-          return;
-        }
-        tabContentArea.innerHTML = `
-          <h3>${currentLesson.title}</h3>
-          <p><em>Type: ${currentLesson.type || 'N/A'}</em></p>
-          <p>${currentLesson.description || ''}</p>
-          <div>${currentLesson.content || ''}</div>
-        `;
-      }
+  if (!currentLesson) {
+    tabContentArea.innerHTML = '<p>Select a lesson to see content.</p>';
+    return;
+  }
+  tabContentArea.innerHTML = `
+    <h3>${currentLesson.title}</h3>
+    <p><em>Type: ${currentLesson.type || 'N/A'}</em></p>
+    <p>${currentLesson.description || ''}</p>
+    <textarea id="lesson-content-textarea" style="flex: 1; width: 100%; resize: vertical; font-size: 16px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 12px; border-radius: 12px; border: 1.5px solid #357ABD; box-shadow: 0 2px 10px rgba(53, 122, 189, 0.25); box-sizing: border-box; min-height: 300px;">${currentLesson.content || ''}</textarea>
+  `;
+
+  // Opcional: atualizar o conteúdo local se o usuário editar o textarea
+  const textarea = document.getElementById('lesson-content-textarea');
+  textarea.addEventListener('input', (e) => {
+    currentLesson.content = e.target.value;
+  });
+}
 
       function renderExercisesTab() {
         if (!exercises || exercises.length === 0) {
