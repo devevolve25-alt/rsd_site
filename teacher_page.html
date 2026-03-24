@@ -737,73 +737,76 @@
 
   // Função para enviar mensagem e receber texto + áudio binário do webhook
   async function sendMessage() {
-    const text = chatInput.value.trim();
-    if (!text) return;
+  const text = chatInput.value.trim();
+  if (!text) return;
 
-    if (!currentClassPlanId) {
-      addMessage('ia', 'Por favor, selecione um class plan antes de enviar a mensagem.');
+  if (!currentClassPlanId) {
+    addMessage('ia', 'Por favor, selecione um class plan antes de enviar a mensagem.');
+    return;
+  }
+
+  addMessage('user', text);
+  chatInput.value = '';
+
+  try {
+    // Construir payload com class_plan_id, class_id e agora exercise_id
+    const payload = {
+      message: text,
+      class_plan_id: currentClassPlanId,
+    };
+    if (currentClassId) {
+      payload.class_id = currentClassId;
+    }
+    if (currentExerciseId) {
+      payload.exercise_id = currentExerciseId;  // <-- linha adicionada
+    }
+
+    // Exibir payload no console e na tela para verificação
+    console.log('Payload enviado ao webhook IA:', payload);
+    addMessage('ia', `Payload enviado: ${JSON.stringify(payload)}`);
+
+    // Enviar mensagem para webhook IA
+    const res = await fetch(WEBHOOK_IA, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      addMessage('ia', 'Erro na resposta do agente IA.');
       return;
     }
 
-    addMessage('user', text);
-    chatInput.value = '';
+    // Tentar interpretar resposta como JSON (texto IA)
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const data = await res.json();
+      const output = data.output || 'Resposta vazia do agente IA.';
+      addMessage('ia', output);
 
-    try {
-      // Construir payload com class_plan_id e opcionalmente class_id
-      const payload = {
-        message: text,
-        class_plan_id: currentClassPlanId,
-      };
-      if (currentClassId) {
-        payload.class_id = currentClassId;
+      // Se houver campo audio_base64 (não usado aqui, mas pode ser adaptado)
+      if (data.audio_base64) {
+        // Caso queira suportar base64, implementar aqui
       }
 
-      // Exibir payload no console e na tela para verificação
-      console.log('Payload enviado ao webhook IA:', payload);
-      addMessage('ia', `Payload enviado: ${JSON.stringify(payload)}`);
-
-      // Enviar mensagem para webhook IA
-      const res = await fetch(WEBHOOK_IA, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        addMessage('ia', 'Erro na resposta do agente IA.');
-        return;
-      }
-
-      // Tentar interpretar resposta como JSON (texto IA)
-      const contentType = res.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        const data = await res.json();
-        const output = data.output || 'Resposta vazia do agente IA.';
-        addMessage('ia', output);
-
-        // Se houver campo audio_base64 (não usado aqui, mas pode ser adaptado)
-        if (data.audio_base64) {
-          // Caso queira suportar base64, implementar aqui
-        }
-
-      } else if (contentType.startsWith('audio/')) {
-        // Resposta é áudio binário puro
-        const audioBlob = await res.blob();
-        setAudioBlob(audioBlob);
-        addMessage('ia', 'Áudio recebido e carregado na aba AUDIO.');
-        // Trocar para aba AUDIO para facilitar audição
-        switchTab('audio-tab');
-      } else {
-        // Resposta inesperada
-        const textResp = await res.text();
-        addMessage('ia', `Resposta inesperada: ${textResp}`);
-      }
-
-    } catch (e) {
-      addMessage('ia', 'Falha na comunicação com o agente IA.');
-      console.error(e);
+    } else if (contentType.startsWith('audio/')) {
+      // Resposta é áudio binário puro
+      const audioBlob = await res.blob();
+      setAudioBlob(audioBlob);
+      addMessage('ia', 'Áudio recebido e carregado na aba AUDIO.');
+      // Trocar para aba AUDIO para facilitar audição
+      switchTab('audio-tab');
+    } else {
+      // Resposta inesperada
+      const textResp = await res.text();
+      addMessage('ia', `Resposta inesperada: ${textResp}`);
     }
+
+  } catch (e) {
+    addMessage('ia', 'Falha na comunicação com o agente IA.');
+    console.error(e);
   }
+}
 
   chatInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
