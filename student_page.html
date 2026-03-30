@@ -537,474 +537,515 @@ body>
 
   <script>
   const SUPABASE_URL = 'https://htsorgukdbfuuypiuksm.supabase.co/rest/v1';
-  const SUPABASE_KEY = 'sb_publishable_8bpn_JEYZU2YzVMC5UK3CA_9Kn4LPdm';
+const SUPABASE_KEY = 'sb_publishable_8bpn_JEYZU2YzVMC5UK3CA_9Kn4LPdm';
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const studentNameInput = document.getElementById('student-name');
-    const btnSubmitName = document.getElementById('btn-submit-name');
-    const studentDisplayName = document.getElementById('student-display-name');
-    const classPlanDropdown = document.getElementById('class-plan-dropdown');
-    const lessonListEl = document.getElementById('lesson-list');
-    const tabButtons = document.querySelectorAll('.right-column nav.sub-tabs button.subtab-button');
-    const tabContentArea = document.getElementById('tab-content-area');
-    const audioPlayerContainer = document.querySelector('.audio-player-container');
-    const audioPlayer = document.getElementById('audio-player');
+document.addEventListener('DOMContentLoaded', () => {
+  const studentNameInput = document.getElementById('student-name');
+  const btnSubmitName = document.getElementById('btn-submit-name');
+  const studentDisplayName = document.getElementById('student-display-name');
+  const classPlanDropdown = document.getElementById('class-plan-dropdown');
+  const lessonListEl = document.getElementById('lesson-list');
+  const tabButtons = document.querySelectorAll('.right-column nav.sub-tabs button.subtab-button');
+  const tabContentArea = document.getElementById('tab-content-area');
+  const audioPlayerContainer = document.querySelector('.audio-player-container');
+  const audioPlayer = document.getElementById('audio-player');
 
-    let currentStudent = null;
-    let classPlans = [];
-    let currentClassPlan = null;
-    let lessons = [];
-    let currentLesson = null;
-    let exercises = [];
+  let currentStudent = null;
+  let classPlans = [];
+  let currentClassPlan = null;
+  let lessons = [];
+  let currentLesson = null;
+  let exercises = [];
+  let selectedExercise = null;
 
-    btnSubmitName.addEventListener('click', async () => {
-      const name = studentNameInput.value.trim();
-      if (!name) {
-        alert('Please enter your name.');
+  btnSubmitName.addEventListener('click', async () => {
+    const name = studentNameInput.value.trim();
+    if (!name) {
+      alert('Please enter your name.');
+      return;
+    }
+    await loadStudentData(name);
+  });
+
+  classPlanDropdown.addEventListener('change', async () => {
+    const selectedId = classPlanDropdown.value;
+    currentClassPlan = classPlans.find(cp => cp.id === selectedId) || null;
+    if (currentClassPlan) {
+      await loadLessonsForClassPlan(currentClassPlan.id);
+    } else {
+      lessons = [];
+      currentLesson = null;
+      renderLessonList();
+      clearTabContent();
+    }
+  });
+
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      activateSubTab(btn.dataset.tab);
+    });
+  });
+
+  async function fetchSupabase(endpoint, options = {}) {
+    const url = `${SUPABASE_URL}/${endpoint}`;
+    const headers = {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      ...options.headers
+    };
+    const response = await fetch(url, { ...options, headers });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Supabase error: ${response.status} ${response.statusText} - ${errorText}`);
+    }
+    return response.json();
+  }
+
+  async function loadStudentData(name) {
+    try {
+      const students = await fetchSupabase(`student?nome=ilike.*${encodeURIComponent(name)}*&limit=1`);
+      if (!students || students.length === 0) {
+        alert('Student not found.');
         return;
       }
-      await loadStudentData(name);
-    });
+      currentStudent = students[0];
+      studentDisplayName.textContent = currentStudent.nome;
 
-    classPlanDropdown.addEventListener('change', async () => {
-      const selectedId = classPlanDropdown.value;
-      currentClassPlan = classPlans.find(cp => cp.id === selectedId) || null;
-      if (currentClassPlan) {
-        await loadLessonsForClassPlan(currentClassPlan.id);
-      } else {
+      classPlans = await fetchSupabase(`class_plan?id_student=eq.${currentStudent.id}`);
+      if (!classPlans || classPlans.length === 0) {
+        alert('No class plans found for this student.');
+        return;
+      }
+      populateClassPlanDropdown();
+      classPlanDropdown.value = classPlans[0].id;
+      currentClassPlan = classPlans[0];
+      await loadLessonsForClassPlan(currentClassPlan.id);
+      clearTabContent();
+    } catch (error) {
+      console.error('Error loading student data:', error);
+      alert('Error loading data. See console for details.');
+    }
+  }
+
+  function populateClassPlanDropdown() {
+    classPlanDropdown.innerHTML = '<option value="">Select Class Plan</option>';
+    classPlans.forEach(cp => {
+      const option = document.createElement('option');
+      option.value = cp.id;
+      option.textContent = cp.description;
+      classPlanDropdown.appendChild(option);
+    });
+  }
+
+  async function loadLessonsForClassPlan(classPlanId) {
+    try {
+      lessons = await fetchSupabase(`classes?id_class_plan=eq.${classPlanId}&order=title.asc`);
+      if (!lessons || lessons.length === 0) {
+        alert('No lessons found for this class plan.');
         lessons = [];
         currentLesson = null;
         renderLessonList();
         clearTabContent();
+        return;
       }
+      renderLessonList();
+      currentLesson = null;
+      clearTabContent();
+    } catch (error) {
+      console.error('Error loading lessons:', error);
+      alert('Error loading lessons. See console for details.');
+    }
+  }
+
+  function renderLessonList() {
+    lessonListEl.innerHTML = '';
+    lessons.forEach(lesson => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = lesson.title;
+      btn.dataset.lessonId = lesson.id;
+      btn.classList.toggle('active', currentLesson && currentLesson.id === lesson.id);
+      btn.addEventListener('click', () => selectLesson(lesson.id));
+      lessonListEl.appendChild(btn);
+    });
+  }
+
+  async function selectLesson(lessonId) {
+    currentLesson = lessons.find(l => l.id === lessonId);
+    if (!currentLesson) return;
+
+    [...lessonListEl.children].forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.lessonId === lessonId);
     });
 
+    activateSubTab('content');
+    renderContentTab();
+
+    try {
+      exercises = await fetchSupabase(`exercises?id_class=eq.${lessonId}`);
+    } catch (exError) {
+      console.error('Error loading exercises:', exError);
+      exercises = [];
+    }
+    selectedExercise = null; // reset selected exercise on lesson change
+  }
+
+  function activateSubTab(tabName) {
     tabButtons.forEach(btn => {
+      const isActive = btn.dataset.tab === tabName;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      btn.tabIndex = isActive ? 0 : -1;
+    });
+    renderTabContent(tabName);
+  }
+
+  function renderTabContent(tabName) {
+    audioPlayer.pause();
+    audioPlayer.src = '';
+    audioPlayerContainer.style.display = 'none';
+    tabContentArea.style.display = 'flex';
+    tabContentArea.style.flexDirection = 'column';
+
+    switch (tabName) {
+      case 'content':
+        renderContentTab();
+        break;
+      case 'exercises':
+        renderExercisesTab();
+        break;
+      case 'homework':
+        renderHomeworkTab();
+        break;
+      case 'listening':
+        renderListeningTab();
+        break;
+      case 'writing':
+        renderWritingTab();
+        break;
+      default:
+        tabContentArea.innerHTML = '<p>Tab not implemented.</p>';
+    }
+  }
+
+  function renderContentTab() {
+    if (!currentLesson) {
+      tabContentArea.innerHTML = '<p>Select a lesson to see content.</p>';
+      return;
+    }
+    tabContentArea.innerHTML = `
+      <h3>${currentLesson.title}</h3>
+      <p><em>Type: ${currentLesson.type || 'N/A'}</em></p>
+      <p>${currentLesson.description || ''}</p>
+      <textarea id="lesson-content-textarea">${currentLesson.content || ''}</textarea>
+    `;
+
+    const textarea = document.getElementById('lesson-content-textarea');
+    textarea.addEventListener('input', (e) => {
+      currentLesson.content = e.target.value;
+    });
+  }
+
+  function renderExercisesTab() {
+    if (!exercises || exercises.length === 0) {
+      tabContentArea.innerHTML = '<p>No exercises available for this lesson.</p>';
+      return;
+    }
+
+    // Lista de exercícios
+    let html = '<ul id="exercise-list" role="list" aria-label="Exercise List">';
+    exercises.forEach((exercise, idx) => {
+      html += `<li><button type="button" data-exercise-id="${exercise.id}" class="${selectedExercise && selectedExercise.id === exercise.id ? 'active' : ''}">Exercise ${idx + 1} (Type: ${exercise.type || 'N/A'})</button></li>`;
+    });
+    html += '</ul>';
+
+    // Container para conteúdo do exercício selecionado
+    html += `<div id="selected-exercise-content" aria-live="polite" aria-atomic="true"></div>`;
+
+    tabContentArea.innerHTML = html;
+
+    // Adiciona eventos aos botões da lista de exercícios
+    const exerciseButtons = tabContentArea.querySelectorAll('#exercise-list button');
+    exerciseButtons.forEach(btn => {
       btn.addEventListener('click', () => {
-        activateSubTab(btn.dataset.tab);
+        const exId = btn.dataset.exerciseId;
+        selectExercise(exId);
+        // Atualiza classes active
+        exerciseButtons.forEach(b => b.classList.toggle('active', b === btn));
       });
     });
 
-    async function fetchSupabase(endpoint, options = {}) {
-      const url = `${SUPABASE_URL}/${endpoint}`;
-      const headers = {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Content-Type': 'application/json',
-        ...options.headers
-      };
-      const response = await fetch(url, { ...options, headers });
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Supabase error: ${response.status} ${response.statusText} - ${errorText}`);
-      }
-      return response.json();
+    // Se já houver exercício selecionado, renderiza seu conteúdo
+    if (selectedExercise) {
+      renderSelectedExerciseContent();
+    }
+  }
+
+  function selectExercise(exerciseId) {
+    selectedExercise = exercises.find(ex => ex.id === exerciseId);
+    renderSelectedExerciseContent();
+  }
+
+  function renderSelectedExerciseContent() {
+    const container = document.getElementById('selected-exercise-content');
+    if (!selectedExercise) {
+      container.innerHTML = '<p>Select an exercise to see its questions.</p>';
+      return;
     }
 
-    async function loadStudentData(name) {
-      try {
-        const students = await fetchSupabase(`student?nome=ilike.*${encodeURIComponent(name)}*&limit=1`);
-        if (!students || students.length === 0) {
-          alert('Student not found.');
-          return;
-        }
-        currentStudent = students[0];
-        studentDisplayName.textContent = currentStudent.nome;
-
-        classPlans = await fetchSupabase(`class_plan?id_student=eq.${currentStudent.id}`);
-        if (!classPlans || classPlans.length === 0) {
-          alert('No class plans found for this student.');
-          return;
-        }
-        populateClassPlanDropdown();
-        classPlanDropdown.value = classPlans[0].id;
-        currentClassPlan = classPlans[0];
-        await loadLessonsForClassPlan(currentClassPlan.id);
-        clearTabContent();
-      } catch (error) {
-        console.error('Error loading student data:', error);
-        alert('Error loading data. See console for details.');
-      }
-    }
-
-    function populateClassPlanDropdown() {
-      classPlanDropdown.innerHTML = '<option value="">Select Class Plan</option>';
-      classPlans.forEach(cp => {
-        const option = document.createElement('option');
-        option.value = cp.id;
-        option.textContent = cp.description;
-        classPlanDropdown.appendChild(option);
-      });
-    }
-
-    async function loadLessonsForClassPlan(classPlanId) {
-      try {
-        lessons = await fetchSupabase(`classes?id_class_plan=eq.${classPlanId}&order=title.asc`);
-        if (!lessons || lessons.length === 0) {
-          alert('No lessons found for this class plan.');
-          lessons = [];
-          currentLesson = null;
-          renderLessonList();
-          clearTabContent();
-          return;
-        }
-        renderLessonList();
-        currentLesson = null;
-        clearTabContent();
-      } catch (error) {
-        console.error('Error loading lessons:', error);
-        alert('Error loading lessons. See console for details.');
-      }
-    }
-
-    function renderLessonList() {
-      lessonListEl.innerHTML = '';
-      lessons.forEach(lesson => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.textContent = lesson.title;
-        btn.dataset.lessonId = lesson.id;
-        btn.classList.toggle('active', currentLesson && currentLesson.id === lesson.id);
-        btn.addEventListener('click', () => selectLesson(lesson.id));
-        lessonListEl.appendChild(btn);
-      });
-    }
-
-    async function selectLesson(lessonId) {
-      currentLesson = lessons.find(l => l.id === lessonId);
-      if (!currentLesson) return;
-
-      [...lessonListEl.children].forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.lessonId === lessonId);
-      });
-
-      activateSubTab('content');
-      renderContentTab();
-
-      try {
-        exercises = await fetchSupabase(`exercises?id_class=eq.${lessonId}`);
-      } catch (exError) {
-        console.error('Error loading exercises:', exError);
-        exercises = [];
-      }
-    }
-
-    function activateSubTab(tabName) {
-      tabButtons.forEach(btn => {
-        const isActive = btn.dataset.tab === tabName;
-        btn.classList.toggle('active', isActive);
-        btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
-        btn.tabIndex = isActive ? 0 : -1;
-      });
-      renderTabContent(tabName);
-    }
-
-    function renderTabContent(tabName) {
-      audioPlayer.pause();
-      audioPlayer.src = '';
-      audioPlayerContainer.style.display = 'none';
-      tabContentArea.style.display = 'flex';
-      tabContentArea.style.flexDirection = 'column';
-
-      switch (tabName) {
-        case 'content':
-          renderContentTab();
-          break;
-        case 'exercises':
-          renderExercisesTab();
-          break;
-        case 'homework':
-          renderHomeworkTab();
-          break;
-        case 'listening':
-          renderListeningTab();
-          break;
-        case 'writing':
-          renderWritingTab();
-          break;
-        default:
-          tabContentArea.innerHTML = '<p>Tab not implemented.</p>';
-      }
-    }
-
-    function renderContentTab() {
-      if (!currentLesson) {
-        tabContentArea.innerHTML = '<p>Select a lesson to see content.</p>';
-        return;
-      }
-      tabContentArea.innerHTML = `
-        <h3>${currentLesson.title}</h3>
-        <p><em>Type: ${currentLesson.type || 'N/A'}</em></p>
-        <p>${currentLesson.description || ''}</p>
-        <textarea id="lesson-content-textarea">${currentLesson.content || ''}</textarea>
-      `;
-
-      const textarea = document.getElementById('lesson-content-textarea');
-      textarea.addEventListener('input', (e) => {
-        currentLesson.content = e.target.value;
-      });
-    }
-
-    function renderExercisesTab() {
-      if (!exercises || exercises.length === 0) {
-        tabContentArea.innerHTML = '<p>No exercises available for this lesson.</p>';
-        return;
-      }
-      let html = '';
-      exercises.forEach((exercise, idx) => {
-        html += `<div class="exercise-block" data-exercise-id="${exercise.id}" style="margin-bottom: 25px;">`;
-        html += `<h4>Exercise ${idx + 1} (Type: ${exercise.type || 'N/A'})</h4>`;
-        for (let i = 1; i <= 10; i++) {
-          const question = exercise[`question_${i}`];
-          if (question && question.trim() !== '') {
-            html += `
-              <div class="exercise-question">
-                <label for="answer-${exercise.id}-${i}">${question}</label>
-                <input type="text" id="answer-${exercise.id}-${i}" name="answer-${exercise.id}-${i}" />
-              </div>
-            `;
-          }
-        }
-        html += '</div>';
-      });
-      html += `<button id="btn-save-answers">Save Answers</button>`;
-      tabContentArea.innerHTML = html;
-
-      document.getElementById('btn-save-answers').addEventListener('click', saveAnswers);
-    }
-
-    async function saveAnswers() {
-      if (!currentStudent) {
-        alert('Please submit your name first.');
-        return;
-      }
-      if (!exercises || exercises.length === 0) {
-        alert('No exercises to save.');
-        return;
-      }
-
-      try {
-        for (const exercise of exercises) {
-          const answerData = {
-            id_exercise: exercise.id
-          };
-          let hasAnswer = false;
-          for (let i = 1; i <= 10; i++) {
-            const input = document.getElementById(`answer-${exercise.id}-${i}`);
-            if (input && input.value.trim() !== '') {
-              answerData[`answer_${i}`] = input.value.trim();
-              hasAnswer = true;
-            }
-          }
-          if (!hasAnswer) continue;
-
-          const existingAnswers = await fetchSupabase(`answers?id_exercise=eq.${exercise.id}&limit=1`);
-          if (existingAnswers && existingAnswers.length > 0) {
-            const answerId = existingAnswers[0].id;
-            await fetchSupabase(`answers?id=eq.${answerId}`, {
-              method: 'PATCH',
-              body: JSON.stringify(answerData)
-            });
-          } else {
-            await fetchSupabase(`answers`, {
-              method: 'POST',
-              body: JSON.stringify(answerData)
-            });
-          }
-        }
-        alert('Answers saved successfully.');
-      } catch (error) {
-        console.error('Error saving answers:', error);
-        alert('Error saving answers. See console for details.');
-      }
-    }
-
-    function renderHomeworkTab() {
-      tabContentArea.innerHTML = `
-        <div class="chat-container" aria-label="Chat with AI Agent" style="flex: 1; display: flex; flex-direction: column;">
-          <h3>Chat with AI Agent</h3>
-          <div class="chat-messages" aria-live="polite" aria-atomic="true"></div>
-          <div class="chat-input-area">
-            <input type="text" class="chat-input" placeholder="Type your message..." aria-label="Type your message to the AI agent" />
-            <button class="send-button" aria-label="Send message">Send</button>
+    let html = `<h4>Exercise (Type: ${selectedExercise.type || 'N/A'})</h4>`;
+    for (let i = 1; i <= 10; i++) {
+      const question = selectedExercise[`question_${i}`];
+      if (question && question.trim() !== '') {
+        html += `
+          <div class="exercise-question">
+            <label for="answer-${selectedExercise.id}-${i}">${question}</label>
+            <input type="text" id="answer-${selectedExercise.id}-${i}" name="answer-${selectedExercise.id}-${i}" />
           </div>
-        </div>
-      `;
-
-      const messagesContainer = tabContentArea.querySelector('.chat-messages');
-      const input = tabContentArea.querySelector('.chat-input');
-      const sendButton = tabContentArea.querySelector('.send-button');
-
-      const chatHistory = [];
-
-      function addMessage(text, sender) {
-        chatHistory.push({ text, sender });
-        const msgEl = document.createElement('div');
-        msgEl.classList.add('chat-message', sender);
-        msgEl.textContent = text;
-        messagesContainer.appendChild(msgEl);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        `;
       }
+    }
+    html += `<button id="btn-save-answers">Save Answers</button>`;
 
-      function simulateAIResponse(userText) {
-        let response = "Sorry, I didn't understand that. Please ask something else.";
-        const txt = userText.toLowerCase();
+    container.innerHTML = html;
 
-        if (txt.includes('hello') || txt.includes('hi')) {
-          response = 'Hello! How can I assist you with your homework today?';
-        } else if (txt.includes('help')) {
-          response = 'Sure! Ask me any question about your lessons or exercises.';
-        } else if (txt.includes('thank')) {
-          response = 'You\'re welcome! Feel free to ask more.';
-        }
+    document.getElementById('btn-save-answers').addEventListener('click', saveAnswers);
+  }
 
-        return response;
-      }
-
-      function sendMessage() {
-        const text = input.value.trim();
-        if (!text) return;
-        addMessage(text, 'user');
-        input.value = '';
-        setTimeout(() => {
-          const aiReply = simulateAIResponse(text);
-          addMessage(aiReply, 'agent');
-        }, 700);
-      }
-
-      sendButton.addEventListener('click', sendMessage);
-      input.addEventListener('keydown', e => {
-        if (e.key === 'Enter') {
-          sendMessage();
-        }
-      });
-
-      addMessage('Hi! I am your AI homework assistant. Please send me your name.', 'agent');
+  async function saveAnswers() {
+    if (!currentStudent) {
+      alert('Please submit your name first.');
+      return;
+    }
+    if (!selectedExercise) {
+      alert('Please select an exercise to save answers.');
+      return;
     }
 
-    async function renderListeningTab() {
-      tabContentArea.innerHTML = '';
-      if (!currentLesson || !currentLesson.audio_url || currentLesson.audio_url.trim() === '') {
-        tabContentArea.innerHTML = '<p>No audio available for this lesson.</p>';
-        audioPlayerContainer.style.display = 'none';
-        return;
-      }
-      audioPlayerContainer.style.display = 'block';
-      audioPlayer.src = currentLesson.audio_url;
-      audioPlayer.load();
-
-      tabContentArea.innerHTML = `
-        <div id="listening-buttons">
-          <button id="btn-read-transcription">Read Transcription</button>
-        </div>
-        <div id="transcription-text"></div>
-      `;
-
-      const btnReadTranscription = document.getElementById('btn-read-transcription');
-      const transcriptionText = document.getElementById('transcription-text');
-
-      async function showTranscription() {
-        try {
-          // Pausar áudio ao clicar em "Read Transcription"
-          audioPlayer.pause();
-
-          audioPlayerContainer.style.display = 'none';
-          btnReadTranscription.style.display = 'none';
-
-          const transcriptData = await fetchSupabase(`classes?id=eq.${currentLesson.id}&select=audio_transcript&limit=1`);
-          let transcript = '';
-          if (transcriptData && transcriptData.length > 0 && transcriptData[0].audio_transcript) {
-            transcript = transcriptData[0].audio_transcript;
-          } else {
-            transcript = 'Transcription not available.';
-          }
-          transcriptionText.textContent = transcript;
-          transcriptionText.style.display = 'block';
-
-          const btnListenAudio = document.createElement('button');
-          btnListenAudio.id = 'btn-listen-audio';
-          btnListenAudio.textContent = 'Listen to the Audio';
-          btnListenAudio.style.marginTop = '15px';
-          btnListenAudio.style.padding = '12px 24px';
-          btnListenAudio.style.fontSize = '17px';
-          btnListenAudio.style.fontWeight = '700';
-          btnListenAudio.style.border = 'none';
-          btnListenAudio.style.borderRadius = '14px';
-          btnListenAudio.style.cursor = 'pointer';
-          btnListenAudio.style.backgroundColor = '#357ABD';
-          btnListenAudio.style.color = 'white';
-          btnListenAudio.style.boxShadow = '0 6px 18px rgba(53, 122, 189, 0.6)';
-          btnListenAudio.style.transition = 'background-color 0.3s ease, box-shadow 0.3s ease';
-          btnListenAudio.addEventListener('mouseenter', () => {
-            btnListenAudio.style.backgroundColor = '#285a8f';
-            btnListenAudio.style.boxShadow = '0 8px 24px rgba(40, 90, 143, 0.8)';
-          });
-          btnListenAudio.addEventListener('mouseleave', () => {
-            btnListenAudio.style.backgroundColor = '#357ABD';
-            btnListenAudio.style.boxShadow = '0 6px 18px rgba(53, 122, 189, 0.6)';
-          });
-          btnListenAudio.addEventListener('click', () => {
-            transcriptionText.style.display = 'none';
-            btnListenAudio.remove();
-            audioPlayerContainer.style.display = 'block';
-            btnReadTranscription.style.display = 'inline-block';
-            // NÃO iniciar a reprodução automática do áudio aqui
-          });
-
-          tabContentArea.appendChild(btnListenAudio);
-        } catch (error) {
-          console.error('Error fetching transcription:', error);
-          transcriptionText.textContent = 'Error loading transcription.';
-          transcriptionText.style.display = 'block';
+    try {
+      const answerData = {
+        id_exercise: selectedExercise.id
+      };
+      let hasAnswer = false;
+      for (let i = 1; i <= 10; i++) {
+        const input = document.getElementById(`answer-${selectedExercise.id}-${i}`);
+        if (input && input.value.trim() !== '') {
+          answerData[`answer_${i}`] = input.value.trim();
+          hasAnswer = true;
         }
       }
-
-      btnReadTranscription.addEventListener('click', showTranscription);
-    }
-
-    // Função atualizada para a aba "writing"
-    function renderWritingTab() {
-      if (!currentLesson) {
-        tabContentArea.innerHTML = '<p>Select a lesson to write.</p>';
+      if (!hasAnswer) {
+        alert('Please enter at least one answer before saving.');
         return;
       }
 
-      tabContentArea.innerHTML = `
-        <textarea id="writing-textarea" placeholder="Write your text here..." style="flex-grow:1; width:100%; min-height:300px; resize:none; font-size:16px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding:16px 20px; border-radius:14px; border:1.5px solid #357ABD; box-shadow:0 2px 10px rgba(53, 122, 189, 0.3); box-sizing:border-box; color:#34495e; background-color:#fff; transition: border-color 0.3s, box-shadow 0.3s;">${currentLesson.writing_text || ''}</textarea>
-        <button id="btn-submit-writing" style="padding:14px 28px; font-size:18px; font-weight:700; background-color:#357ABD; color:white; border:none; border-radius:14px; cursor:pointer; box-shadow:0 6px 18px rgba(53, 122, 189, 0.6); transition: background-color 0.3s ease, box-shadow 0.3s ease; align-self:flex-start; margin-top:10px;">Submit</button>
-      `;
+      const existingAnswers = await fetchSupabase(`answers?id_exercise=eq.${selectedExercise.id}&limit=1`);
+      if (existingAnswers && existingAnswers.length > 0) {
+        const answerId = existingAnswers[0].id;
+        await fetchSupabase(`answers?id=eq.${answerId}`, {
+          method: 'PATCH',
+          body: JSON.stringify(answerData)
+        });
+      } else {
+        await fetchSupabase(`answers`, {
+          method: 'POST',
+          body: JSON.stringify(answerData)
+        });
+      }
+      alert('Answers saved successfully.');
+    } catch (error) {
+      console.error('Error saving answers:', error);
+      alert('Error saving answers. See console for details.');
+    }
+  }
 
-      const textarea = document.getElementById('writing-textarea');
-      const btnSubmitWriting = document.getElementById('btn-submit-writing');
+  function renderHomeworkTab() {
+    tabContentArea.innerHTML = `
+      <div class="chat-container" aria-label="Chat with AI Agent" style="flex: 1; display: flex; flex-direction: column;">
+        <h3>Chat with AI Agent</h3>
+        <div class="chat-messages" aria-live="polite" aria-atomic="true"></div>
+        <div class="chat-input-area">
+          <input type="text" class="chat-input" placeholder="Type your message..." aria-label="Type your message to the AI agent" />
+          <button class="send-button" aria-label="Send message">Send</button>
+        </div>
+      </div>
+    `;
 
-      btnSubmitWriting.addEventListener('click', async () => {
-        const text = textarea.value.trim();
-        if (!text) {
-          alert('Please enter some text before submitting.');
-          return;
-        }
-        try {
-          await fetchSupabase(`classes?id=eq.${currentLesson.id}`, {
-            method: 'PATCH',
-            body: JSON.stringify({ writing_text: text }),
-          });
-          alert('Writing text saved successfully.');
-          currentLesson.writing_text = text;
-        } catch (error) {
-          console.error('Error saving writing text:', error);
-          alert('Error saving writing text. See console for details.');
-        }
-      });
+    const messagesContainer = tabContentArea.querySelector('.chat-messages');
+    const input = tabContentArea.querySelector('.chat-input');
+    const sendButton = tabContentArea.querySelector('.send-button');
+
+    const chatHistory = [];
+
+    function addMessage(text, sender) {
+      chatHistory.push({ text, sender });
+      const msgEl = document.createElement('div');
+      msgEl.classList.add('chat-message', sender);
+      msgEl.textContent = text;
+      messagesContainer.appendChild(msgEl);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
-    function clearTabContent() {
-      tabContentArea.innerHTML = '<p>Select a lesson and a tab to display content.</p>';
-      audioPlayer.pause();
-      audioPlayer.src = '';
+    function simulateAIResponse(userText) {
+      let response = "Sorry, I didn't understand that. Please ask something else.";
+      const txt = userText.toLowerCase();
+
+      if (txt.includes('hello') || txt.includes('hi')) {
+        response = 'Hello! How can I assist you with your homework today?';
+      } else if (txt.includes('help')) {
+        response = 'Sure! Ask me any question about your lessons or exercises.';
+      } else if (txt.includes('thank')) {
+        response = 'You\'re welcome! Feel free to ask more.';
+      }
+
+      return response;
+    }
+
+    function sendMessage() {
+      const text = input.value.trim();
+      if (!text) return;
+      addMessage(text, 'user');
+      input.value = '';
+      setTimeout(() => {
+        const aiReply = simulateAIResponse(text);
+        addMessage(aiReply, 'agent');
+      }, 700);
+    }
+
+    sendButton.addEventListener('click', sendMessage);
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+
+    addMessage('Hi! I am your AI homework assistant. Please send me your name.', 'agent');
+  }
+
+  async function renderListeningTab() {
+    tabContentArea.innerHTML = '';
+    if (!currentLesson || !currentLesson.audio_url || currentLesson.audio_url.trim() === '') {
+      tabContentArea.innerHTML = '<p>No audio available for this lesson.</p>';
       audioPlayerContainer.style.display = 'none';
+      return;
+    }
+    audioPlayerContainer.style.display = 'block';
+    audioPlayer.src = currentLesson.audio_url;
+    audioPlayer.load();
+
+    tabContentArea.innerHTML = `
+      <div id="listening-buttons">
+        <button id="btn-read-transcription">Read Transcription</button>
+      </div>
+      <div id="transcription-text"></div>
+    `;
+
+    const btnReadTranscription = document.getElementById('btn-read-transcription');
+    const transcriptionText = document.getElementById('transcription-text');
+
+    async function showTranscription() {
+      try {
+        // Pausar áudio ao clicar em "Read Transcription"
+        audioPlayer.pause();
+
+        audioPlayerContainer.style.display = 'none';
+        btnReadTranscription.style.display = 'none';
+
+        const transcriptData = await fetchSupabase(`classes?id=eq.${currentLesson.id}&select=audio_transcript&limit=1`);
+        let transcript = '';
+        if (transcriptData && transcriptData.length > 0 && transcriptData[0].audio_transcript) {
+          transcript = transcriptData[0].audio_transcript;
+        } else {
+          transcript = 'Transcription not available.';
+        }
+        transcriptionText.textContent = transcript;
+        transcriptionText.style.display = 'block';
+
+        const btnListenAudio = document.createElement('button');
+        btnListenAudio.id = 'btn-listen-audio';
+        btnListenAudio.textContent = 'Listen to the Audio';
+        btnListenAudio.style.marginTop = '15px';
+        btnListenAudio.style.padding = '12px 24px';
+        btnListenAudio.style.fontSize = '17px';
+        btnListenAudio.style.fontWeight = '700';
+        btnListenAudio.style.border = 'none';
+        btnListenAudio.style.borderRadius = '14px';
+        btnListenAudio.style.cursor = 'pointer';
+        btnListenAudio.style.backgroundColor = '#357ABD';
+        btnListenAudio.style.color = 'white';
+        btnListenAudio.style.boxShadow = '0 6px 18px rgba(53, 122, 189, 0.6)';
+        btnListenAudio.style.transition = 'background-color 0.3s ease, box-shadow 0.3s ease';
+        btnListenAudio.addEventListener('mouseenter', () => {
+          btnListenAudio.style.backgroundColor = '#285a8f';
+          btnListenAudio.style.boxShadow = '0 8px 24px rgba(40, 90, 143, 0.8)';
+        });
+        btnListenAudio.addEventListener('mouseleave', () => {
+          btnListenAudio.style.backgroundColor = '#357ABD';
+          btnListenAudio.style.boxShadow = '0 6px 18px rgba(53, 122, 189, 0.6)';
+        });
+        btnListenAudio.addEventListener('click', () => {
+          transcriptionText.style.display = 'none';
+          btnListenAudio.remove();
+          audioPlayerContainer.style.display = 'block';
+          btnReadTranscription.style.display = 'inline-block';
+          // NÃO iniciar a reprodução automática do áudio aqui
+        });
+
+        tabContentArea.appendChild(btnListenAudio);
+      } catch (error) {
+        console.error('Error fetching transcription:', error);
+        transcriptionText.textContent = 'Error loading transcription.';
+        transcriptionText.style.display = 'block';
+      }
     }
 
-  }); // End of DOMContentLoaded
+    btnReadTranscription.addEventListener('click', showTranscription);
+  }
+
+  function renderWritingTab() {
+    if (!currentLesson) {
+      tabContentArea.innerHTML = '<p>Select a lesson to write.</p>';
+      return;
+    }
+
+    tabContentArea.innerHTML = `
+      <textarea id="writing-textarea" placeholder="Write your text here..." style="flex-grow:1; width:100%; min-height:300px; resize:none; font-size:16px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding:16px 20px; border-radius:14px; border:1.5px solid #357ABD; box-shadow:0 2px 10px rgba(53, 122, 189, 0.3); box-sizing:border-box; color:#34495e; background-color:#fff; transition: border-color 0.3s, box-shadow 0.3s;">${currentLesson.writing_text || ''}</textarea>
+      <button id="btn-submit-writing" style="padding:14px 28px; font-size:18px; font-weight:700; background-color:#357ABD; color:white; border:none; border-radius:14px; cursor:pointer; box-shadow:0 6px 18px rgba(53, 122, 189, 0.6); transition: background-color 0.3s ease, box-shadow 0.3s ease; align-self:flex-start; margin-top:10px;">Submit</button>
+    `;
+
+    const textarea = document.getElementById('writing-textarea');
+    const btnSubmitWriting = document.getElementById('btn-submit-writing');
+
+    btnSubmitWriting.addEventListener('click', async () => {
+      const text = textarea.value.trim();
+      if (!text) {
+        alert('Please enter some text before submitting.');
+        return;
+      }
+      try {
+        await fetchSupabase(`classes?id=eq.${currentLesson.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ writing_text: text }),
+        });
+        alert('Writing text saved successfully.');
+        currentLesson.writing_text = text;
+      } catch (error) {
+        console.error('Error saving writing text:', error);
+        alert('Error saving writing text. See console for details.');
+      }
+    });
+  }
+
+  function clearTabContent() {
+    tabContentArea.innerHTML = '<p>Select a lesson and a tab to display content.</p>';
+    audioPlayer.pause();
+    audioPlayer.src = '';
+    audioPlayerContainer.style.display = 'none';
+    selectedExercise = null;
+  }
+
+});
   </script>
 
 </body>
