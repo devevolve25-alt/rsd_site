@@ -788,30 +788,32 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderSelectedExerciseContent() {
-    const container = document.getElementById('selected-exercise-content');
-    if (!selectedExercise) {
-      container.innerHTML = '<p>Select an exercise to see its questions.</p>';
-      return;
-    }
-
-    let html = `<h4>Exercise (Type: ${selectedExercise.type || 'N/A'})</h4>`;
-    for (let i = 1; i <= 10; i++) {
-      const question = selectedExercise[`question_${i}`];
-      if (question && question.trim() !== '') {
-        html += `
-          <div class="exercise-question">
-            <label for="answer-${selectedExercise.id}-${i}">${question}</label>
-            <input type="text" id="answer-${selectedExercise.id}-${i}" name="answer-${selectedExercise.id}-${i}" />
-          </div>
-        `;
-      }
-    }
-    html += `<button id="btn-save-answers">Save Answers</button>`;
-
-    container.innerHTML = html;
-
-    document.getElementById('btn-save-answers').addEventListener('click', saveAnswers);
+  const container = document.getElementById('selected-exercise-content');
+  if (!selectedExercise) {
+    container.innerHTML = '<p>Select an exercise to see its questions.</p>';
+    return;
   }
+
+  // Substituir o título pelo statement
+  let html = `<h4>${selectedExercise.statement || 'Exercise'}</h4>`;
+
+  for (let i = 1; i <= 10; i++) {
+    const question = selectedExercise[`question_${i}`];
+    if (question && question.trim() !== '') {
+      html += `
+        <div class="exercise-question">
+          <label for="answer-${selectedExercise.id}-${i}">${question}</label>
+          <input type="text" id="answer-${selectedExercise.id}-${i}" name="answer-${selectedExercise.id}-${i}" />
+        </div>
+      `;
+    }
+  }
+  html += `<button id="btn-save-answers">Save Answers</button>`;
+
+  container.innerHTML = html;
+
+  document.getElementById('btn-save-answers').addEventListener('click', saveAnswers);
+}
 
   async function saveAnswers() {
     if (!currentStudent) {
