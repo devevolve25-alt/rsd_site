@@ -441,6 +441,301 @@
       max-height: 400px;
       box-sizing: border-box;
     }
+
+    /* =========================================================
+   Ajustes responsivos para dispositivos móveis
+   Não altera a lógica JavaScript nem as funcionalidades.
+   ========================================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.left-column,
+.right-column,
+#tab-content-area,
+.chat-container {
+  min-width: 0;
+}
+
+/* Tablets e telas menores */
+@media (max-width: 900px) {
+  .container {
+    flex-direction: column;
+    width: 100%;
+    min-height: 100vh;
+    height: auto;
+    padding: 12px;
+    gap: 15px;
+    overflow: visible;
+  }
+
+  .left-column {
+    width: 100%;
+    min-width: 0;
+    max-height: none;
+    overflow: visible;
+    padding: 18px;
+  }
+
+  .right-column {
+    width: 100%;
+    min-height: 600px;
+    padding: 22px;
+    overflow: visible;
+  }
+
+  #lesson-list {
+    max-height: 260px;
+  }
+
+  #tab-content-area {
+    min-height: 420px;
+  }
+}
+
+/* Smartphones */
+@media (max-width: 600px) {
+  html,
+  body {
+    min-width: 320px;
+    height: auto;
+    overflow-x: hidden;
+  }
+
+  body {
+    min-height: 100vh;
+  }
+
+  .container {
+    min-height: 100vh;
+    padding: 8px;
+    gap: 10px;
+    border-radius: 10px;
+  }
+
+  .left-column {
+    padding: 15px;
+    border-radius: 12px;
+  }
+
+  .right-column {
+    min-height: 520px;
+    padding: 15px;
+    border-radius: 15px;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .left-column h1 {
+    font-size: 1.35rem;
+    line-height: 1.25;
+    margin-bottom: 14px;
+  }
+
+  #student-input-area {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  #student-name,
+  #btn-submit-name,
+  #class-plan-dropdown {
+    min-height: 46px;
+    font-size: 16px;
+  }
+
+  .student-info,
+  .class-plans-label {
+    font-size: 16px;
+  }
+
+  #class-plan-dropdown {
+    margin-bottom: 18px;
+  }
+
+  #lesson-list {
+    max-height: 220px;
+    gap: 8px;
+  }
+
+  #lesson-list button {
+    min-height: 44px;
+    padding: 11px 13px;
+    font-size: 1rem;
+  }
+
+  nav.sub-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 15px;
+  }
+
+  nav.sub-tabs button.subtab-button {
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 6px;
+    font-size: 14px;
+    border-radius: 12px;
+    transform: none;
+  }
+
+  nav.sub-tabs button.subtab-button:hover:not(.active),
+  nav.sub-tabs button.subtab-button.active {
+    transform: none;
+  }
+
+  #tab-content-area {
+    min-height: 400px;
+    font-size: 16px;
+    line-height: 1.5;
+    overflow: visible;
+  }
+
+  #lesson-content-textarea {
+    min-height: 260px;
+    font-size: 17px;
+    padding: 11px;
+  }
+
+  .exercise-question label {
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  .exercise-question input[type="text"] {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  #btn-save-answers,
+  #btn-submit-writing {
+    width: 100%;
+    min-height: 46px;
+    padding: 12px 18px;
+    font-size: 16px;
+  }
+
+  .chat-container {
+    min-height: 460px;
+    padding: 14px;
+    border-radius: 15px;
+  }
+
+  .chat-container h3 {
+    font-size: 1.3rem;
+    margin-bottom: 12px;
+  }
+
+  .chat-messages {
+    min-height: 230px;
+    padding: 12px;
+    font-size: 15px;
+  }
+
+  .chat-message {
+    max-width: 90%;
+    padding: 9px 12px;
+  }
+
+  .chat-input-area {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .chat-input,
+  .send-button {
+    width: 100%;
+    min-height: 46px;
+  }
+
+  .chat-input {
+    padding: 12px 14px;
+  }
+
+  .send-button {
+    padding: 12px 18px;
+    font-size: 16px;
+  }
+
+  #listening-buttons {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 15px;
+  }
+
+  #listening-buttons button {
+    flex: 1 1 100%;
+    min-height: 46px;
+    padding: 11px 16px;
+    font-size: 16px;
+  }
+
+  #transcription-text {
+    max-height: none;
+    min-height: 180px;
+    padding: 14px;
+    font-size: 16px;
+  }
+
+  #writing-textarea {
+    min-height: 260px;
+    height: 260px;
+    padding: 13px 14px;
+    font-size: 16px;
+  }
+
+  .audio-player-container {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .audio-player-container audio {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* Smartphones muito estreitos */
+@media (max-width: 380px) {
+  .container {
+    padding: 5px;
+  }
+
+  .left-column,
+  .right-column {
+    padding: 12px;
+  }
+
+  .left-column h1 {
+    font-size: 1.2rem;
+  }
+
+  nav.sub-tabs button.subtab-button {
+    font-size: 13px;
+  }
+
+  #tab-content-area {
+    min-height: 360px;
+  }
+}
+
+/* Melhora a interação em telas sensíveis ao toque */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  select,
+  input,
+  textarea {
+    touch-action: manipulation;
+  }
+
+  button {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
   </style>
 </head>
 
