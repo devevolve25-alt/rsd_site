@@ -1265,72 +1265,108 @@
       }
 
       function renderExercisesTab() {
-        if (!exercises || exercises.length === 0) {
-          tabContentArea.innerHTML =
-            '<p>No exercises available for this lesson.</p>';
-          return;
-        }
+  if (!exercises || exercises.length === 0) {
+    tabContentArea.innerHTML =
+      '<p>No exercises available for this lesson.</p>';
+    return;
+  }
 
-        let html =
-          '<ul id="exercise-list" role="list" ' +
-          'aria-label="Exercise List">';
+  /*
+   * Ordena os exercícios pelo número existente
+   * no início do campo statement.
+   *
+   * Exemplo:
+   * "1. Fill in the blanks"
+   * "2. Choose the correct answer"
+   */
+  const orderedExercises = exercises
+    .map((exercise, originalIndex) => {
+      const statement =
+        String(exercise.statement || '').trim();
 
-        exercises.forEach((exercise, index) => {
-          const isSelected =
-            selectedExercise &&
-            String(selectedExercise.id) ===
-              String(exercise.id);
+      const match =
+        statement.match(/^(\d+)\.\s*/);
 
-          html += `
-            <li>
-              <button
-                type="button"
-                data-exercise-id="${exercise.id}"
-                class="${isSelected ? 'active' : ''}"
-              >
-                Exercise ${index + 1}
-                (Type: ${exercise.type || 'N/A'})
-              </button>
-            </li>
-          `;
-        });
-
-        html += `
-          </ul>
-          <div
-            id="selected-exercise-content"
-            aria-live="polite"
-            aria-atomic="true"
-          ></div>
-        `;
-
-        tabContentArea.innerHTML = html;
-
-        const exerciseButtons =
-          tabContentArea.querySelectorAll(
-            '#exercise-list button'
-          );
-
-        exerciseButtons.forEach(button => {
-          button.addEventListener('click', () => {
-            const exerciseId =
-              button.dataset.exerciseId;
-
-            selectExercise(exerciseId);
-
-            exerciseButtons.forEach(item => {
-              item.classList.toggle(
-                'active',
-                item === button
-              );
-            });
-          });
-        });
-
-        if (selectedExercise) {
-          renderSelectedExerciseContent();
-        }
+      return {
+        exercise,
+        originalIndex,
+        statementNumber: match
+          ? Number(match[1])
+          : Number.MAX_SAFE_INTEGER
+      };
+    })
+    .sort((a, b) => {
+      if (a.statementNumber !== b.statementNumber) {
+        return a.statementNumber - b.statementNumber;
       }
+
+      /*
+       * Mantém a ordem original caso algum statement
+       * não contenha uma numeração válida.
+       */
+      return a.originalIndex - b.originalIndex;
+    })
+    .map(item => item.exercise);
+
+  let html =
+    '<ul id="exercise-list" role="list" ' +
+    'aria-label="Exercise List">';
+
+  orderedExercises.forEach(exercise => {
+    const isSelected =
+      selectedExercise &&
+      String(selectedExercise.id) ===
+        String(exercise.id);
+
+    html += `
+      <li>
+        <button
+          type="button"
+          data-exercise-id="${exercise.id}"
+          class="${isSelected ? 'active' : ''}"
+        >
+          ${exercise.statement || 'Exercise'}
+        </button>
+      </li>
+    `;
+  });
+
+  html += `
+    </ul>
+    <div
+      id="selected-exercise-content"
+      aria-live="polite"
+      aria-atomic="true"
+    ></div>
+  `;
+
+  tabContentArea.innerHTML = html;
+
+  const exerciseButtons =
+    tabContentArea.querySelectorAll(
+      '#exercise-list button'
+    );
+
+  exerciseButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const exerciseId =
+        button.dataset.exerciseId;
+
+      selectExercise(exerciseId);
+
+      exerciseButtons.forEach(item => {
+        item.classList.toggle(
+          'active',
+          item === button
+        );
+      });
+    });
+  });
+
+  if (selectedExercise) {
+    renderSelectedExerciseContent();
+  }
+}
 
       function selectExercise(exerciseId) {
         selectedExercise =
