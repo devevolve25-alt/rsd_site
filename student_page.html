@@ -1308,6 +1308,51 @@
     })
     .map(item => item.exercise);
 
+    function getStatementPreview(statement) {
+    const cleanStatement =
+      String(statement || '').trim();
+
+    if (!cleanStatement) {
+      return 'Exercise';
+    }
+
+    /*
+     * Preserva a numeração inicial.
+     * Exemplo: "1. Fill in the blanks"
+     */
+    const numberMatch =
+      cleanStatement.match(/^(\d+)\.\s*(.*)$/);
+
+    if (numberMatch) {
+      const number = numberMatch[1];
+      const text = numberMatch[2].trim();
+      const words = text.split(/\s+/);
+
+      const preview =
+        words.slice(0, 5).join(' ');
+
+      const suffix =
+        words.length > 5 ? '...' : '';
+
+      return `${number}. ${preview}${suffix}`;
+    }
+
+    /*
+     * Tratamento alternativo caso o statement
+     * não tenha numeração no início.
+     */
+    const words =
+      cleanStatement.split(/\s+/);
+
+    const preview =
+      words.slice(0, 5).join(' ');
+
+    const suffix =
+      words.length > 5 ? '...' : '';
+
+    return `${preview}${suffix}`;
+  }
+
   let html =
     '<ul id="exercise-list" role="list" ' +
     'aria-label="Exercise List">';
@@ -1325,7 +1370,7 @@
           data-exercise-id="${exercise.id}"
           class="${isSelected ? 'active' : ''}"
         >
-          ${exercise.statement || 'Exercise'}
+          ${getStatementPreview(exercise.statement)}
         </button>
       </li>
     `;
