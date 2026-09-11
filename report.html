@@ -16,6 +16,7 @@
       min-height: 100vh;
       font-family: Arial, Helvetica, sans-serif;
       background: #f4f6f8;
+      color: #1f2937;
     }
 
     header {
@@ -43,12 +44,16 @@
     }
 
     .conteudo {
+      width: min(1200px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 40px 0;
+    }
+
+    .area-botao {
       display: flex;
-      flex-direction: column;
-      align-items: center;
       justify-content: center;
-      min-height: calc(100vh - 86px);
-      gap: 16px;
+      align-items: center;
+      min-height: calc(100vh - 166px);
     }
 
     #gerarCodigo {
@@ -72,10 +77,77 @@
     }
 
     #mensagem {
-      min-height: 20px;
-      color: #333333;
+      margin-top: 16px;
+      color: #b42318;
       font-size: 14px;
       text-align: center;
+    }
+
+    .relatorio {
+      display: none;
+    }
+
+    .empresa {
+      margin: 0 0 28px;
+      color: #123b66;
+      font-size: 28px;
+      font-weight: 700;
+      text-align: left;
+      text-transform: capitalize;
+    }
+
+    .secao-relatorio {
+      margin-bottom: 32px;
+    }
+
+    .titulo-tabela {
+      margin: 0 0 12px;
+      color: #123b66;
+      font-size: 20px;
+      font-weight: 700;
+      text-transform: lowercase;
+    }
+
+    .tabela-container {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid #dbe3ec;
+      border-radius: 8px;
+      background: #ffffff;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      color: #ffffff;
+      background: #123b66;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    td {
+      color: #374151;
+      font-size: 14px;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f8fafc;
     }
 
     @media (max-width: 600px) {
@@ -92,6 +164,15 @@
 
       .logo {
         width: 130px;
+      }
+
+      .conteudo {
+        width: calc(100% - 24px);
+        padding: 24px 0;
+      }
+
+      .empresa {
+        font-size: 24px;
       }
     }
   </style>
@@ -111,11 +192,49 @@
   </header>
 
   <main class="conteudo">
-    <button id="gerarCodigo" type="button">
-      gerar código
-    </button>
+    <section id="areaBotao" class="area-botao">
+      <div>
+        <button id="gerarCodigo" type="button">
+          gerar código
+        </button>
 
-    <div id="mensagem" role="status" aria-live="polite"></div>
+        <div id="mensagem" role="alert"></div>
+      </div>
+    </section>
+
+    <section id="relatorio" class="relatorio">
+      <h2 id="empresa" class="empresa"></h2>
+
+      <section class="secao-relatorio">
+        <h3 class="titulo-tabela">dados gerais</h3>
+
+        <div class="tabela-container">
+          <table>
+            <thead id="cabecalhoOverview"></thead>
+            <tbody id="corpoOverview"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="secao-relatorio">
+        <h3 class="titulo-tabela">usuarios ativos</h3>
+
+        <div class="tabela-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Nome do usuário</th>
+                <th>Sessões válidas</th>
+                <th>Sessões previstas</th>
+                <th>Taxa de utilização</th>
+              </tr>
+            </thead>
+
+            <tbody id="corpoUsuarios"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
   </main>
 
   <script>
@@ -124,40 +243,177 @@
 
     const botao = document.getElementById("gerarCodigo");
     const mensagem = document.getElementById("mensagem");
+    const areaBotao = document.getElementById("areaBotao");
+    const relatorio = document.getElementById("relatorio");
+
+    const empresa = document.getElementById("empresa");
+    const cabecalhoOverview = document.getElementById("cabecalhoOverview");
+    const corpoOverview = document.getElementById("corpoOverview");
+    const corpoUsuarios = document.getElementById("corpoUsuarios");
+
+    function obterToken() {
+      const parametros = new URLSearchParams(window.location.search);
+      return parametros.get("token");
+    }
+
+    function formatarNomeCampo(nome) {
+      const nomes = {
+        enrolled_users: "Usuários inscritos",
+        users_with_activity: "Usuários com atividade",
+        users_without_activity: "Usuários sem atividade",
+        fully_active_users: "Usuários totalmente ativos",
+        fully_active_rate: "Taxa de usuários totalmente ativos",
+        total_valid_sessions: "Total de sessões válidas",
+        expected_sessions: "Sessões previstas",
+        average_sessions_per_user: "Média de sessões por usuário",
+        overall_utilization_rate: "Taxa geral de utilização"
+      };
+
+      return nomes[nome] || nome;
+    }
+
+    function formatarPercentual(valor) {
+      const numero = Number(valor);
+
+      if (!Number.isFinite(numero)) {
+        return "-";
+      }
+
+      return `${numero * 100}%`;
+    }
+
+    function formatarValorOverview(campo, valor) {
+      const camposPercentuais = [
+        "fully_active_rate",
+        "overall_utilization_rate"
+      ];
+
+      if (camposPercentuais.includes(campo)) {
+        return formatarPercentual(valor);
+      }
+
+      return valor ?? "-";
+    }
+
+    function criarCelula(tipo, valor) {
+      const celula = document.createElement(tipo);
+      celula.textContent = valor;
+      return celula;
+    }
+
+    function renderizarOverview(overview) {
+      const campos = Object.keys(overview);
+
+      const linhaCabecalho = document.createElement("tr");
+      const linhaDados = document.createElement("tr");
+
+      campos.forEach(campo => {
+        linhaCabecalho.appendChild(
+          criarCelula("th", formatarNomeCampo(campo))
+        );
+
+        linhaDados.appendChild(
+          criarCelula(
+            "td",
+            formatarValorOverview(campo, overview[campo])
+          )
+        );
+      });
+
+      cabecalhoOverview.replaceChildren(linhaCabecalho);
+      corpoOverview.replaceChildren(linhaDados);
+    }
+
+    function renderizarUsuarios(usuarios) {
+      corpoUsuarios.replaceChildren();
+
+      usuarios.forEach(usuario => {
+        const linha = document.createElement("tr");
+
+        linha.appendChild(
+          criarCelula("td", usuario.user_name ?? "-")
+        );
+
+        linha.appendChild(
+          criarCelula("td", usuario.valid_sessions ?? "-")
+        );
+
+        linha.appendChild(
+          criarCelula("td", usuario.target_sessions ?? "-")
+        );
+
+        linha.appendChild(
+          criarCelula(
+            "td",
+            formatarPercentual(usuario.utilization_rate)
+          )
+        );
+
+        corpoUsuarios.appendChild(linha);
+      });
+    }
+
+    function renderizarRelatorio(dados) {
+      /*
+       * O n8n retorna um array com um objeto.
+       */
+      const relatorioRecebido = Array.isArray(dados)
+        ? dados[0]
+        : dados;
+
+      if (!relatorioRecebido) {
+        throw new Error("A resposta do n8n não contém dados.");
+      }
+
+      empresa.textContent = relatorioRecebido.company || "-";
+
+      renderizarOverview(relatorioRecebido.overview || {});
+      renderizarUsuarios(relatorioRecebido.users || []);
+
+      /*
+       * Após uma resposta válida, o botão e a mensagem são ocultados.
+       * O relatório passa a ser o único conteúdo exibido na área principal.
+       */
+      areaBotao.style.display = "none";
+      relatorio.style.display = "block";
+    }
 
     botao.addEventListener("click", async () => {
-      /*
-       * Obtém o token diretamente da URL:
-       * report.html?token=SEU_TOKEN
-       */
-      const parametros = new URLSearchParams(window.location.search);
-      const token = parametros.get("token");
+      const token = obterToken();
 
       botao.disabled = true;
-      mensagem.textContent = "Processando...";
+      mensagem.textContent = "";
 
       try {
-  const resposta = await fetch(WEBHOOK_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      token: token
-    })
-  });
+        const resposta = await fetch(WEBHOOK_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            token: token
+          })
+        });
 
-  if (!resposta.ok) {
-    throw new Error(`Erro HTTP ${resposta.status}`);
-  }
+        if (!resposta.ok) {
+          throw new Error(`Erro HTTP ${resposta.status}`);
+        }
 
-  mensagem.textContent = "Código gerado com sucesso.";
-} catch (erro) {
-  console.error("Erro ao enviar o token:", erro);
-  mensagem.textContent = "Não foi possível gerar o código.";
-} finally {
-  botao.disabled = false;
-}
+        const dados = await resposta.json();
+
+        renderizarRelatorio(dados);
+      } catch (erro) {
+        console.error("Erro ao enviar o token ou processar a resposta:", erro);
+
+        /*
+         * Em caso de erro, o botão continua visível
+         * e pode ser clicado novamente.
+         */
+        mensagem.textContent =
+          "Não foi possível gerar o relatório. Tente novamente.";
+
+        botao.disabled = false;
+      }
     });
   </script>
 </body>
