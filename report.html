@@ -137,25 +137,27 @@
       mensagem.textContent = "Processando...";
 
       try {
-        await fetch(WEBHOOK_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify([
-            {
-              token: token
-            }
-          ])
-        });
+  const resposta = await fetch(WEBHOOK_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      token: token
+    })
+  });
 
-        mensagem.textContent = "Código gerado com sucesso.";
-      } catch (erro) {
-        console.error("Erro ao enviar o token:", erro);
-        mensagem.textContent = "Não foi possível gerar o código.";
-      } finally {
-        botao.disabled = false;
-      }
+  if (!resposta.ok) {
+    throw new Error(`Erro HTTP ${resposta.status}`);
+  }
+
+  mensagem.textContent = "Código gerado com sucesso.";
+} catch (erro) {
+  console.error("Erro ao enviar o token:", erro);
+  mensagem.textContent = "Não foi possível gerar o código.";
+} finally {
+  botao.disabled = false;
+}
     });
   </script>
 </body>
