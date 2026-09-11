@@ -1,116 +1,162 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>Business Talks AI - Monthly Report</title>
 
   <style>
-    :root {
-      --header-background: #111827;
-      --header-height: 88px;
-      --header-padding: 24px;
-      --logo-height: 48px;
-      --title-color: #ffffff;
-    }
-
     * {
       box-sizing: border-box;
     }
 
-    html,
     body {
       margin: 0;
-      min-height: 100%;
-      font-family: Arial, Helvetica, sans-serif;
-      background-color: #f3f4f6;
-    }
-
-    body {
       min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f4f6f8;
     }
 
-    .page-header {
-      position: relative;
+    header {
       display: flex;
       align-items: center;
-      width: 100%;
-      min-height: var(--header-height);
-      padding: 16px var(--header-padding);
-      background-color: var(--header-background);
+      min-height: 86px;
+      padding: 14px 28px;
+      background: #123b66;
     }
 
-    .header-logo {
-      display: block;
-      width: auto;
-      height: var(--logo-height);
+    .logo {
+      width: 150px;
+      height: auto;
       object-fit: contain;
     }
 
-    .header-title {
-      position: absolute;
-      left: 50%;
+    .titulo {
+      flex: 1;
       margin: 0;
-      color: var(--title-color);
-      font-size: clamp(1rem, 2vw, 1.5rem);
-      font-weight: 700;
-      line-height: 1.2;
+      padding-right: 150px;
+      color: #ffffff;
       text-align: center;
-      text-transform: uppercase;
-      white-space: nowrap;
-      transform: translateX(-50%);
+      font-size: 22px;
+      font-weight: 700;
     }
 
-    .page-content {
-      min-height: calc(100vh - var(--header-height));
-      padding: 32px var(--header-padding);
+    .conteudo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 86px);
+      gap: 16px;
+    }
+
+    #gerarCodigo {
+      padding: 14px 30px;
+      border: none;
+      border-radius: 8px;
+      color: #ffffff;
+      background: #123b66;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    #gerarCodigo:hover {
+      background: #0d2d4d;
+    }
+
+    #gerarCodigo:disabled {
+      cursor: wait;
+      opacity: 0.7;
+    }
+
+    #mensagem {
+      min-height: 20px;
+      color: #333333;
+      font-size: 14px;
+      text-align: center;
     }
 
     @media (max-width: 600px) {
-      :root {
-        --header-height: auto;
-        --header-padding: 16px;
-        --logo-height: 40px;
-      }
-
-      .page-header {
+      header {
         flex-direction: column;
-        gap: 16px;
-        padding-top: 20px;
-        padding-bottom: 20px;
+        gap: 12px;
+        padding: 18px;
       }
 
-      .header-title {
-        position: static;
-        font-size: 1rem;
-        white-space: normal;
-        transform: none;
+      .titulo {
+        padding-right: 0;
+        font-size: 18px;
       }
 
-      .page-content {
-        min-height: calc(100vh - 140px);
-        padding: 24px var(--header-padding);
+      .logo {
+        width: 130px;
       }
     }
   </style>
 </head>
 
 <body>
-  <header class="page-header">
+  <header>
     <img
-      class="header-logo"
+      class="logo"
       src="https://zplqlcvcpeohtxodvfkq.supabase.co/storage/v1/object/public/logos_estab/LOGO_BT_CUT.png"
-      alt="Logo Business Talks AI"
-    />
+      alt="Business Talks AI"
+    >
 
-    <h1 class="header-title">
-      BUSINESS TALKS AI - MONTHLY REPORT
+    <h1 class="titulo">
+      BUSINESS TALKS AI - MONTLY REPORT
     </h1>
   </header>
 
-  <main class="page-content">
-    <!-- Os relatórios carregados do Supabase serão adicionados posteriormente. -->
+  <main class="conteudo">
+    <button id="gerarCodigo" type="button">
+      gerar código
+    </button>
+
+    <div id="mensagem" role="status" aria-live="polite"></div>
   </main>
+
+  <script>
+    const WEBHOOK_URL =
+      "https://powerfulkiwi-n8n.cloudfy.live/webhook/bus_rep_btai-9f28-4187-ba6e-03667a057463";
+
+    const botao = document.getElementById("gerarCodigo");
+    const mensagem = document.getElementById("mensagem");
+
+    botao.addEventListener("click", async () => {
+      /*
+       * Obtém o token diretamente da URL:
+       * report.html?token=SEU_TOKEN
+       */
+      const parametros = new URLSearchParams(window.location.search);
+      const token = parametros.get("token");
+
+      botao.disabled = true;
+      mensagem.textContent = "Processando...";
+
+      try {
+        await fetch(WEBHOOK_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify([
+            {
+              token: token
+            }
+          ])
+        });
+
+        mensagem.textContent = "Código gerado com sucesso.";
+      } catch (erro) {
+        console.error("Erro ao enviar o token:", erro);
+        mensagem.textContent = "Não foi possível gerar o código.";
+      } finally {
+        botao.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>
