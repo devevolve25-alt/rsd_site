@@ -77,6 +77,7 @@
     }
 
     #mensagem {
+      min-height: 20px;
       margin-top: 16px;
       color: #b42318;
       font-size: 14px;
@@ -150,6 +151,16 @@
       background: #f8fafc;
     }
 
+    #cabecalhoOverview th {
+      min-width: 120px;
+      height: 64px;
+      padding: 10px 12px;
+      white-space: pre-line;
+      line-height: 1.25;
+      text-align: center;
+      vertical-align: middle;
+    }
+
     @media (max-width: 600px) {
       header {
         flex-direction: column;
@@ -174,16 +185,6 @@
       .empresa {
         font-size: 24px;
       }
-
-      .cabecalhoOverview th {
-  min-width: 120px;
-  height: 64px;
-  padding: 10px 12px;
-  white-space: pre-line;
-  line-height: 1.25;
-  text-align: center;
-  vertical-align: middle;
-}
     }
   </style>
 </head>
@@ -266,29 +267,38 @@
       return parametros.get("token");
     }
 
+    function formatarDataBR(data) {
+      if (!data) {
+        return "-";
+      }
+
+      const dataTexto = String(data);
+      const partes = dataTexto.substring(0, 10).split("-");
+
+      if (partes.length !== 3) {
+        return dataTexto;
+      }
+
+      const [ano, mes, dia] = partes;
+
+      return `${dia}/${mes}/${ano.substring(2)}`;
+    }
+
     function formatarNomeCampo(nome) {
-  const nomes = {
-    enrolled_users: "Usuários\ninscritos",
+      const nomes = {
+        enrolled_users: "Usuários\ninscritos",
+        users_with_activity: "Usuários com\natividade",
+        users_without_activity: "Usuários sem\natividade",
+        fully_active_users: "Usuários\ncompletamente ativos",
+        fully_active_rate: "Taxa de usuários\ncompletamente ativos",
+        total_valid_sessions: "Total de sessões\nválidas",
+        expected_sessions: "Sessões\nprevistas",
+        average_sessions_per_user: "Média de sessões\npor usuário",
+        overall_utilization_rate: "Taxa geral de\nutilização"
+      };
 
-    users_with_activity: "Usuários com\natividade",
-
-    users_without_activity: "Usuários sem\natividade",
-
-    fully_active_users: "Usuários\ncompletamente ativos",
-
-    fully_active_rate: "Taxa de usuários\ncompletamente ativos",
-
-    total_valid_sessions: "Total de sessões\nválidas",
-
-    expected_sessions: "Sessões\nprevistas",
-
-    average_sessions_per_user: "Média de sessões\npor usuário",
-
-    overall_utilization_rate: "Taxa geral de\nutilização"
-  };
-
-  return nomes[nome] || nome;
-}
+      return nomes[nome] || nome;
+    }
 
     function formatarPercentual(valor) {
       const numero = Number(valor);
@@ -372,9 +382,6 @@
     }
 
     function renderizarRelatorio(dados) {
-      /*
-       * O n8n retorna um array com um objeto.
-       */
       const relatorioRecebido = Array.isArray(dados)
         ? dados[0]
         : dados;
@@ -383,15 +390,20 @@
         throw new Error("A resposta do n8n não contém dados.");
       }
 
-      empresa.textContent = relatorioRecebido.company || "-";
+      const company = relatorioRecebido.company ?? "-";
+      const periodStart = formatarDataBR(
+        relatorioRecebido.period_start
+      );
+      const periodEnd = formatarDataBR(
+        relatorioRecebido.period_end
+      );
+
+      empresa.textContent =
+        `${company} | ${periodStart} até ${periodEnd}`;
 
       renderizarOverview(relatorioRecebido.overview || {});
       renderizarUsuarios(relatorioRecebido.users || []);
 
-      /*
-       * Após uma resposta válida, o botão e a mensagem são ocultados.
-       * O relatório passa a ser o único conteúdo exibido na área principal.
-       */
       areaBotao.style.display = "none";
       relatorio.style.display = "block";
     }
@@ -421,12 +433,11 @@
 
         renderizarRelatorio(dados);
       } catch (erro) {
-        console.error("Erro ao enviar o token ou processar a resposta:", erro);
+        console.error(
+          "Erro ao enviar o token ou processar a resposta:",
+          erro
+        );
 
-        /*
-         * Em caso de erro, o botão continua visível
-         * e pode ser clicado novamente.
-         */
         mensagem.textContent =
           "Não foi possível gerar o relatório. Tente novamente.";
 
