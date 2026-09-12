@@ -7,28 +7,50 @@
   <title>Business Talks AI - Monthly Report</title>
 
   <style>
+    :root {
+      --azul-principal: #0e4a7c;
+      --azul-claro: #33c7e2;
+      --cinza: #787878;
+      --cinza-escuro: #404040;
+      --cinza-medio: #d9e1e7;
+      --cinza-claro: #f5f8fa;
+      --branco: #ffffff;
+      --erro: #a33a3a;
+      --sombra: 0 8px 24px rgba(14, 74, 124, 0.08);
+    }
+
     * {
       box-sizing: border-box;
     }
 
+    html {
+      min-height: 100%;
+      background: var(--branco);
+    }
+
     body {
-      margin: 0;
       min-height: 100vh;
+      margin: 0;
+      color: var(--cinza-escuro);
+      background: var(--branco);
       font-family: Arial, Helvetica, sans-serif;
-      background: #f4f6f8;
-      color: #1f2937;
+      line-height: 1.5;
     }
 
     header {
       display: flex;
       align-items: center;
-      min-height: 86px;
-      padding: 14px 28px;
-      background: #123b66;
+      gap: 32px;
+      min-height: 88px;
+      padding: 16px 48px;
+      background: var(--branco);
+      border-bottom: 4px solid var(--azul-claro);
+      box-shadow: 0 2px 10px rgba(14, 74, 124, 0.06);
     }
 
     .logo {
-      width: 150px;
+      display: block;
+      width: 148px;
       height: auto;
       object-fit: contain;
     }
@@ -36,50 +58,103 @@
     .titulo {
       flex: 1;
       margin: 0;
-      padding-right: 150px;
-      color: #ffffff;
-      text-align: center;
+      color: var(--azul-principal);
       font-size: 22px;
       font-weight: 700;
+      letter-spacing: 0.08em;
+      line-height: 1.3;
+      text-align: right;
     }
 
     .conteudo {
-      width: min(1200px, calc(100% - 32px));
+      width: min(1280px, calc(100% - 64px));
       margin: 0 auto;
-      padding: 40px 0;
+      padding: 48px 0 64px;
     }
 
     .area-botao {
       display: flex;
-      justify-content: center;
       align-items: center;
-      min-height: calc(100vh - 166px);
+      justify-content: center;
+      min-height: calc(100vh - 220px);
+      padding: 24px 0;
+    }
+
+    .area-botao > div {
+      width: min(100%, 520px);
+      padding: 48px 44px;
+      text-align: center;
+      background: var(--branco);
+      border: 1px solid var(--cinza-medio);
+      border-top: 5px solid var(--azul-principal);
+      border-radius: 8px;
+      box-shadow: var(--sombra);
+    }
+
+    .area-botao > div::before {
+      display: block;
+      margin-bottom: 16px;
+      color: var(--azul-principal);
+      content: "RELATÓRIO GERENCIAL";
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+    }
+
+    .area-botao > div::after {
+      display: block;
+      max-width: 360px;
+      margin: 18px auto 0;
+      color: var(--cinza);
+      content: "Clique no botão abaixo para gerar o relatório mensal.";
+      font-size: 14px;
+      line-height: 1.6;
     }
 
     #gerarCodigo {
-      padding: 14px 30px;
-      border: none;
-      border-radius: 8px;
-      color: #ffffff;
-      background: #123b66;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 190px;
+      min-height: 48px;
+      padding: 13px 28px;
+      color: var(--branco);
+      background: var(--azul-principal);
+      border: 2px solid var(--azul-principal);
+      border-radius: 5px;
       cursor: pointer;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
+      letter-spacing: 0.02em;
+      transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
     }
 
     #gerarCodigo:hover {
-      background: #0d2d4d;
+      background: #0b3b63;
+      border-color: #0b3b63;
+      box-shadow: 0 5px 14px rgba(14, 74, 124, 0.22);
+      transform: translateY(-1px);
+    }
+
+    #gerarCodigo:focus-visible {
+      outline: 3px solid rgba(51, 199, 226, 0.45);
+      outline-offset: 3px;
     }
 
     #gerarCodigo:disabled {
       cursor: wait;
-      opacity: 0.7;
+      opacity: 0.65;
+      transform: none;
     }
 
     #mensagem {
       min-height: 20px;
-      margin-top: 16px;
-      color: #b42318;
+      margin-top: 18px;
+      color: var(--erro);
       font-size: 14px;
       text-align: center;
     }
@@ -89,101 +164,205 @@
     }
 
     .empresa {
-      margin: 0 0 28px;
-      color: #123b66;
-      font-size: 28px;
+      margin: 0 0 40px;
+      padding-bottom: 18px;
+      color: var(--azul-principal);
+      border-bottom: 2px solid var(--azul-claro);
+      font-size: 30px;
       font-weight: 700;
+      line-height: 1.25;
       text-align: left;
       text-transform: capitalize;
     }
 
     .secao-relatorio {
-      margin-bottom: 32px;
+      margin-bottom: 40px;
+      padding: 26px;
+      background: var(--branco);
+      border: 1px solid var(--cinza-medio);
+      border-radius: 8px;
+      box-shadow: var(--sombra);
     }
 
     .titulo-tabela {
-      margin: 0 0 12px;
-      color: #123b66;
-      font-size: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0 0 20px;
+      color: var(--azul-principal);
+      font-size: 18px;
       font-weight: 700;
-      text-transform: lowercase;
+      letter-spacing: 0.04em;
+      line-height: 1.3;
+      text-transform: uppercase;
+    }
+
+    .titulo-tabela::before {
+      display: inline-block;
+      width: 5px;
+      height: 23px;
+      background: var(--azul-claro);
+      border-radius: 2px;
+      content: "";
     }
 
     .tabela-container {
       width: 100%;
       overflow-x: auto;
-      border: 1px solid #dbe3ec;
-      border-radius: 8px;
-      background: #ffffff;
-      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+      border: 1px solid var(--cinza-medio);
+      border-radius: 6px;
+      background: var(--branco);
     }
 
     table {
       width: 100%;
+      min-width: 620px;
       border-collapse: collapse;
     }
 
     th,
     td {
-      padding: 14px 16px;
-      border-bottom: 1px solid #e5e7eb;
+      padding: 15px 17px;
+      border-bottom: 1px solid #e7ecef;
       text-align: left;
-      white-space: nowrap;
+      vertical-align: middle;
     }
 
     th {
-      color: #ffffff;
-      background: #123b66;
-      font-size: 14px;
+      color: var(--branco);
+      background: var(--azul-principal);
+      font-size: 13px;
       font-weight: 700;
+      letter-spacing: 0.02em;
+      line-height: 1.35;
     }
 
     td {
-      color: #374151;
+      color: var(--cinza-escuro);
+      background: var(--branco);
       font-size: 14px;
+    }
+
+    tbody tr {
+      transition: background 0.2s ease;
+    }
+
+    tbody tr:hover {
+      background: rgba(51, 199, 226, 0.08);
+    }
+
+    tbody tr:hover td {
+      background: rgba(51, 199, 226, 0.08);
     }
 
     tbody tr:last-child td {
       border-bottom: none;
     }
 
-    tbody tr:nth-child(even) {
-      background: #f8fafc;
+    tbody tr:nth-child(even) td {
+      background: var(--cinza-claro);
+    }
+
+    tbody tr:nth-child(even):hover td {
+      background: rgba(51, 199, 226, 0.1);
     }
 
     #cabecalhoOverview th {
-      min-width: 120px;
-      height: 64px;
-      padding: 10px 12px;
+      min-width: 130px;
+      height: 72px;
+      padding: 12px 14px;
       white-space: pre-line;
-      line-height: 1.25;
+      line-height: 1.3;
       text-align: center;
       vertical-align: middle;
+    }
+
+    #cabecalhoOverview + tbody td {
+      color: var(--azul-principal);
+      font-size: 18px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    @media (max-width: 800px) {
+      header {
+        gap: 20px;
+        padding: 16px 28px;
+      }
+
+      .titulo {
+        font-size: 19px;
+        letter-spacing: 0.05em;
+      }
+
+      .conteudo {
+        width: min(100% - 40px, 1280px);
+        padding-top: 36px;
+      }
+
+      .empresa {
+        font-size: 26px;
+      }
+
+      .secao-relatorio {
+        padding: 22px;
+      }
     }
 
     @media (max-width: 600px) {
       header {
         flex-direction: column;
-        gap: 12px;
-        padding: 18px;
-      }
-
-      .titulo {
-        padding-right: 0;
-        font-size: 18px;
+        gap: 14px;
+        min-height: auto;
+        padding: 20px 18px;
+        text-align: center;
       }
 
       .logo {
-        width: 130px;
+        width: 132px;
+      }
+
+      .titulo {
+        font-size: 17px;
+        line-height: 1.4;
+        text-align: center;
       }
 
       .conteudo {
         width: calc(100% - 24px);
-        padding: 24px 0;
+        padding: 24px 0 40px;
+      }
+
+      .area-botao {
+        min-height: calc(100vh - 190px);
+        padding: 12px 0;
+      }
+
+      .area-botao > div {
+        padding: 36px 24px;
       }
 
       .empresa {
-        font-size: 24px;
+        margin-bottom: 28px;
+        font-size: 23px;
+      }
+
+      .secao-relatorio {
+        margin-bottom: 26px;
+        padding: 18px;
+      }
+
+      .titulo-tabela {
+        font-size: 16px;
+      }
+
+      th,
+      td {
+        padding: 13px 14px;
+      }
+
+      #gerarCodigo {
+        width: 100%;
       }
     }
   </style>
@@ -198,7 +377,7 @@
     >
 
     <h1 class="titulo">
-      BUSINESS TALKS AI - MONTLY REPORT
+      BUSINESS TALKS AI - MONTHLY REPORT
     </h1>
   </header>
 
@@ -206,7 +385,7 @@
     <section id="areaBotao" class="area-botao">
       <div>
         <button id="gerarCodigo" type="button">
-          gerar código
+          Gerar relatório
         </button>
 
         <div id="mensagem" role="alert"></div>
@@ -217,7 +396,7 @@
       <h2 id="empresa" class="empresa"></h2>
 
       <section class="secao-relatorio">
-        <h3 class="titulo-tabela">dados gerais</h3>
+        <h3 class="titulo-tabela">Dados gerais</h3>
 
         <div class="tabela-container">
           <table>
@@ -228,7 +407,7 @@
       </section>
 
       <section class="secao-relatorio">
-        <h3 class="titulo-tabela">usuarios ativos</h3>
+        <h3 class="titulo-tabela">Usuários ativos</h3>
 
         <div class="tabela-container">
           <table>
