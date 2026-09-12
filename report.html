@@ -382,247 +382,732 @@
   </header>
 
   <main class="conteudo">
-    <section id="areaBotao" class="area-botao">
-      <div>
-        <button id="gerarCodigo" type="button">
-          Gerar relatório
-        </button>
+  <section id="areaBotao" class="area-botao">
+    <div>
+      <button id="gerarCodigo" type="button">
+        Gerar relatório
+      </button>
 
-        <div id="mensagem" role="alert"></div>
+      <div id="mensagem" role="alert"></div>
+    </div>
+  </section>
+
+  <section id="relatorio" class="relatorio">
+    <h2 id="tituloRelatorio" class="empresa">
+      Relatório Mensal de Inglês Profissional
+    </h2>
+
+    <div id="cabecalhoRelatorio" class="secao-relatorio">
+      <h3 id="empresaRelatorio" class="titulo-tabela"></h3>
+      <p id="periodoRelatorio"></p>
+    </div>
+
+    <section class="secao-relatorio">
+      <h3 class="titulo-tabela">Visão Gerencial</h3>
+
+      <div class="tabela-container">
+        <table>
+          <thead id="cabecalhoOverview"></thead>
+          <tbody id="corpoOverview"></tbody>
+        </table>
+      </div>
+
+      <h3 class="titulo-tabela">Participação por Colaborador</h3>
+
+      <div class="tabela-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Colaborador</th>
+              <th>Sessões realizadas</th>
+              <th>Meta mensal</th>
+              <th>Utilização</th>
+            </tr>
+          </thead>
+          <tbody id="corpoManagementUsers"></tbody>
+        </table>
       </div>
     </section>
 
-    <section id="relatorio" class="relatorio">
-      <h2 id="empresa" class="empresa"></h2>
+    <section class="secao-relatorio">
+      <h3 class="titulo-tabela">Frequência e Regularidade</h3>
 
-      <section class="secao-relatorio">
-        <h3 class="titulo-tabela">Dados gerais</h3>
+      <div class="tabela-container">
+        <table>
+          <thead id="cabecalhoFrequencySummary"></thead>
+          <tbody id="corpoFrequencySummary"></tbody>
+        </table>
+      </div>
 
-        <div class="tabela-container">
-          <table>
-            <thead id="cabecalhoOverview"></thead>
-            <tbody id="corpoOverview"></tbody>
-          </table>
-        </div>
-      </section>
+      <h3 class="titulo-tabela">Distribuição Semanal das Sessões</h3>
 
-      <section class="secao-relatorio">
-        <h3 class="titulo-tabela">Usuários ativos</h3>
+      <div class="tabela-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Período</th>
+              <th>Sessões</th>
+            </tr>
+          </thead>
+          <tbody id="corpoWeeklyDistribution"></tbody>
+        </table>
+      </div>
 
-        <div class="tabela-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Nome do usuário</th>
-                <th>Sessões válidas</th>
-                <th>Sessões previstas</th>
-                <th>Taxa de utilização</th>
-              </tr>
-            </thead>
+      <h3 class="titulo-tabela">Regularidade por Colaborador</h3>
 
-            <tbody id="corpoUsuarios"></tbody>
-          </table>
-        </div>
-      </section>
+      <div class="tabela-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Colaborador</th>
+              <th>Sessões</th>
+              <th>Dias ativos</th>
+              <th>Semanas ativas</th>
+            </tr>
+          </thead>
+          <tbody id="corpoFrequencyUsers"></tbody>
+        </table>
+      </div>
     </section>
-  </main>
+
+    <section class="secao-relatorio">
+      <h3 class="titulo-tabela">Progresso</h3>
+
+      <div class="tabela-container">
+        <table>
+          <thead id="cabecalhoProgressSummary"></thead>
+          <tbody id="corpoProgressSummary"></tbody>
+        </table>
+      </div>
+
+      <h3 class="titulo-tabela">Progresso por Colaborador</h3>
+
+      <div class="tabela-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Colaborador</th>
+              <th>Sessões</th>
+              <th>Objetivos avaliados</th>
+              <th>Objetivos alcançados</th>
+              <th>Objetivos não alcançados</th>
+              <th>Aproveitamento</th>
+              <th>Evolução</th>
+            </tr>
+          </thead>
+          <tbody id="corpoProgressUsers"></tbody>
+        </table>
+      </div>
+
+      <h3 class="titulo-tabela">Práticas Profissionais</h3>
+
+      <div id="praticasProfissionais"></div>
+    </section>
+  </section>
+</main>
 
   <script>
-    const WEBHOOK_URL =
-      "https://powerfulkiwi-n8n.cloudfy.live/webhook/bus_rep_btai-9f28-4187-ba6e-03667a057463";
+  const WEBHOOK_URL =
+    "https://powerfulkiwi-n8n.cloudfy.live/webhook/bus_rep_btai-9f28-4187-ba6e-03667a057463";
 
-    const botao = document.getElementById("gerarCodigo");
-    const mensagem = document.getElementById("mensagem");
-    const areaBotao = document.getElementById("areaBotao");
-    const relatorio = document.getElementById("relatorio");
+  const botao = document.getElementById("gerarCodigo");
+  const mensagem = document.getElementById("mensagem");
+  const areaBotao = document.getElementById("areaBotao");
+  const relatorio = document.getElementById("relatorio");
 
-    const empresa = document.getElementById("empresa");
-    const cabecalhoOverview = document.getElementById("cabecalhoOverview");
-    const corpoOverview = document.getElementById("corpoOverview");
-    const corpoUsuarios = document.getElementById("corpoUsuarios");
+  const empresaRelatorio =
+    document.getElementById("empresaRelatorio");
 
-    function obterToken() {
-      const parametros = new URLSearchParams(window.location.search);
-      return parametros.get("token");
+  const periodoRelatorio =
+    document.getElementById("periodoRelatorio");
+
+  const cabecalhoOverview =
+    document.getElementById("cabecalhoOverview");
+
+  const corpoOverview =
+    document.getElementById("corpoOverview");
+
+  const corpoManagementUsers =
+    document.getElementById("corpoManagementUsers");
+
+  const cabecalhoFrequencySummary =
+    document.getElementById("cabecalhoFrequencySummary");
+
+  const corpoFrequencySummary =
+    document.getElementById("corpoFrequencySummary");
+
+  const corpoWeeklyDistribution =
+    document.getElementById("corpoWeeklyDistribution");
+
+  const corpoFrequencyUsers =
+    document.getElementById("corpoFrequencyUsers");
+
+  const cabecalhoProgressSummary =
+    document.getElementById("cabecalhoProgressSummary");
+
+  const corpoProgressSummary =
+    document.getElementById("corpoProgressSummary");
+
+  const corpoProgressUsers =
+    document.getElementById("corpoProgressUsers");
+
+  const praticasProfissionais =
+    document.getElementById("praticasProfissionais");
+
+  function obterToken() {
+    const parametros = new URLSearchParams(window.location.search);
+    return parametros.get("token");
+  }
+
+  function criarCelula(tipo, valor) {
+    const celula = document.createElement(tipo);
+    celula.textContent = valor;
+    return celula;
+  }
+
+  function formatarValor(valor) {
+    if (valor === null || valor === undefined) {
+      return "-";
     }
 
-    function formatarDataBR(data) {
-      if (!data) {
-        return "-";
-      }
+    return String(valor);
+  }
 
-      const dataTexto = String(data);
-      const partes = dataTexto.substring(0, 10).split("-");
-
-      if (partes.length !== 3) {
-        return dataTexto;
-      }
-
-      const [ano, mes, dia] = partes;
-
-      return `${dia}/${mes}/${ano.substring(2)}`;
+  function formatarPercentual(valor) {
+    if (valor === null || valor === undefined) {
+      return "-";
     }
 
-    function formatarNomeCampo(nome) {
-      const nomes = {
-        enrolled_users: "Usuários\ninscritos",
-        users_with_activity: "Usuários com\natividade",
-        users_without_activity: "Usuários sem\natividade",
-        fully_active_users: "Usuários\ncompletamente ativos",
-        fully_active_rate: "Taxa de usuários\ncompletamente ativos",
-        total_valid_sessions: "Total de sessões\nválidas",
-        expected_sessions: "Sessões\nprevistas",
-        average_sessions_per_user: "Média de sessões\npor usuário",
-        overall_utilization_rate: "Taxa geral de\nutilização"
-      };
+    return `${Number(valor) * 100}%`;
+  }
 
-      return nomes[nome] || nome;
+  function formatarPercentualComInsuficiencia(valor) {
+    if (valor === null || valor === undefined) {
+      return "Dados insuficientes";
     }
 
-    function formatarPercentual(valor) {
-      const numero = Number(valor);
+    return `${Number(valor) * 100}%`;
+  }
 
-      if (!Number.isFinite(numero)) {
-        return "-";
-      }
-
-      return `${numero * 100}%`;
+  function formatarPeriodo(start, end) {
+    if (!start || !end) {
+      return "-";
     }
 
-    function formatarValorOverview(campo, valor) {
-      const camposPercentuais = [
-        "fully_active_rate",
-        "overall_utilization_rate"
-      ];
+    const dataInicial = String(start).substring(0, 10);
+    const dataFinal = String(end).substring(0, 10);
 
-      if (camposPercentuais.includes(campo)) {
-        return formatarPercentual(valor);
-      }
+    const partesInicial = dataInicial.split("-");
+    const partesFinal = dataFinal.split("-");
 
-      return valor ?? "-";
+    if (
+      partesInicial.length !== 3 ||
+      partesFinal.length !== 3
+    ) {
+      return "-";
     }
 
-    function criarCelula(tipo, valor) {
-      const celula = document.createElement(tipo);
-      celula.textContent = valor;
-      return celula;
+    const ano = partesInicial[0];
+    const mes = Number(partesInicial[1]);
+
+    const meses = [
+      "janeiro",
+      "fevereiro",
+      "março",
+      "abril",
+      "maio",
+      "junho",
+      "julho",
+      "agosto",
+      "setembro",
+      "outubro",
+      "novembro",
+      "dezembro"
+    ];
+
+    if (!meses[mes - 1]) {
+      return "-";
     }
 
-    function renderizarOverview(overview) {
-      const campos = Object.keys(overview);
+    return `${meses[mes - 1]} de ${ano}`;
+  }
 
-      const linhaCabecalho = document.createElement("tr");
-      const linhaDados = document.createElement("tr");
+  function formatarStatusEvolucao(status) {
+    const statusMapeados = {
+      PROGRESSING: "Progredindo",
+      STABLE: "Estável",
+      REGRESSING: "Regressão",
+      INSUFFICIENT_DATA: "Dados insuficientes"
+    };
 
-      campos.forEach(campo => {
-        linhaCabecalho.appendChild(
-          criarCelula("th", formatarNomeCampo(campo))
-        );
+    return statusMapeados[status] || formatarValor(status);
+  }
 
-        linhaDados.appendChild(
-          criarCelula(
-            "td",
-            formatarValorOverview(campo, overview[campo])
-          )
-        );
-      });
+  function formatarOutcome(outcome) {
+    const outcomesMapeados = {
+      ACHIEVED: "Alcançado",
+      NOT_ACHIEVED: "Não alcançado"
+    };
 
-      cabecalhoOverview.replaceChildren(linhaCabecalho);
-      corpoOverview.replaceChildren(linhaDados);
+    if (outcome === null || outcome === undefined) {
+      return "Não avaliado";
     }
 
-    function renderizarUsuarios(usuarios) {
-      corpoUsuarios.replaceChildren();
+    return outcomesMapeados[outcome] || formatarValor(outcome);
+  }
 
-      usuarios.forEach(usuario => {
-        const linha = document.createElement("tr");
+  function formatarProgressionStatus(status) {
+    const statusMapeados = {
+      PROGRESS: "Progresso",
+      STABLE: "Estável",
+      REGRESSION: "Regressão"
+    };
 
-        linha.appendChild(
-          criarCelula("td", usuario.user_name ?? "-")
-        );
-
-        linha.appendChild(
-          criarCelula("td", usuario.valid_sessions ?? "-")
-        );
-
-        linha.appendChild(
-          criarCelula("td", usuario.target_sessions ?? "-")
-        );
-
-        linha.appendChild(
-          criarCelula(
-            "td",
-            formatarPercentual(usuario.utilization_rate)
-          )
-        );
-
-        corpoUsuarios.appendChild(linha);
-      });
+    if (status === null || status === undefined) {
+      return "Não avaliado";
     }
 
-    function renderizarRelatorio(dados) {
-      const relatorioRecebido = Array.isArray(dados)
-        ? dados[0]
-        : dados;
+    return statusMapeados[status] || formatarValor(status);
+  }
 
-      if (!relatorioRecebido) {
-        throw new Error("A resposta do n8n não contém dados.");
-      }
+  function renderizarIndicadores(
+    cabecalho,
+    corpo,
+    indicadores
+  ) {
+    const linhaCabecalho = document.createElement("tr");
+    const linhaDados = document.createElement("tr");
 
-      const company = relatorioRecebido.company ?? "-";
-      const periodStart = formatarDataBR(
-        relatorioRecebido.period_start
+    indicadores.forEach(indicador => {
+      linhaCabecalho.appendChild(
+        criarCelula("th", indicador.label)
       );
-      const periodEnd = formatarDataBR(
-        relatorioRecebido.period_end
+
+      linhaDados.appendChild(
+        criarCelula("td", indicador.value)
       );
-
-      empresa.textContent =
-        `${company} | ${periodStart} até ${periodEnd}`;
-
-      renderizarOverview(relatorioRecebido.overview || {});
-      renderizarUsuarios(relatorioRecebido.users || []);
-
-      areaBotao.style.display = "none";
-      relatorio.style.display = "block";
-    }
-
-    botao.addEventListener("click", async () => {
-      const token = obterToken();
-
-      botao.disabled = true;
-      mensagem.textContent = "";
-
-      try {
-        const resposta = await fetch(WEBHOOK_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            token: token
-          })
-        });
-
-        if (!resposta.ok) {
-          throw new Error(`Erro HTTP ${resposta.status}`);
-        }
-
-        const dados = await resposta.json();
-
-        renderizarRelatorio(dados);
-      } catch (erro) {
-        console.error(
-          "Erro ao enviar o token ou processar a resposta:",
-          erro
-        );
-
-        mensagem.textContent =
-          "Não foi possível gerar o relatório. Tente novamente.";
-
-        botao.disabled = false;
-      }
     });
-  </script>
+
+    cabecalho.replaceChildren(linhaCabecalho);
+    corpo.replaceChildren(linhaDados);
+  }
+
+  function renderizarVisaoGerencial(management) {
+    const overview = management.overview;
+
+    const indicadores = [
+      {
+        label: "Colaboradores inscritos",
+        value: formatarValor(overview.enrolled_users)
+      },
+      {
+        label: "Colaboradores com atividade",
+        value: formatarValor(overview.users_with_activity)
+      },
+      {
+        label: "Colaboradores sem atividade",
+        value: formatarValor(overview.users_without_activity)
+      },
+      {
+        label: "Colaboradores com participação completa",
+        value: formatarValor(overview.fully_active_users)
+      },
+      {
+        label: "Taxa de participação completa",
+        value: formatarPercentual(overview.fully_active_rate)
+      },
+      {
+        label: "Sessões realizadas",
+        value: formatarValor(overview.total_valid_sessions)
+      },
+      {
+        label: "Sessões esperadas",
+        value: formatarValor(overview.expected_sessions)
+      },
+      {
+        label: "Média de sessões por colaborador",
+        value: formatarValor(
+          overview.average_sessions_per_user
+        )
+      },
+      {
+        label: "Aproveitamento geral da utilização",
+        value: formatarPercentual(
+          overview.overall_utilization_rate
+        )
+      }
+    ];
+
+    renderizarIndicadores(
+      cabecalhoOverview,
+      corpoOverview,
+      indicadores
+    );
+
+    corpoManagementUsers.replaceChildren();
+
+    management.users.forEach(usuario => {
+      const linha = document.createElement("tr");
+
+      linha.appendChild(
+        criarCelula("td", formatarValor(usuario.user_name))
+      );
+
+      linha.appendChild(
+        criarCelula(
+          "td",
+          formatarValor(usuario.valid_sessions)
+        )
+      );
+
+      linha.appendChild(
+        criarCelula(
+          "td",
+          formatarValor(usuario.target_sessions)
+        )
+      );
+
+      linha.appendChild(
+        criarCelula(
+          "td",
+          formatarPercentual(usuario.utilization_rate)
+        )
+      );
+
+      corpoManagementUsers.appendChild(linha);
+    });
+  }
+
+  function renderizarFrequencia(frequency) {
+    const summary = frequency.summary;
+
+    const indicadores = [
+      {
+        label: "Colaboradores inscritos",
+        value: formatarValor(summary.enrolled_users)
+      },
+      {
+        label: "Colaboradores com atividade",
+        value: formatarValor(summary.users_with_activity)
+      },
+      {
+        label: "Colaboradores sem atividade",
+        value: formatarValor(summary.users_without_activity)
+      },
+      {
+        label: "Total de sessões",
+        value: formatarValor(summary.total_sessions)
+      },
+      {
+        label: "Dias com atividade",
+        value: formatarValor(summary.total_active_days)
+      },
+      {
+        label: "Média de sessões por colaborador ativo",
+        value: formatarValor(
+          summary.average_sessions_per_active_user
+        )
+      },
+      {
+        label: "Semanas analisadas",
+        value: formatarValor(summary.weeks_in_period)
+      }
+    ];
+
+    renderizarIndicadores(
+      cabecalhoFrequencySummary,
+      corpoFrequencySummary,
+      indicadores
+    );
+
+    corpoWeeklyDistribution.replaceChildren();
+
+    frequency.weekly_distribution.forEach(periodo => {
+      const linha = document.createElement("tr");
+
+      linha.appendChild(
+        criarCelula("td", formatarValor(periodo.label))
+      );
+
+      linha.appendChild(
+        criarCelula("td", formatarValor(periodo.sessions))
+      );
+
+      corpoWeeklyDistribution.appendChild(linha);
+    });
+
+    corpoFrequencyUsers.replaceChildren();
+
+    frequency.users.forEach(usuario => {
+      const linha = document.createElement("tr");
+
+      linha.appendChild(
+        criarCelula("td", formatarValor(usuario.user_name))
+      );
+
+      linha.appendChild(
+        criarCelula(
+          "td",
+          formatarValor(usuario.valid_sessions)
+        )
+      );
+
+      linha.appendChild(
+        criarCelula("td", formatarValor(usuario.active_days))
+      );
+
+      linha.appendChild(
+        criarCelula("td", formatarValor(usuario.active_weeks))
+      );
+
+      corpoFrequencyUsers.appendChild(linha);
+    });
+  }
+
+  function renderizarProgresso(progress) {
+    const summary = progress.summary;
+
+    const indicadores = [
+      {
+        label: "Colaboradores inscritos",
+        value: formatarValor(summary.enrolled_users)
+      },
+      {
+        label: "Sessões válidas",
+        value: formatarValor(summary.total_valid_sessions)
+      },
+      {
+        label: "Sessões com resultado avaliado",
+        value: formatarValor(summary.evaluated_outcomes)
+      },
+      {
+        label: "Objetivos alcançados",
+        value: formatarValor(summary.achieved_sessions)
+      },
+      {
+        label: "Objetivos não alcançados",
+        value: formatarValor(summary.not_achieved_sessions)
+      },
+      {
+        label: "Aproveitamento dos objetivos",
+        value: formatarPercentualComInsuficiencia(
+          summary.overall_achievement_rate
+        )
+      },
+      {
+        label: "Colaboradores evoluindo",
+        value: formatarValor(summary.users_progressing)
+      },
+      {
+        label: "Colaboradores estáveis",
+        value: formatarValor(summary.users_stable)
+      },
+      {
+        label: "Colaboradores em regressão",
+        value: formatarValor(summary.users_regressing)
+      },
+      {
+        label: "Colaboradores com dados insuficientes",
+        value: formatarValor(
+          summary.users_insufficient_data
+        )
+      }
+    ];
+
+    renderizarIndicadores(
+      cabecalhoProgressSummary,
+      corpoProgressSummary,
+      indicadores
+    );
+
+    corpoProgressUsers.replaceChildren();
+
+    progress.users.forEach(usuario => {
+      const linha = document.createElement("tr");
+      const progression = usuario.progression || {};
+
+      linha.appendChild(
+        criarCelula("td", formatarValor(usuario.user_name))
+      );
+
+      linha.appendChild(
+        criarCelula(
+          "td",
+          formatarValor(usuario.valid_sessions)
+        )
+      );
+
+      linha.appendChild(
+        criarCelula(
+          "td",
+          formatarValor(usuario.evaluated_outcomes)
+        )
+      );
+
+      linha.appendChild(
+        criarCelula(
+          "td",
+          formatarValor(usuario.achieved_sessions)
+        )
+      );
+
+      linha.appendChild(
+        criarCelula(
+          "td",
+          formatarValor(usuario.not_achieved_sessions)
+        )
+      );
+
+      linha.appendChild(
+        criarCelula(
+          "td",
+          formatarPercentualComInsuficiencia(
+            usuario.achievement_rate
+          )
+        )
+      );
+
+      linha.appendChild(
+        criarCelula(
+          "td",
+          formatarStatusEvolucao(
+            progression.evolution_status
+          )
+        )
+      );
+
+      corpoProgressUsers.appendChild(linha);
+    });
+
+    renderizarPraticas(progress.users);
+  }
+
+  function renderizarPraticas(usuarios) {
+    praticasProfissionais.replaceChildren();
+
+    const usuariosComPraticas = usuarios.filter(usuario =>
+      Array.isArray(usuario.practices) &&
+      usuario.practices.length > 0
+    );
+
+    if (usuariosComPraticas.length === 0) {
+      const mensagemPraticas = document.createElement("p");
+
+      mensagemPraticas.textContent =
+        "Não há práticas avaliadas no período.";
+
+      praticasProfissionais.appendChild(mensagemPraticas);
+      return;
+    }
+
+    usuariosComPraticas.forEach(usuario => {
+      const blocoUsuario = document.createElement("div");
+      const tituloUsuario = document.createElement("h4");
+
+      tituloUsuario.textContent =
+        formatarValor(usuario.user_name);
+
+      blocoUsuario.appendChild(tituloUsuario);
+
+      usuario.practices.forEach(pratica => {
+        const blocoPratica = document.createElement("div");
+
+        const objetivo = document.createElement("p");
+        objetivo.textContent =
+          `Objetivo: ${formatarValor(pratica.objective)}`;
+
+        const resultadoEsperado = document.createElement("p");
+        resultadoEsperado.textContent =
+          `Resultado esperado: ${
+            formatarValor(pratica.measurable_outcome)
+          }`;
+
+        const resultado = document.createElement("p");
+        resultado.textContent =
+          `Resultado: ${formatarOutcome(pratica.outcome)}`;
+
+        const evolucao = document.createElement("p");
+        evolucao.textContent =
+          `Evolução observada: ${
+            formatarProgressionStatus(
+              pratica.progression_status
+            )
+          }`;
+
+        blocoPratica.appendChild(objetivo);
+        blocoPratica.appendChild(resultadoEsperado);
+        blocoPratica.appendChild(resultado);
+        blocoPratica.appendChild(evolucao);
+
+        blocoUsuario.appendChild(blocoPratica);
+      });
+
+      praticasProfissionais.appendChild(blocoUsuario);
+    });
+  }
+
+  function renderizarRelatorio(dados) {
+    const report = dados?.report;
+
+    if (!report) {
+      throw new Error(
+        "A resposta não contém o objeto report."
+      );
+    }
+
+    empresaRelatorio.textContent =
+      formatarValor(report.company);
+
+    periodoRelatorio.textContent =
+      `Período: ${formatarPeriodo(
+        report.period.start,
+        report.period.end
+      )}`;
+
+    renderizarVisaoGerencial(report.management);
+    renderizarFrequencia(report.frequency);
+    renderizarProgresso(report.progress);
+
+    areaBotao.style.display = "none";
+    relatorio.style.display = "block";
+  }
+
+  botao.addEventListener("click", async () => {
+    const token = obterToken();
+
+    botao.disabled = true;
+    mensagem.textContent = "";
+
+    try {
+      const resposta = await fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          token: token
+        })
+      });
+
+      if (!resposta.ok) {
+        throw new Error(`Erro HTTP ${resposta.status}`);
+      }
+
+      const dados = await resposta.json();
+
+      renderizarRelatorio(dados);
+    } catch (erro) {
+      console.error(
+        "Erro ao enviar o token ou processar a resposta:",
+        erro
+      );
+
+      mensagem.textContent =
+        "Não foi possível gerar o relatório. Tente novamente.";
+
+      botao.disabled = false;
+    }
+  });
+</script>
 </body>
 </html>
