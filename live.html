@@ -549,6 +549,8 @@
 
   let liveMediaStream = null;
 
+  let openingEventId = null;
+
 
   /* =====================================================
      TEMPORARY SESSION DATA
@@ -690,6 +692,60 @@
 
 
   /* =====================================================
+     START CONVERSATION AUTOMATICALLY
+  ===================================================== */
+
+  function requestOpeningTurn() {
+
+    if (
+      !dataChannel ||
+      dataChannel.readyState !== 'open'
+    ) {
+
+      console.error(
+        'Cannot request opening turn: data channel is not open'
+      );
+
+      return;
+
+    }
+
+
+    openingEventId =
+      'opening_' + Date.now();
+
+
+    const event = {
+
+      type:
+        'session.instructions.append',
+
+      client_event_id:
+        openingEventId,
+
+      delegation_id:
+        null,
+
+      instructions:
+        'Begin the professional conversation immediately, speaking as your assigned character. Use English. Start naturally according to your role and the scenario. Do not wait for the user to speak first. After your opening turn, pause and listen for the user.'
+
+    };
+
+
+    console.log(
+      'Requesting opening turn:',
+      event
+    );
+
+
+    dataChannel.send(
+      JSON.stringify(event)
+    );
+
+  }
+
+
+  /* =====================================================
      OPENAI EVENT HANDLER
   ===================================================== */
 
@@ -697,11 +753,15 @@
 
     let data;
 
+
     try {
 
-      data = JSON.parse(event.data);
+      data =
+        JSON.parse(event.data);
 
-    } catch (error) {
+    }
+
+    catch (error) {
 
       console.error(
         'Invalid OpenAI event:',
@@ -726,28 +786,85 @@
     if (data.type === 'session.started') {
 
       liveSessionId =
-        data.session?.id || liveSessionId;
+        data.session?.id ||
+        liveSessionId;
+
 
       sessionActive = true;
 
-      talkButton.disabled = false;
+
+      talkButton.disabled =
+        false;
+
 
       talkButton.textContent =
         'END TALK';
 
-      talkButton.classList.add('live');
 
-      liveIndicator.classList.add('active');
+      talkButton.classList.add(
+        'live'
+      );
+
+
+      liveIndicator.classList.add(
+        'active'
+      );
+
 
       statusText.textContent =
         'LIVE';
 
+
       startTimer();
+
 
       console.log(
         'GPT-Live-1 session started:',
         liveSessionId
       );
+
+
+      /*
+        The Live session is now ready.
+
+        Ask the Executor to begin the
+        professional interaction.
+      */
+
+      requestOpeningTurn();
+
+
+      return;
+
+    }
+
+
+    /* -------------------------------------------------
+       OPENING INSTRUCTION ACCEPTED
+    ------------------------------------------------- */
+
+    if (
+      data.type ===
+      'session.instructions.appended'
+    ) {
+
+      console.log(
+        'Instructions appended:',
+        data
+      );
+
+
+      if (
+        data.client_event_id ===
+        openingEventId
+      ) {
+
+        console.log(
+          'Executor opening turn requested successfully'
+        );
+
+      }
+
 
       return;
 
@@ -765,9 +882,11 @@
         data
       );
 
+
       cleanupSession(
         'Session ended'
       );
+
 
       return;
 
@@ -784,6 +903,7 @@
         'GPT-Live-1 error:',
         data
       );
+
 
       statusText.textContent =
         'Live session error';
@@ -803,20 +923,26 @@
       sessionActive ||
       peerConnection
     ) {
+
       return;
+
     }
 
 
-    talkButton.disabled = true;
+    talkButton.disabled =
+      true;
+
 
     talkButton.textContent =
       'CONNECTING...';
+
 
     statusText.textContent =
       'Requesting microphone access';
 
 
     try {
+
 
       /* -------------------------------------------------
          1. MICROPHONE
@@ -845,11 +971,18 @@
       ------------------------------------------------- */
 
       remoteAudio =
-        document.createElement('audio');
+        document.createElement(
+          'audio'
+        );
 
-      remoteAudio.autoplay = true;
 
-      remoteAudio.playsInline = true;
+      remoteAudio.autoplay =
+        true;
+
+
+      remoteAudio.playsInline =
+        true;
+
 
       document.body.appendChild(
         remoteAudio
@@ -859,6 +992,7 @@
       peerConnection.addEventListener(
         'track',
         (event) => {
+
 
           console.log(
             'Remote audio track received'
@@ -873,12 +1007,15 @@
             remoteAudio.srcObject =
               event.streams[0];
 
-          } else {
+          }
+
+          else {
 
             const stream =
               new MediaStream([
                 event.track
               ]);
+
 
             remoteAudio.srcObject =
               stream;
@@ -937,9 +1074,11 @@
         'open',
         () => {
 
+
           console.log(
             'OpenAI data channel opened'
           );
+
 
           statusText.textContent =
             'Initializing Live session';
@@ -980,6 +1119,7 @@
       peerConnection.addEventListener(
         'connectionstatechange',
         () => {
+
 
           console.log(
             'WebRTC connection state:',
@@ -1029,7 +1169,9 @@
 
 
       const sdp =
-        peerConnection.localDescription?.sdp;
+        peerConnection
+          .localDescription
+          ?.sdp;
 
 
       if (!sdp) {
@@ -1053,16 +1195,22 @@
         await fetch(
           '/api/live-session',
           {
-            method: 'POST',
+
+            method:
+              'POST',
 
             headers: {
+
               'Content-Type':
                 'application/json'
+
             },
 
-            body: JSON.stringify({
-              sdp: sdp
-            })
+            body:
+              JSON.stringify({
+                sdp: sdp
+              })
+
           }
         );
 
@@ -1107,30 +1255,37 @@
 
 
       liveSessionId =
-        result.session?.id || null;
+        result.session?.id ||
+        null;
 
 
       /* -------------------------------------------------
          11. APPLY OPENAI SDP ANSWER
       ------------------------------------------------- */
 
-      await peerConnection.setRemoteDescription({
-        type: 'answer',
-        sdp: result.transport.sdp
-      });
+      await peerConnection
+        .setRemoteDescription({
+
+          type:
+            'answer',
+
+          sdp:
+            result.transport.sdp
+
+        });
 
 
       /*
-        IMPORTANT:
+        The HTTP request has created
+        the GPT-Live session.
 
-        The HTTP request already created the GPT-Live
-        session.
-
-        Do NOT send "session.start" here.
-
-        We now wait for the OpenAI event:
+        We now wait for:
 
         session.started
+
+        When that event arrives,
+        requestOpeningTurn() will ask
+        Carlos to speak first.
       */
 
 
@@ -1140,7 +1295,9 @@
 
     }
 
+
     catch (error) {
+
 
       console.error(
         'Unable to start Live session:',
@@ -1168,7 +1325,9 @@
     }
 
 
-    talkButton.disabled = true;
+    talkButton.disabled =
+      true;
+
 
     statusText.textContent =
       'Ending conversation...';
@@ -1176,9 +1335,6 @@
 
     /*
       Ask GPT-Live to close the session cleanly.
-
-      This allows OpenAI to send session.closed
-      including final usage information.
     */
 
     if (
@@ -1186,9 +1342,11 @@
       dataChannel.readyState === 'open'
     ) {
 
+
       dataChannel.send(
         JSON.stringify({
-          type: 'session.close'
+          type:
+            'session.close'
         })
       );
 
@@ -1202,15 +1360,15 @@
 
       setTimeout(() => {
 
-        if (
-          peerConnection
-        ) {
+
+        if (peerConnection) {
 
           cleanupSession(
             'Session ended'
           );
 
         }
+
 
       }, 15000);
 
@@ -1221,7 +1379,7 @@
 
 
     /*
-      If the data channel is already unavailable,
+      If the data channel is unavailable,
       close locally.
     */
 
@@ -1238,6 +1396,7 @@
 
   function cleanupSession(message) {
 
+
     /* -------------------------------------------------
        STOP MICROPHONE
     ------------------------------------------------- */
@@ -1247,10 +1406,13 @@
       liveMediaStream
         .getTracks()
         .forEach(
-          track => track.stop()
+          track =>
+            track.stop()
         );
 
-      liveMediaStream = null;
+
+      liveMediaStream =
+        null;
 
     }
 
@@ -1262,12 +1424,22 @@
     if (dataChannel) {
 
       try {
+
         dataChannel.close();
-      } catch (error) {
-        console.warn(error);
+
       }
 
-      dataChannel = null;
+      catch (error) {
+
+        console.warn(
+          error
+        );
+
+      }
+
+
+      dataChannel =
+        null;
 
     }
 
@@ -1279,12 +1451,22 @@
     if (peerConnection) {
 
       try {
+
         peerConnection.close();
-      } catch (error) {
-        console.warn(error);
+
       }
 
-      peerConnection = null;
+      catch (error) {
+
+        console.warn(
+          error
+        );
+
+      }
+
+
+      peerConnection =
+        null;
 
     }
 
@@ -1299,17 +1481,24 @@
 
         remoteAudio.pause();
 
-        remoteAudio.srcObject = null;
+        remoteAudio.srcObject =
+          null;
 
         remoteAudio.remove();
 
-      } catch (error) {
+      }
 
-        console.warn(error);
+      catch (error) {
+
+        console.warn(
+          error
+        );
 
       }
 
-      remoteAudio = null;
+
+      remoteAudio =
+        null;
 
     }
 
@@ -1320,37 +1509,49 @@
 
     stopTimer();
 
-    sessionStartTime = null;
+    sessionStartTime =
+      null;
 
 
     /* -------------------------------------------------
        SESSION STATE
     ------------------------------------------------- */
 
-    sessionActive = false;
+    sessionActive =
+      false;
 
-    liveSessionId = null;
+    liveSessionId =
+      null;
+
+    openingEventId =
+      null;
 
 
     /* -------------------------------------------------
        INTERFACE
     ------------------------------------------------- */
 
-    talkButton.disabled = false;
+    talkButton.disabled =
+      false;
+
 
     talkButton.classList.remove(
       'live'
     );
 
+
     talkButton.textContent =
       'START TALK';
+
 
     liveIndicator.classList.remove(
       'active'
     );
 
+
     statusText.textContent =
-      message || 'Session ended';
+      message ||
+      'Session ended';
 
   }
 
@@ -1363,11 +1564,14 @@
     'click',
     () => {
 
+
       if (sessionActive) {
 
         endSession();
 
-      } else {
+      }
+
+      else {
 
         startSession();
 
