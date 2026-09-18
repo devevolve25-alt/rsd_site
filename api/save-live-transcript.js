@@ -84,13 +84,13 @@ export default async function handler(req, res) {
     const SUPABASE_URL =
       process.env.SUPABASE_URL;
 
-    const SUPABASE_SERVICE_ROLE_KEY =
-      process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const SUPABASE_SECRET_KEY =
+      process.env.SUPABASE_SECRET_KEY;
 
 
     if (
       !SUPABASE_URL ||
-      !SUPABASE_SERVICE_ROLE_KEY
+      !SUPABASE_SECRET_KEY
     ) {
 
       console.error(
@@ -113,15 +113,16 @@ export default async function handler(req, res) {
         `${SUPABASE_URL}/rest/v1/sessions?id=eq.${SESSION_ID}`,
         {
 
-          method: 'PATCH',
+          method:
+            'PATCH',
 
           headers: {
 
             'apikey':
-              SUPABASE_SERVICE_ROLE_KEY,
+              SUPABASE_SECRET_KEY,
 
             'Authorization':
-              `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+              `Bearer ${SUPABASE_SECRET_KEY}`,
 
             'Content-Type':
               'application/json',
@@ -144,7 +145,7 @@ export default async function handler(req, res) {
 
 
     /* =====================================================
-       SUPABASE RESPONSE
+       READ SUPABASE RESPONSE
     ===================================================== */
 
     const responseText =
@@ -173,6 +174,10 @@ export default async function handler(req, res) {
     }
 
 
+    /* =====================================================
+       SUPABASE ERROR
+    ===================================================== */
+
     if (!supabaseResponse.ok) {
 
       console.error(
@@ -196,11 +201,9 @@ export default async function handler(req, res) {
     }
 
 
-    /*
-      With Prefer: return=representation,
-      an empty array means no matching session
-      was updated.
-    */
+    /* =====================================================
+       SESSION NOT FOUND
+    ===================================================== */
 
     if (
       !Array.isArray(result) ||
@@ -221,11 +224,13 @@ export default async function handler(req, res) {
     console.log(
       'Live conversation saved:',
       {
+
         session_id:
           SESSION_ID,
 
         messages:
           messages.length
+
       }
     );
 
