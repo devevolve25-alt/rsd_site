@@ -549,7 +549,9 @@
 
   let liveMediaStream = null;
 
-  let openingEventId = null;
+  let openingInstructionEventId = null;
+  let openingCommentaryEventId = null;
+  let openingCommentarySent = false;
 
 
   /* =====================================================
@@ -692,10 +694,10 @@
 
 
   /* =====================================================
-     START CONVERSATION AUTOMATICALLY
+     REQUEST OPENING INSTRUCTIONS
   ===================================================== */
 
-  function requestOpeningTurn() {
+  function requestOpeningInstructions() {
 
     if (
       !dataChannel ||
@@ -703,7 +705,7 @@
     ) {
 
       console.error(
-        'Cannot request opening turn: data channel is not open'
+        'Cannot request opening instructions: data channel is not open'
       );
 
       return;
@@ -711,8 +713,8 @@
     }
 
 
-    openingEventId =
-      'opening_' + Date.now();
+    openingInstructionEventId =
+      'opening_instruction_' + Date.now();
 
 
     const event = {
@@ -720,20 +722,89 @@
       type:
         'session.instructions.append',
 
-      client_event_id:
-        openingEventId,
+      event_id:
+        openingInstructionEventId,
 
       delegation_id:
         null,
 
-      instructions:
-        'Begin the professional conversation immediately, speaking as your assigned character. Use English. Start naturally according to your role and the scenario. Do not wait for the user to speak first. After your opening turn, pause and listen for the user.'
+      content:
+        'Begin the professional conversation immediately as your assigned character. Use English and follow all existing scenario instructions. Start naturally according to your role and the professional situation. Do not wait for the user to speak first. After your opening turn, pause and listen for the user.'
 
     };
 
 
     console.log(
-      'Requesting opening turn:',
+      'Sending opening instructions:',
+      event
+    );
+
+
+    dataChannel.send(
+      JSON.stringify(event)
+    );
+
+  }
+
+
+  /* =====================================================
+     REQUEST OPENING COMMENTARY
+  ===================================================== */
+
+  function requestOpeningCommentary() {
+
+    if (
+      !dataChannel ||
+      dataChannel.readyState !== 'open'
+    ) {
+
+      console.error(
+        'Cannot request opening commentary: data channel is not open'
+      );
+
+      return;
+
+    }
+
+
+    if (openingCommentarySent) {
+
+      console.log(
+        'Opening commentary already sent'
+      );
+
+      return;
+
+    }
+
+
+    openingCommentarySent =
+      true;
+
+
+    openingCommentaryEventId =
+      'opening_commentary_' + Date.now();
+
+
+    const event = {
+
+      type:
+        'session.commentary.append',
+
+      event_id:
+        openingCommentaryEventId,
+
+      delegation_id:
+        null,
+
+      content:
+        'Begin the conversation now, following the instructions provided.'
+
+    };
+
+
+    console.log(
+      'Sending opening commentary:',
       event
     );
 
@@ -790,7 +861,8 @@
         liveSessionId;
 
 
-      sessionActive = true;
+      sessionActive =
+        true;
 
 
       talkButton.disabled =
@@ -825,13 +897,13 @@
 
 
       /*
-        The Live session is now ready.
+        STEP 1
 
-        Ask the Executor to begin the
-        professional interaction.
+        Add the explicit opening behavior
+        to the existing compiled prompt.
       */
 
-      requestOpeningTurn();
+      requestOpeningInstructions();
 
 
       return;
@@ -840,7 +912,7 @@
 
 
     /* -------------------------------------------------
-       OPENING INSTRUCTION ACCEPTED
+       OPENING INSTRUCTIONS ACCEPTED
     ------------------------------------------------- */
 
     if (
@@ -854,13 +926,63 @@
       );
 
 
+      /*
+        The server returns our original
+        event_id as client_event_id.
+
+        Only continue when this confirmation
+        belongs to the opening instruction.
+      */
+
       if (
         data.client_event_id ===
-        openingEventId
+        openingInstructionEventId
       ) {
 
         console.log(
-          'Executor opening turn requested successfully'
+          'Opening instructions accepted'
+        );
+
+
+        /*
+          STEP 2
+
+          Now explicitly provide commentary
+          that should be spoken by the model.
+        */
+
+        requestOpeningCommentary();
+
+      }
+
+
+      return;
+
+    }
+
+
+    /* -------------------------------------------------
+       OPENING COMMENTARY ACCEPTED
+    ------------------------------------------------- */
+
+    if (
+      data.type ===
+      'session.commentary.appended'
+    ) {
+
+      console.log(
+        'Commentary appended:',
+        data
+      );
+
+
+      if (
+        data.client_event_id ===
+        openingCommentaryEventId
+      ) {
+
+        console.log(
+          'Opening commentary accepted'
         );
 
       }
@@ -908,6 +1030,9 @@
       statusText.textContent =
         'Live session error';
 
+
+      return;
+
     }
 
   }
@@ -927,6 +1052,21 @@
       return;
 
     }
+
+
+    /*
+      Reset opening state before
+      creating a new Live session.
+    */
+
+    openingInstructionEventId =
+      null;
+
+    openingCommentaryEventId =
+      null;
+
+    openingCommentarySent =
+      false;
 
 
     talkButton.disabled =
@@ -1276,16 +1416,25 @@
 
 
       /*
-        The HTTP request has created
+        The HTTP request already created
         the GPT-Live session.
+
+        Do NOT send session.start here.
 
         We now wait for:
 
         session.started
 
-        When that event arrives,
-        requestOpeningTurn() will ask
-        Carlos to speak first.
+        Then:
+
+        1. session.instructions.append
+
+        2. session.instructions.appended
+
+        3. session.commentary.append
+
+        The microphone track remains active
+        throughout this sequence.
       */
 
 
@@ -1335,6 +1484,9 @@
 
     /*
       Ask GPT-Live to close the session cleanly.
+
+      This allows OpenAI to send session.closed
+      including final usage information.
     */
 
     if (
@@ -1379,7 +1531,7 @@
 
 
     /*
-      If the data channel is unavailable,
+      If the data channel is already unavailable,
       close locally.
     */
 
@@ -1523,8 +1675,14 @@
     liveSessionId =
       null;
 
-    openingEventId =
+    openingInstructionEventId =
       null;
+
+    openingCommentaryEventId =
+      null;
+
+    openingCommentarySent =
+      false;
 
 
     /* -------------------------------------------------
