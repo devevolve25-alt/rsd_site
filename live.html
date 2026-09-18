@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Business Talks | Live Action</title>
+
+  <style>
+    /* =====================================================
+       RESET
+    ===================================================== */
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f4f6f8;
+      color: #1f2d47;
+    }
+
+
+    /* =====================================================
+       HEADER
+    ===================================================== */
+
+    .header {
+      width: 100%;
+      background: #1f4e79;
+      color: #ffffff;
+      padding: 18px 32px;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      gap: 30px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .brand img {
+      width: 115px;
+      height: auto;
+      display: block;
+    }
+
+    .title-area h1 {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .title-area p {
+      font-size: 13px;
+      opacity: 0.8;
+    }
+
+
+    /* =====================================================
+       USER INFORMATION
+    ===================================================== */
+
+    .user-info {
+      display: flex;
+      gap: 32px;
+      align-items: center;
+    }
+
+    .info-block {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .info-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.7;
+    }
+
+    .info-value {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+
+    /* =====================================================
+       MAIN LAYOUT
+    ===================================================== */
+
+    .main {
+      width: 100%;
+      min-height: calc(100vh - 86px);
+
+      display: grid;
+      grid-template-columns: 1fr 340px;
+    }
+
+
+    /* =====================================================
+       LIVE AREA
+    ===================================================== */
+
+    .live-area {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+
+      padding: 40px;
+      position: relative;
+    }
+
+    .live-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #667085;
+      margin-bottom: 28px;
+    }
+
+
+    /* =====================================================
+       START BUTTON
+    ===================================================== */
+
+    .talk-button {
+      width: 190px;
+      height: 190px;
+
+      border-radius: 50%;
+      border: none;
+
+      background: #1f4e79;
+      color: #ffffff;
+
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+
+      cursor: pointer;
+
+      box-shadow:
+        0 10px 30px rgba(31, 78, 121, 0.22);
+
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+    }
+
+    .talk-button:hover {
+      transform: translateY(-3px);
+
+      box-shadow:
+        0 14px 36px rgba(31, 78, 121, 0.30);
+    }
+
+    .talk-button:active {
+      transform: translateY(0);
+    }
+
+    .talk-button.live {
+      background: #a73535;
+    }
+
+    .talk-button:disabled {
+      cursor: default;
+      opacity: 0.7;
+      transform: none;
+    }
+
+
+    /* =====================================================
+       LIVE STATUS
+    ===================================================== */
+
+    .session-status {
+      margin-top: 30px;
+
+      min-height: 28px;
+
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      font-size: 14px;
+      color: #667085;
+    }
+
+    .live-indicator {
+      width: 9px;
+      height: 9px;
+
+      border-radius: 50%;
+
+      background: #c5cbd3;
+
+      display: none;
+    }
+
+    .live-indicator.active {
+      display: block;
+      background: #c63f3f;
+    }
+
+    .timer {
+      display: none;
+      font-weight: 600;
+      color: #344054;
+    }
+
+    .timer.active {
+      display: inline;
+    }
+
+
+    /* =====================================================
+       MISSION PANEL
+    ===================================================== */
+
+    .mission-panel {
+      background: #ffffff;
+      border-left: 1px solid #e4e7ec;
+
+      padding: 42px 32px;
+
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .mission-section + .mission-section {
+      margin-top: 42px;
+      padding-top: 34px;
+      border-top: 1px solid #eaecf0;
+    }
+
+    .mission-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.4px;
+
+      color: #1f4e79;
+
+      margin-bottom: 14px;
+    }
+
+    .mission-text {
+      font-size: 16px;
+      line-height: 1.65;
+      color: #344054;
+    }
+
+
+    /* =====================================================
+       MOBILE
+    ===================================================== */
+
+    @media (max-width: 768px) {
+
+      .header {
+        padding: 16px 20px;
+
+        flex-direction: column;
+        align-items: flex-start;
+
+        gap: 18px;
+      }
+
+      .brand img {
+        width: 100px;
+      }
+
+      .title-area h1 {
+        font-size: 19px;
+      }
+
+      .user-info {
+        width: 100%;
+
+        gap: 20px;
+
+        justify-content: space-between;
+      }
+
+      .info-block {
+        flex: 1;
+      }
+
+      .main {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .mission-panel {
+        order: 1;
+
+        border-left: none;
+        border-bottom: 1px solid #e4e7ec;
+
+        padding: 28px 22px;
+      }
+
+      .mission-section + .mission-section {
+        margin-top: 24px;
+        padding-top: 24px;
+      }
+
+      .mission-text {
+        font-size: 15px;
+      }
+
+      .live-area {
+        order: 2;
+
+        min-height: 430px;
+
+        padding: 40px 20px;
+      }
+
+      .talk-button {
+        width: 165px;
+        height: 165px;
+
+        font-size: 16px;
+      }
+
+    }
+
+
+    /* =====================================================
+       SMALL MOBILE
+    ===================================================== */
+
+    @media (max-width: 480px) {
+
+      .user-info {
+        flex-direction: column;
+        align-items: flex-start;
+
+        gap: 12px;
+      }
+
+      .talk-button {
+        width: 150px;
+        height: 150px;
+      }
+
+    }
+
+  </style>
+</head>
+
+
+<body>
+
+  <!-- ===================================================
+       HEADER
+  ==================================================== -->
+
+  <header class="header">
+
+    <div class="brand">
+
+      <img
+        src="https://zplqlcvcpeohtxodvfkq.supabase.co/storage/v1/object/public/logos_estab/bt_logo_white.jpeg"
+        alt="Business Talks"
+      >
+
+      <div class="title-area">
+        <h1>Live Action</h1>
+        <p>Professional English Simulation</p>
+      </div>
+
+    </div>
+
+
+    <div class="user-info">
+
+      <div class="info-block">
+        <span class="info-label">Company</span>
+
+        <span
+          class="info-value"
+          id="companyName"
+        >
+          Company Name
+        </span>
+      </div>
+
+
+      <div class="info-block">
+        <span class="info-label">Participant</span>
+
+        <span
+          class="info-value"
+          id="userName"
+        >
+          User Name
+        </span>
+      </div>
+
+    </div>
+
+  </header>
+
+
+
+  <!-- ===================================================
+       MAIN
+  ==================================================== -->
+
+  <main class="main">
+
+
+    <!-- LIVE AREA -->
+
+    <section class="live-area">
+
+      <div class="live-title">
+        Live professional conversation
+      </div>
+
+
+      <button
+        id="talkButton"
+        class="talk-button"
+        type="button"
+      >
+        START TALK
+      </button>
+
+
+      <div class="session-status">
+
+        <span
+          id="liveIndicator"
+          class="live-indicator"
+        ></span>
+
+        <span id="statusText">
+          Ready to start
+        </span>
+
+        <span
+          id="timer"
+          class="timer"
+        >
+          00:00
+        </span>
+
+      </div>
+
+    </section>
+
+
+
+    <!-- MISSION PANEL -->
+
+    <aside class="mission-panel">
+
+      <div class="mission-section">
+
+        <div class="mission-label">
+          YOUR MISSION
+        </div>
+
+        <div
+          class="mission-text"
+          id="mission"
+        >
+          Your professional mission will appear here.
+        </div>
+
+      </div>
+
+
+      <div class="mission-section">
+
+        <div class="mission-label">
+          OBJECTIVE
+        </div>
+
+        <div
+          class="mission-text"
+          id="objective"
+        >
+          The objective of the activity will appear here.
+        </div>
+
+      </div>
+
+    </aside>
+
+  </main>
+
+
+
+  <script>
+
+    /* =====================================================
+       ELEMENTS
+    ===================================================== */
+
+    const talkButton =
+      document.getElementById('talkButton');
+
+    const statusText =
+      document.getElementById('statusText');
+
+    const liveIndicator =
+      document.getElementById('liveIndicator');
+
+    const timer =
+      document.getElementById('timer');
+
+
+    /* =====================================================
+       SESSION STATE
+    ===================================================== */
+
+    let sessionActive = false;
+
+    let sessionStartTime = null;
+
+    let timerInterval = null;
+
+
+    /* =====================================================
+       TEMPORARY SESSION DATA
+
+       Later these values will come from your backend /
+       Supabase session validation.
+    ===================================================== */
+
+    const sessionData = {
+
+      companyName:
+        'Company Name',
+
+      userName:
+        'User Name',
+
+      mission:
+        'Explain the situation clearly and respond to the other participant during the conversation.',
+
+      objective:
+        'Reach the expected professional outcome through effective communication.'
+
+    };
+
+
+    /* =====================================================
+       LOAD PAGE DATA
+    ===================================================== */
+
+    function loadSessionData(data) {
+
+      document.getElementById('companyName')
+        .textContent = data.companyName || '';
+
+      document.getElementById('userName')
+        .textContent = data.userName || '';
+
+      document.getElementById('mission')
+        .textContent = data.mission || '';
+
+      document.getElementById('objective')
+        .textContent = data.objective || '';
+
+    }
+
+
+    loadSessionData(sessionData);
+
+
+    /* =====================================================
+       TIMER
+    ===================================================== */
+
+    function startTimer() {
+
+      sessionStartTime = Date.now();
+
+      timer.classList.add('active');
+
+      updateTimer();
+
+      timerInterval = setInterval(
+        updateTimer,
+        1000
+      );
+
+    }
+
+
+    function updateTimer() {
+
+      if (!sessionStartTime) {
+        return;
+      }
+
+      const elapsed =
+        Math.floor(
+          (Date.now() - sessionStartTime) / 1000
+        );
+
+      const minutes =
+        Math.floor(elapsed / 60);
+
+      const seconds =
+        elapsed % 60;
+
+      timer.textContent =
+        String(minutes).padStart(2, '0') +
+        ':' +
+        String(seconds).padStart(2, '0');
+
+    }
+
+
+    function stopTimer() {
+
+      clearInterval(timerInterval);
+
+      timerInterval = null;
+
+    }
+
+
+    /* =====================================================
+       START SESSION
+
+       GPT-Live-1 / WebRTC connection will be added here.
+    ===================================================== */
+
+    async function startSession() {
+
+      if (sessionActive) {
+        return;
+      }
+
+      talkButton.disabled = true;
+
+      talkButton.textContent =
+        'CONNECTING...';
+
+      statusText.textContent =
+        'Requesting microphone access';
+
+
+      try {
+
+        /*
+          Temporary microphone test.
+
+          This already allows us to verify that desktop
+          and mobile browsers can access the microphone.
+
+          Later the MediaStream will be connected to the
+          OpenAI WebRTC session.
+        */
+
+        const mediaStream =
+          await navigator.mediaDevices.getUserMedia({
+            audio: true
+          });
+
+
+        /*
+          Store the stream so it can be closed when the
+          conversation ends.
+        */
+
+        window.liveMediaStream =
+          mediaStream;
+
+
+        /*
+          -----------------------------------------------
+          OPENAI LIVE CONNECTION WILL BE INSERTED HERE
+          -----------------------------------------------
+
+          Future sequence:
+
+          1. Request ephemeral token from backend
+          2. Create WebRTC connection
+          3. Configure GPT-Live-1 session
+          4. Attach microphone stream
+          5. Receive model audio
+          6. Start conversation
+        */
+
+
+        sessionActive = true;
+
+        talkButton.disabled = false;
+
+        talkButton.textContent =
+          'END TALK';
+
+        talkButton.classList.add('live');
+
+        liveIndicator.classList.add('active');
+
+        statusText.textContent =
+          'LIVE';
+
+        startTimer();
+
+      }
+
+      catch (error) {
+
+        console.error(
+          'Unable to start session:',
+          error
+        );
+
+        talkButton.disabled = false;
+
+        talkButton.textContent =
+          'START TALK';
+
+        statusText.textContent =
+          'Microphone access required';
+
+      }
+
+    }
+
+
+    /* =====================================================
+       END SESSION
+    ===================================================== */
+
+    function endSession() {
+
+      if (!sessionActive) {
+        return;
+      }
+
+
+      /*
+        Stop microphone tracks.
+      */
+
+      if (window.liveMediaStream) {
+
+        window.liveMediaStream
+          .getTracks()
+          .forEach(track => track.stop());
+
+        window.liveMediaStream = null;
+
+      }
+
+
+      /*
+        Later we will also close the OpenAI
+        WebRTC connection here.
+      */
+
+
+      stopTimer();
+
+      sessionActive = false;
+
+      talkButton.classList.remove('live');
+
+      talkButton.textContent =
+        'START TALK';
+
+      liveIndicator.classList.remove('active');
+
+      statusText.textContent =
+        'Session ended';
+
+    }
+
+
+    /* =====================================================
+       BUTTON
+    ===================================================== */
+
+    talkButton.addEventListener(
+      'click',
+      () => {
+
+        if (sessionActive) {
+
+          endSession();
+
+        } else {
+
+          startSession();
+
+        }
+
+      }
+    );
+
+  </script>
+
+</body>
+</html>
