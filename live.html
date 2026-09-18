@@ -560,6 +560,10 @@
 
   let transcriptEvents = [];
 
+  let conversationMessages = [];
+
+  const TRANSCRIPT_GAP_THRESHOLD_MS = 1500;
+
 
   /* =====================================================
      TEMPORARY SESSION DATA
@@ -696,6 +700,328 @@
       );
 
     });
+
+  }
+
+
+  /* =====================================================
+     BUILD CONVERSATION MESSAGES
+  ===================================================== */
+
+  function buildConversationMessages(events) {
+
+    if (!Array.isArray(events) || events.length === 0) {
+      return [];
+    }
+
+
+    /*
+      Work with a copy.
+
+      transcriptEvents remains untouched.
+
+      start_ms is used as the primary chronological
+      reference.
+
+      Original array position is preserved as a stable
+      fallback when timestamps are equal or unavailable.
+    */
+
+    const orderedEvents =
+      events
+        .map((event, index) => ({
+          ...event,
+          _originalIndex: index
+        }))
+        .sort((a, b) => {
+
+          const aStart =
+            Number.isFinite(a.start_ms)
+              ? a.start_ms
+              : Number.MAX_SAFE_INTEGER;
+
+          const bStart =
+            Number.isFinite(b.start_ms)
+              ? b.start_ms
+              : Number.MAX_SAFE_INTEGER;
+
+
+          if (aStart !== bStart) {
+            return aStart - bStart;
+          }
+
+
+          return (
+            a._originalIndex -
+            b._originalIndex
+          );
+
+        });
+
+
+    const messages = [];
+
+    let currentMessage = null;
+
+
+    for (const event of orderedEvents) {
+
+      if (
+        !event ||
+        !event.speaker ||
+        typeof event.text !== 'string'
+      ) {
+
+        continue;
+
+      }
+
+
+      /*
+        Ignore completely empty deltas.
+
+        Do NOT trim text because transcript deltas
+        already contain spacing information.
+      */
+
+      if (event.text.length === 0) {
+        continue;
+      }
+
+
+      const eventStart =
+        Number.isFinite(event.start_ms)
+          ? event.start_ms
+          : null;
+
+
+      const eventEnd =
+        Number.isFinite(event.end_ms)
+          ? event.end_ms
+          : eventStart;
+
+
+      /*
+        First valid transcript event.
+      */
+
+      if (!currentMessage) {
+
+        currentMessage = {
+
+          role:
+            event.speaker,
+
+          content:
+            event.text,
+
+          start_ms:
+            eventStart,
+
+          end_ms:
+            eventEnd
+
+        };
+
+        continue;
+
+      }
+
+
+      /*
+        RULE 1:
+        Speaker change closes the current message.
+      */
+
+      const speakerChanged =
+        event.speaker !==
+        currentMessage.role;
+
+
+      /*
+        RULE 2:
+        Calculate the temporal gap between
+        the current message and the new delta.
+      */
+
+      let temporalGap = 0;
+
+
+      if (
+        eventStart !== null &&
+        currentMessage.end_ms !== null
+      ) {
+
+        temporalGap =
+          eventStart -
+          currentMessage.end_ms;
+
+      }
+
+
+      /*
+        RULE 3:
+        Same speaker + gap greater than threshold
+        starts a new message.
+      */
+
+      const temporalBreak =
+        !speakerChanged &&
+        temporalGap >
+          TRANSCRIPT_GAP_THRESHOLD_MS;
+
+
+      /*
+        Close current message when either:
+
+        - speaker changes
+        - temporal gap is too large
+      */
+
+      if (
+        speakerChanged ||
+        temporalBreak
+      ) {
+
+        messages.push(
+          currentMessage
+        );
+
+
+        currentMessage = {
+
+          role:
+            event.speaker,
+
+          content:
+            event.text,
+
+          start_ms:
+            eventStart,
+
+          end_ms:
+            eventEnd
+
+        };
+
+
+        continue;
+
+      }
+
+
+      /*
+        Same speaker + acceptable temporal gap.
+
+        Preserve transcript delta exactly as received.
+
+        Do NOT trim.
+        Do NOT manually insert spaces.
+      */
+
+      currentMessage.content +=
+        event.text;
+
+
+      /*
+        Keep the greatest observed end timestamp.
+      */
+
+      if (eventEnd !== null) {
+
+        if (
+          currentMessage.end_ms === null
+        ) {
+
+          currentMessage.end_ms =
+            eventEnd;
+
+        }
+
+        else {
+
+          currentMessage.end_ms =
+            Math.max(
+              currentMessage.end_ms,
+              eventEnd
+            );
+
+        }
+
+      }
+
+    }
+
+
+    /*
+      Flush the final open message.
+    */
+
+    if (currentMessage) {
+
+      messages.push(
+        currentMessage
+      );
+
+    }
+
+
+    /*
+      Add deterministic sequence numbers.
+    */
+
+    return messages.map(
+      (message, index) => ({
+
+        sequence:
+          index + 1,
+
+        ...message
+
+      })
+    );
+
+  }
+
+
+  /* =====================================================
+     PRINT FINAL TRANSCRIPT
+  ===================================================== */
+
+  function printFinalTranscript(label = '') {
+
+    const suffix =
+      label
+        ? ` (${label})`
+        : '';
+
+
+    console.log(
+      `FINAL RAW TRANSCRIPT${suffix}:`,
+      transcriptEvents
+    );
+
+
+    console.table(
+      transcriptEvents
+    );
+
+
+    conversationMessages =
+      buildConversationMessages(
+        transcriptEvents
+      );
+
+
+    console.log(
+      `FINAL CONVERSATION MESSAGES${suffix}:`,
+      conversationMessages
+    );
+
+
+    console.table(
+      conversationMessages
+    );
 
   }
 
@@ -1099,21 +1425,17 @@
 
 
       /*
-        IMPORTANT:
-
-        Print the complete raw transcript
+        Build and print both transcript representations
         before cleanup.
+
+        transcriptEvents:
+        raw GPT-Live transcript deltas.
+
+        conversationMessages:
+        consolidated conversation interventions.
       */
 
-      console.log(
-        'FINAL RAW TRANSCRIPT:',
-        transcriptEvents
-      );
-
-
-      console.table(
-        transcriptEvents
-      );
+      printFinalTranscript();
 
 
       cleanupSession(
@@ -1181,16 +1503,19 @@
 
 
     /*
-      Reset transcript before
+      Reset transcript state before
       creating a new Live session.
     */
 
     transcriptEvents =
       [];
 
+    conversationMessages =
+      [];
+
 
     console.log(
-      'Transcript buffer reset'
+      'Transcript buffers reset'
     );
 
 
@@ -1641,18 +1966,12 @@
         if (peerConnection) {
 
           /*
-            Print transcript before
+            Build and print transcript before
             fallback cleanup as well.
           */
 
-          console.log(
-            'FINAL RAW TRANSCRIPT (fallback):',
-            transcriptEvents
-          );
-
-
-          console.table(
-            transcriptEvents
+          printFinalTranscript(
+            'fallback'
           );
 
 
@@ -1673,17 +1992,11 @@
 
     /*
       If the data channel is already unavailable,
-      print the transcript and close locally.
+      build the transcript and close locally.
     */
 
-    console.log(
-      'FINAL RAW TRANSCRIPT (local close):',
-      transcriptEvents
-    );
-
-
-    console.table(
-      transcriptEvents
+    printFinalTranscript(
+      'local close'
     );
 
 
@@ -1840,13 +2153,13 @@
     /*
       IMPORTANT:
 
-      transcriptEvents is intentionally NOT
-      cleared here.
+      transcriptEvents and conversationMessages
+      are intentionally NOT cleared here.
 
-      This keeps the final transcript available
-      in memory and in DevTools after the session.
+      This keeps both representations available
+      in memory and DevTools after the session.
 
-      It will be reset only when startSession()
+      They will be reset only when startSession()
       begins a new conversation.
     */
 
