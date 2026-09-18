@@ -565,6 +565,19 @@
   const TRANSCRIPT_GAP_THRESHOLD_MS = 1500;
 
 
+  /*
+    Prevent duplicate persistence.
+
+    session.closed, fallback timeout and local close
+    can potentially reach the finalization logic.
+
+    This flag guarantees that the conversation
+    is persisted only once.
+  */
+
+  let conversationSaveStarted = false;
+
+
   /* =====================================================
      TEMPORARY SESSION DATA
   ===================================================== */
@@ -840,8 +853,7 @@
 
       /*
         RULE 2:
-        Calculate the temporal gap between
-        the current message and the new delta.
+        Calculate temporal gap.
       */
 
       let temporalGap = 0;
@@ -870,13 +882,6 @@
         temporalGap >
           TRANSCRIPT_GAP_THRESHOLD_MS;
 
-
-      /*
-        Close current message when either:
-
-        - speaker changes
-        - temporal gap is too large
-      */
 
       if (
         speakerChanged ||
@@ -913,10 +918,7 @@
       /*
         Same speaker + acceptable temporal gap.
 
-        Preserve transcript delta exactly as received.
-
-        Do NOT trim.
-        Do NOT manually insert spaces.
+        Preserve the delta exactly as received.
       */
 
       currentMessage.content +=
@@ -954,7 +956,7 @@
 
 
     /*
-      Flush the final open message.
+      Flush final message.
     */
 
     if (currentMessage) {
@@ -985,10 +987,10 @@
 
 
   /* =====================================================
-     PRINT FINAL TRANSCRIPT
+     BUILD AND PRINT FINAL TRANSCRIPT
   ===================================================== */
 
-  function printFinalTranscript(label = '') {
+  function buildAndPrintFinalTranscript(label = '') {
 
     const suffix =
       label
@@ -1022,6 +1024,205 @@
     console.table(
       conversationMessages
     );
+
+
+    return conversationMessages;
+
+  }
+
+
+  /* =====================================================
+     SAVE CONVERSATION MESSAGES
+  ===================================================== */
+
+  async function saveConversationMessages() {
+
+    /*
+      Avoid duplicate writes.
+    */
+
+    if (conversationSaveStarted) {
+
+      console.log(
+        'Conversation save already started'
+      );
+
+      return {
+        skipped: true
+      };
+
+    }
+
+
+    conversationSaveStarted =
+      true;
+
+
+    /*
+      Ensure the consolidated array exists.
+    */
+
+    if (
+      !Array.isArray(conversationMessages) ||
+      conversationMessages.length === 0
+    ) {
+
+      conversationMessages =
+        buildConversationMessages(
+          transcriptEvents
+        );
+
+    }
+
+
+    /*
+      Do not call the endpoint with an empty conversation.
+    */
+
+    if (conversationMessages.length === 0) {
+
+      console.warn(
+        'Conversation not saved: no transcript messages available'
+      );
+
+      return {
+        skipped: true
+      };
+
+    }
+
+
+    console.log(
+      'Saving conversation messages:',
+      conversationMessages
+    );
+
+
+    const response =
+      await fetch(
+        '/api/save-live-transcript',
+        {
+
+          method:
+            'POST',
+
+          headers: {
+
+            'Content-Type':
+              'application/json'
+
+          },
+
+          body:
+            JSON.stringify({
+
+              messages:
+                conversationMessages
+
+            })
+
+        }
+      );
+
+
+    const responseText =
+      await response.text();
+
+
+    let result = null;
+
+
+    if (responseText) {
+
+      try {
+
+        result =
+          JSON.parse(
+            responseText
+          );
+
+      }
+
+      catch {
+
+        result =
+          responseText;
+
+      }
+
+    }
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        `Transcript save error ${response.status}: ${
+          typeof result === 'string'
+            ? result
+            : JSON.stringify(result)
+        }`
+      );
+
+    }
+
+
+    console.log(
+      'LIVE TRANSCRIPT SAVED:',
+      result
+    );
+
+
+    return result;
+
+  }
+
+
+  /* =====================================================
+     FINALIZE SESSION TRANSCRIPT
+  ===================================================== */
+
+  async function finalizeSessionTranscript(label = '') {
+
+    /*
+      First build the final consolidated representation.
+    */
+
+    buildAndPrintFinalTranscript(
+      label
+    );
+
+
+    /*
+      Then persist it through the Vercel backend.
+    */
+
+    try {
+
+      const result =
+        await saveConversationMessages();
+
+
+      console.log(
+        'Transcript finalization completed:',
+        result
+      );
+
+
+      return true;
+
+    }
+
+    catch (error) {
+
+      console.error(
+        'FAILED TO SAVE LIVE TRANSCRIPT:',
+        error
+      );
+
+
+      return false;
+
+    }
 
   }
 
@@ -1153,7 +1354,7 @@
      OPENAI EVENT HANDLER
   ===================================================== */
 
-  function handleOpenAIEvent(event) {
+  async function handleOpenAIEvent(event) {
 
     let data;
 
@@ -1318,7 +1519,7 @@
       /*
         STEP 1
 
-        Add the explicit opening behavior
+        Add explicit opening behavior
         to the existing compiled prompt.
       */
 
@@ -1345,14 +1546,6 @@
       );
 
 
-      /*
-        The server returns our original
-        event_id as client_event_id.
-
-        Only continue when this confirmation
-        belongs to the opening instruction.
-      */
-
       if (
         data.client_event_id ===
         openingInstructionEventId
@@ -1366,8 +1559,7 @@
         /*
           STEP 2
 
-          Now explicitly provide commentary
-          that should be spoken by the model.
+          Explicitly request the opening commentary.
         */
 
         requestOpeningCommentary();
@@ -1425,21 +1617,38 @@
 
 
       /*
-        Build and print both transcript representations
-        before cleanup.
-
-        transcriptEvents:
-        raw GPT-Live transcript deltas.
-
-        conversationMessages:
-        consolidated conversation interventions.
+        Build + persist transcript BEFORE cleanup.
       */
 
-      printFinalTranscript();
+      statusText.textContent =
+        'Saving conversation...';
+
+
+      const saved =
+        await finalizeSessionTranscript();
+
+
+      if (saved) {
+
+        console.log(
+          'Session transcript successfully persisted'
+        );
+
+      }
+
+      else {
+
+        console.warn(
+          'Session ended but transcript persistence failed'
+        );
+
+      }
 
 
       cleanupSession(
-        'Session ended'
+        saved
+          ? 'Session ended'
+          : 'Session ended - save failed'
       );
 
 
@@ -1488,8 +1697,7 @@
 
 
     /*
-      Reset opening state before
-      creating a new Live session.
+      Reset opening state.
     */
 
     openingInstructionEventId =
@@ -1503,8 +1711,7 @@
 
 
     /*
-      Reset transcript state before
-      creating a new Live session.
+      Reset transcript state.
     */
 
     transcriptEvents =
@@ -1512,6 +1719,9 @@
 
     conversationMessages =
       [];
+
+    conversationSaveStarted =
+      false;
 
 
     console.log(
@@ -1871,20 +2081,15 @@
 
         Do NOT send session.start here.
 
-        We now wait for:
+        Wait for:
 
         session.started
 
         Then:
 
         1. session.instructions.append
-
         2. session.instructions.appended
-
         3. session.commentary.append
-
-        The microphone track remains active
-        throughout this sequence.
       */
 
 
@@ -1933,10 +2138,7 @@
 
 
     /*
-      Ask GPT-Live to close the session cleanly.
-
-      This allows OpenAI to send session.closed
-      including final usage information.
+      Ask GPT-Live to close cleanly.
     */
 
     if (
@@ -1957,32 +2159,39 @@
         Safety timeout.
 
         If session.closed is not received,
-        close locally after 15 seconds.
+        persist locally collected transcript
+        after 15 seconds.
       */
 
-      setTimeout(() => {
+      setTimeout(
+        async () => {
 
 
-        if (peerConnection) {
-
-          /*
-            Build and print transcript before
-            fallback cleanup as well.
-          */
-
-          printFinalTranscript(
-            'fallback'
-          );
+          if (peerConnection) {
 
 
-          cleanupSession(
-            'Session ended'
-          );
-
-        }
+            statusText.textContent =
+              'Saving conversation...';
 
 
-      }, 15000);
+            const saved =
+              await finalizeSessionTranscript(
+                'fallback'
+              );
+
+
+            cleanupSession(
+              saved
+                ? 'Session ended'
+                : 'Session ended - save failed'
+            );
+
+          }
+
+
+        },
+        15000
+      );
 
 
       return;
@@ -1991,18 +2200,28 @@
 
 
     /*
-      If the data channel is already unavailable,
-      build the transcript and close locally.
+      Data channel is already unavailable.
+
+      Persist locally collected transcript
+      before cleanup.
     */
 
-    printFinalTranscript(
+    statusText.textContent =
+      'Saving conversation...';
+
+
+    finalizeSessionTranscript(
       'local close'
-    );
+    )
+      .then((saved) => {
 
+        cleanupSession(
+          saved
+            ? 'Session ended'
+            : 'Session ended - save failed'
+        );
 
-    cleanupSession(
-      'Session ended'
-    );
+      });
 
   }
 
@@ -2156,11 +2375,12 @@
       transcriptEvents and conversationMessages
       are intentionally NOT cleared here.
 
-      This keeps both representations available
-      in memory and DevTools after the session.
+      They remain available in DevTools after
+      the session.
 
-      They will be reset only when startSession()
-      begins a new conversation.
+      conversationSaveStarted is also preserved
+      until the next startSession(), preventing
+      a late fallback from writing twice.
     */
 
 
