@@ -555,6 +555,13 @@
 
 
   /* =====================================================
+     TRANSCRIPT STATE
+  ===================================================== */
+
+  let transcriptEvents = [];
+
+
+  /* =====================================================
      TEMPORARY SESSION DATA
   ===================================================== */
 
@@ -851,6 +858,92 @@
 
 
     /* -------------------------------------------------
+       USER TRANSCRIPT DELTA
+    ------------------------------------------------- */
+
+    if (
+      data.type ===
+      'session.input_transcript.delta'
+    ) {
+
+      const transcriptEvent = {
+
+        speaker:
+          'user',
+
+        text:
+          data.delta,
+
+        start_ms:
+          data.start_ms,
+
+        end_ms:
+          data.end_ms
+
+      };
+
+
+      transcriptEvents.push(
+        transcriptEvent
+      );
+
+
+      console.log(
+        '[USER]',
+        data.delta,
+        `[${data.start_ms} → ${data.end_ms} ms]`
+      );
+
+
+      return;
+
+    }
+
+
+    /* -------------------------------------------------
+       EXECUTOR TRANSCRIPT DELTA
+    ------------------------------------------------- */
+
+    if (
+      data.type ===
+      'session.output_transcript.delta'
+    ) {
+
+      const transcriptEvent = {
+
+        speaker:
+          'executor',
+
+        text:
+          data.delta,
+
+        start_ms:
+          data.start_ms,
+
+        end_ms:
+          data.end_ms
+
+      };
+
+
+      transcriptEvents.push(
+        transcriptEvent
+      );
+
+
+      console.log(
+        '[EXECUTOR]',
+        data.delta,
+        `[${data.start_ms} → ${data.end_ms} ms]`
+      );
+
+
+      return;
+
+    }
+
+
+    /* -------------------------------------------------
        SESSION STARTED
     ------------------------------------------------- */
 
@@ -1005,6 +1098,24 @@
       );
 
 
+      /*
+        IMPORTANT:
+
+        Print the complete raw transcript
+        before cleanup.
+      */
+
+      console.log(
+        'FINAL RAW TRANSCRIPT:',
+        transcriptEvents
+      );
+
+
+      console.table(
+        transcriptEvents
+      );
+
+
       cleanupSession(
         'Session ended'
       );
@@ -1067,6 +1178,20 @@
 
     openingCommentarySent =
       false;
+
+
+    /*
+      Reset transcript before
+      creating a new Live session.
+    */
+
+    transcriptEvents =
+      [];
+
+
+    console.log(
+      'Transcript buffer reset'
+    );
 
 
     talkButton.disabled =
@@ -1515,6 +1640,22 @@
 
         if (peerConnection) {
 
+          /*
+            Print transcript before
+            fallback cleanup as well.
+          */
+
+          console.log(
+            'FINAL RAW TRANSCRIPT (fallback):',
+            transcriptEvents
+          );
+
+
+          console.table(
+            transcriptEvents
+          );
+
+
           cleanupSession(
             'Session ended'
           );
@@ -1532,8 +1673,19 @@
 
     /*
       If the data channel is already unavailable,
-      close locally.
+      print the transcript and close locally.
     */
+
+    console.log(
+      'FINAL RAW TRANSCRIPT (local close):',
+      transcriptEvents
+    );
+
+
+    console.table(
+      transcriptEvents
+    );
+
 
     cleanupSession(
       'Session ended'
@@ -1683,6 +1835,20 @@
 
     openingCommentarySent =
       false;
+
+
+    /*
+      IMPORTANT:
+
+      transcriptEvents is intentionally NOT
+      cleared here.
+
+      This keeps the final transcript available
+      in memory and in DevTools after the session.
+
+      It will be reset only when startSession()
+      begins a new conversation.
+    */
 
 
     /* -------------------------------------------------
