@@ -515,8 +515,7 @@
   </main>
 
 
-
-  <script>
+<script>
 
   /* =====================================================
      ELEMENTS
@@ -540,34 +539,19 @@
   ===================================================== */
 
   let sessionActive = false;
-
   let sessionStartTime = null;
-
   let timerInterval = null;
 
-
-  /* =====================================================
-     WEBRTC STATE
-  ===================================================== */
-
-  // WebRTC connection with GPT-Live-1
   let peerConnection = null;
-
-  // OpenAI data channel
   let dataChannel = null;
-
-  // Audio element used to play GPT-Live-1 voice
   let remoteAudio = null;
-
-  // OpenAI Live session ID
   let liveSessionId = null;
+
+  let liveMediaStream = null;
 
 
   /* =====================================================
      TEMPORARY SESSION DATA
-
-     Later these values will come from your backend /
-     Supabase session validation.
   ===================================================== */
 
   const sessionData = {
@@ -658,7 +642,9 @@
 
   function stopTimer() {
 
-    clearInterval(timerInterval);
+    if (timerInterval) {
+      clearInterval(timerInterval);
+    }
 
     timerInterval = null;
 
@@ -666,69 +652,81 @@
 
 
   /* =====================================================
-     START SESSION
-
-     In the next implementation step this function will:
-
-     1. Request microphone access
-     2. Create RTCPeerConnection
-     3. Add microphone track
-     4. Create OpenAI data channel
-     5. Create SDP offer
-     6. Send SDP to /api/live-session
-     7. Receive OpenAI SDP answer
-     8. Establish GPT-Live-1 session
+     WAIT FOR ICE GATHERING
   ===================================================== */
 
-  async function startSession() {
+  function waitForIceGatheringComplete(pc) {
 
-    if (sessionActive) {
-      return;
-    }
+    return new Promise((resolve) => {
 
-    talkButton.disabled = true;
+      if (pc.iceGatheringState === 'complete') {
+        resolve();
+        return;
+      }
 
-    talkButton.textContent =
-      'CONNECTING...';
+      function checkState() {
 
-    statusText.textContent =
-      'Requesting microphone access';
+        if (pc.iceGatheringState === 'complete') {
 
+          pc.removeEventListener(
+            'icegatheringstatechange',
+            checkState
+          );
+
+          resolve();
+
+        }
+
+      }
+
+      pc.addEventListener(
+        'icegatheringstatechange',
+        checkState
+      );
+
+    });
+
+  }
+
+
+  /* =====================================================
+     OPENAI EVENT HANDLER
+  ===================================================== */
+
+  function handleOpenAIEvent(event) {
+
+    let data;
 
     try {
 
-      /*
-        Request microphone access.
-      */
+      data = JSON.parse(event.data);
 
-      const mediaStream =
-        await navigator.mediaDevices.getUserMedia({
-          audio: true
-        });
+    } catch (error) {
 
+      console.error(
+        'Invalid OpenAI event:',
+        event.data
+      );
 
-      /*
-        Store the stream so it can be closed when the
-        conversation ends.
-      */
+      return;
 
-      window.liveMediaStream =
-        mediaStream;
+    }
 
 
-      /*
-        -----------------------------------------------
-        OPENAI LIVE CONNECTION WILL BE INSERTED HERE
-        -----------------------------------------------
+    console.log(
+      'OpenAI Live event:',
+      data
+    );
 
-        peerConnection
-        dataChannel
-        remoteAudio
-        liveSessionId
 
-        will be initialized here in the next step.
-      */
+    /* -------------------------------------------------
+       SESSION STARTED
+    ------------------------------------------------- */
 
+    if (data.type === 'session.started') {
+
+      liveSessionId =
+        data.session?.id || liveSessionId;
 
       sessionActive = true;
 
@@ -746,39 +744,49 @@
 
       startTimer();
 
-    }
-
-    catch (error) {
-
-      console.error(
-        'Unable to start session:',
-        error
+      console.log(
+        'GPT-Live-1 session started:',
+        liveSessionId
       );
 
+      return;
 
-      /*
-        If microphone was opened before another
-        connection error occurred, close it.
-      */
-
-      if (window.liveMediaStream) {
-
-        window.liveMediaStream
-          .getTracks()
-          .forEach(track => track.stop());
-
-        window.liveMediaStream = null;
-
-      }
+    }
 
 
-      talkButton.disabled = false;
+    /* -------------------------------------------------
+       SESSION CLOSED
+    ------------------------------------------------- */
 
-      talkButton.textContent =
-        'START TALK';
+    if (data.type === 'session.closed') {
+
+      console.log(
+        'GPT-Live-1 session closed:',
+        data
+      );
+
+      cleanupSession(
+        'Session ended'
+      );
+
+      return;
+
+    }
+
+
+    /* -------------------------------------------------
+       ERROR
+    ------------------------------------------------- */
+
+    if (data.type === 'error') {
+
+      console.error(
+        'GPT-Live-1 error:',
+        data
+      );
 
       statusText.textContent =
-        'Unable to start session';
+        'Live session error';
 
     }
 
@@ -786,7 +794,371 @@
 
 
   /* =====================================================
-     END SESSION
+     START SESSION
+  ===================================================== */
+
+  async function startSession() {
+
+    if (
+      sessionActive ||
+      peerConnection
+    ) {
+      return;
+    }
+
+
+    talkButton.disabled = true;
+
+    talkButton.textContent =
+      'CONNECTING...';
+
+    statusText.textContent =
+      'Requesting microphone access';
+
+
+    try {
+
+      /* -------------------------------------------------
+         1. MICROPHONE
+      ------------------------------------------------- */
+
+      liveMediaStream =
+        await navigator.mediaDevices.getUserMedia({
+          audio: true
+        });
+
+
+      /* -------------------------------------------------
+         2. CREATE WEBRTC CONNECTION
+      ------------------------------------------------- */
+
+      statusText.textContent =
+        'Creating secure connection';
+
+
+      peerConnection =
+        new RTCPeerConnection();
+
+
+      /* -------------------------------------------------
+         3. RECEIVE GPT-LIVE AUDIO
+      ------------------------------------------------- */
+
+      remoteAudio =
+        document.createElement('audio');
+
+      remoteAudio.autoplay = true;
+
+      remoteAudio.playsInline = true;
+
+      document.body.appendChild(
+        remoteAudio
+      );
+
+
+      peerConnection.addEventListener(
+        'track',
+        (event) => {
+
+          console.log(
+            'Remote audio track received'
+          );
+
+
+          if (
+            event.streams &&
+            event.streams[0]
+          ) {
+
+            remoteAudio.srcObject =
+              event.streams[0];
+
+          } else {
+
+            const stream =
+              new MediaStream([
+                event.track
+              ]);
+
+            remoteAudio.srcObject =
+              stream;
+
+          }
+
+
+          remoteAudio
+            .play()
+            .catch((error) => {
+
+              console.warn(
+                'Audio autoplay warning:',
+                error
+              );
+
+            });
+
+        }
+      );
+
+
+      /* -------------------------------------------------
+         4. ADD MICROPHONE TO WEBRTC
+      ------------------------------------------------- */
+
+      liveMediaStream
+        .getAudioTracks()
+        .forEach((track) => {
+
+          peerConnection.addTrack(
+            track,
+            liveMediaStream
+          );
+
+        });
+
+
+      /* -------------------------------------------------
+         5. CREATE OPENAI DATA CHANNEL
+      ------------------------------------------------- */
+
+      dataChannel =
+        peerConnection.createDataChannel(
+          'oai-events'
+        );
+
+
+      dataChannel.addEventListener(
+        'message',
+        handleOpenAIEvent
+      );
+
+
+      dataChannel.addEventListener(
+        'open',
+        () => {
+
+          console.log(
+            'OpenAI data channel opened'
+          );
+
+          statusText.textContent =
+            'Initializing Live session';
+
+        }
+      );
+
+
+      dataChannel.addEventListener(
+        'close',
+        () => {
+
+          console.log(
+            'OpenAI data channel closed'
+          );
+
+        }
+      );
+
+
+      dataChannel.addEventListener(
+        'error',
+        (error) => {
+
+          console.error(
+            'OpenAI data channel error:',
+            error
+          );
+
+        }
+      );
+
+
+      /* -------------------------------------------------
+         6. CONNECTION STATE MONITOR
+      ------------------------------------------------- */
+
+      peerConnection.addEventListener(
+        'connectionstatechange',
+        () => {
+
+          console.log(
+            'WebRTC connection state:',
+            peerConnection?.connectionState
+          );
+
+
+          if (
+            peerConnection?.connectionState ===
+            'failed'
+          ) {
+
+            cleanupSession(
+              'Connection failed'
+            );
+
+          }
+
+        }
+      );
+
+
+      /* -------------------------------------------------
+         7. CREATE SDP OFFER
+      ------------------------------------------------- */
+
+      statusText.textContent =
+        'Preparing Live session';
+
+
+      const offer =
+        await peerConnection.createOffer();
+
+
+      await peerConnection.setLocalDescription(
+        offer
+      );
+
+
+      /* -------------------------------------------------
+         8. WAIT FOR ICE CANDIDATES
+      ------------------------------------------------- */
+
+      await waitForIceGatheringComplete(
+        peerConnection
+      );
+
+
+      const sdp =
+        peerConnection.localDescription?.sdp;
+
+
+      if (!sdp) {
+
+        throw new Error(
+          'Unable to create SDP offer'
+        );
+
+      }
+
+
+      /* -------------------------------------------------
+         9. SEND SDP TO OUR VERCEL ENDPOINT
+      ------------------------------------------------- */
+
+      statusText.textContent =
+        'Connecting to GPT-Live-1';
+
+
+      const response =
+        await fetch(
+          '/api/live-session',
+          {
+            method: 'POST',
+
+            headers: {
+              'Content-Type':
+                'application/json'
+            },
+
+            body: JSON.stringify({
+              sdp: sdp
+            })
+          }
+        );
+
+
+      /* -------------------------------------------------
+         10. VERIFY SERVER RESPONSE
+      ------------------------------------------------- */
+
+      if (!response.ok) {
+
+        const errorText =
+          await response.text();
+
+
+        throw new Error(
+          `Live API error ${response.status}: ${errorText}`
+        );
+
+      }
+
+
+      const result =
+        await response.json();
+
+
+      console.log(
+        'Live session created:',
+        result
+      );
+
+
+      if (
+        !result.transport ||
+        !result.transport.sdp
+      ) {
+
+        throw new Error(
+          'OpenAI response does not contain SDP answer'
+        );
+
+      }
+
+
+      liveSessionId =
+        result.session?.id || null;
+
+
+      /* -------------------------------------------------
+         11. APPLY OPENAI SDP ANSWER
+      ------------------------------------------------- */
+
+      await peerConnection.setRemoteDescription({
+        type: 'answer',
+        sdp: result.transport.sdp
+      });
+
+
+      /*
+        IMPORTANT:
+
+        The HTTP request already created the GPT-Live
+        session.
+
+        Do NOT send "session.start" here.
+
+        We now wait for the OpenAI event:
+
+        session.started
+      */
+
+
+      statusText.textContent =
+        'Waiting for Live session';
+
+
+    }
+
+    catch (error) {
+
+      console.error(
+        'Unable to start Live session:',
+        error
+      );
+
+
+      cleanupSession(
+        'Unable to start session'
+      );
+
+    }
+
+  }
+
+
+  /* =====================================================
+     REQUEST SESSION END
   ===================================================== */
 
   function endSession() {
@@ -796,95 +1168,189 @@
     }
 
 
+    talkButton.disabled = true;
+
+    statusText.textContent =
+      'Ending conversation...';
+
+
     /*
-      Stop microphone tracks.
+      Ask GPT-Live to close the session cleanly.
+
+      This allows OpenAI to send session.closed
+      including final usage information.
     */
 
-    if (window.liveMediaStream) {
+    if (
+      dataChannel &&
+      dataChannel.readyState === 'open'
+    ) {
 
-      window.liveMediaStream
-        .getTracks()
-        .forEach(track => track.stop());
+      dataChannel.send(
+        JSON.stringify({
+          type: 'session.close'
+        })
+      );
 
-      window.liveMediaStream = null;
+
+      /*
+        Safety timeout.
+
+        If session.closed is not received,
+        close locally after 15 seconds.
+      */
+
+      setTimeout(() => {
+
+        if (
+          peerConnection
+        ) {
+
+          cleanupSession(
+            'Session ended'
+          );
+
+        }
+
+      }, 15000);
+
+
+      return;
 
     }
 
 
     /*
-      Close OpenAI data channel when it exists.
+      If the data channel is already unavailable,
+      close locally.
     */
+
+    cleanupSession(
+      'Session ended'
+    );
+
+  }
+
+
+  /* =====================================================
+     CLEANUP
+  ===================================================== */
+
+  function cleanupSession(message) {
+
+    /* -------------------------------------------------
+       STOP MICROPHONE
+    ------------------------------------------------- */
+
+    if (liveMediaStream) {
+
+      liveMediaStream
+        .getTracks()
+        .forEach(
+          track => track.stop()
+        );
+
+      liveMediaStream = null;
+
+    }
+
+
+    /* -------------------------------------------------
+       CLOSE DATA CHANNEL
+    ------------------------------------------------- */
 
     if (dataChannel) {
 
-      dataChannel.close();
+      try {
+        dataChannel.close();
+      } catch (error) {
+        console.warn(error);
+      }
 
       dataChannel = null;
 
     }
 
 
-    /*
-      Close WebRTC connection when it exists.
-    */
+    /* -------------------------------------------------
+       CLOSE WEBRTC
+    ------------------------------------------------- */
 
     if (peerConnection) {
 
-      peerConnection.close();
+      try {
+        peerConnection.close();
+      } catch (error) {
+        console.warn(error);
+      }
 
       peerConnection = null;
 
     }
 
 
-    /*
-      Remove remote audio element when it exists.
-    */
+    /* -------------------------------------------------
+       REMOVE REMOTE AUDIO
+    ------------------------------------------------- */
 
     if (remoteAudio) {
 
-      remoteAudio.pause();
+      try {
 
-      remoteAudio.srcObject = null;
+        remoteAudio.pause();
 
-      remoteAudio.remove();
+        remoteAudio.srcObject = null;
+
+        remoteAudio.remove();
+
+      } catch (error) {
+
+        console.warn(error);
+
+      }
 
       remoteAudio = null;
 
     }
 
 
-    /*
-      Clear OpenAI Live session ID.
-    */
-
-    liveSessionId = null;
-
-
-    /*
-      Stop local timer.
-    */
+    /* -------------------------------------------------
+       TIMER
+    ------------------------------------------------- */
 
     stopTimer();
 
     sessionStartTime = null;
 
+
+    /* -------------------------------------------------
+       SESSION STATE
+    ------------------------------------------------- */
+
     sessionActive = false;
 
+    liveSessionId = null;
 
-    /*
-      Restore interface.
-    */
 
-    talkButton.classList.remove('live');
+    /* -------------------------------------------------
+       INTERFACE
+    ------------------------------------------------- */
+
+    talkButton.disabled = false;
+
+    talkButton.classList.remove(
+      'live'
+    );
 
     talkButton.textContent =
       'START TALK';
 
-    liveIndicator.classList.remove('active');
+    liveIndicator.classList.remove(
+      'active'
+    );
 
     statusText.textContent =
-      'Session ended';
+      message || 'Session ended';
 
   }
 
@@ -911,6 +1377,7 @@
   );
 
 </script>
+  
 
 </body>
 </html>
