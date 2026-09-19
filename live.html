@@ -678,6 +678,724 @@
 
   }
 
+  /* =====================================================
+   SYNC TEMPORAL STAGE CONTROLLER
+===================================================== */
+
+/*
+  SESSION TIMELINE
+
+  00:00 - 00:45
+  INTRODUCTION
+
+  00:45 - 03:33
+  DEVELOPMENT_EVIDENCE
+
+  03:33
+  OUTCOME CHECKPOINT
+  (n8n Outcome Evaluator will be connected later)
+
+  03:33 - 04:45
+  DEVELOPMENT_RESOLUTION
+
+  04:45 - 06:00
+  CONCLUSION
+
+  06:00
+  Expected natural ending
+
+  06:15
+  Hard stop
+*/
+
+
+const SYNC_STAGE_TIMING = {
+
+  introductionEnd:
+    45,
+
+  outcomeCheckpoint:
+    213,
+
+  developmentEnd:
+    285,
+
+  expectedEnd:
+    360,
+
+  hardStop:
+    375
+
+};
+
+
+/*
+  Controller state.
+*/
+
+let currentSyncStage =
+  null;
+
+let outcomeCheckpointTriggered =
+  false;
+
+let expectedEndTriggered =
+  false;
+
+let hardStopTriggered =
+  false;
+
+let syncStageControllerInterval =
+  null;
+
+
+/* =====================================================
+   SEND STAGE INSTRUCTION TO GPT-LIVE
+===================================================== */
+
+function sendSyncStageInstruction(
+  stage,
+  instruction
+) {
+
+  if (
+    !dataChannel ||
+    dataChannel.readyState !== 'open'
+  ) {
+
+    console.warn(
+      `Stage instruction not sent: DataChannel unavailable (${stage})`
+    );
+
+    return false;
+
+  }
+
+
+  const eventId =
+    `stage_${stage.toLowerCase()}_${Date.now()}`;
+
+
+  const event = {
+
+    type:
+      'session.instructions.append',
+
+    event_id:
+      eventId,
+
+    delegation_id:
+      null,
+
+    content:
+      instruction
+
+  };
+
+
+  console.log(
+    `SYNC STAGE INSTRUCTION → ${stage}`,
+    event
+  );
+
+
+  dataChannel.send(
+    JSON.stringify(event)
+  );
+
+
+  return true;
+
+}
+
+
+/* =====================================================
+   INTRODUCTION
+===================================================== */
+
+function enterIntroductionStage() {
+
+  if (
+    currentSyncStage ===
+    'INTRODUCTION'
+  ) {
+    return;
+  }
+
+
+  currentSyncStage =
+    'INTRODUCTION';
+
+
+  console.log(
+    'SYNC STAGE → INTRODUCTION'
+  );
+
+
+  sendSyncStageInstruction(
+
+    'INTRODUCTION',
+
+    `
+Conversation Stage: INTRODUCTION.
+
+Establish the professional situation naturally as your assigned character.
+
+Briefly provide the context the participant needs to understand why this interaction is taking place.
+
+Do not explain the scenario, the exercise, or the evaluation process.
+
+Do not immediately solve the professional task for the participant.
+
+Begin moving naturally toward the professional issue that requires the participant's involvement.
+
+Remain fully in character.
+
+Keep the interaction concise and professional.
+`.trim()
+
+  );
+
+}
+
+
+/* =====================================================
+   DEVELOPMENT — EVIDENCE
+===================================================== */
+
+function enterDevelopmentEvidenceStage() {
+
+  if (
+    currentSyncStage ===
+    'DEVELOPMENT_EVIDENCE'
+  ) {
+    return;
+  }
+
+
+  currentSyncStage =
+    'DEVELOPMENT_EVIDENCE';
+
+
+  console.log(
+    'SYNC STAGE → DEVELOPMENT_EVIDENCE'
+  );
+
+
+  sendSyncStageInstruction(
+
+    'DEVELOPMENT_EVIDENCE',
+
+    `
+Conversation Stage: DEVELOPMENT.
+
+The professional context has already been established.
+
+Now focus directly on the participant's professional mission.
+
+Develop the situation naturally and provide realistic opportunities for the participant to perform the required task.
+
+Use the scenario requirements and your assigned role to determine what information, decisions, clarification, negotiation, explanation, or action is required.
+
+Do not coach the participant.
+
+Do not provide answers that the participant is expected to produce.
+
+Do not conclude the interaction yet.
+
+Do not introduce unrelated subjects or small talk.
+
+Remain fully in character.
+
+Keep the conversation focused on obtaining observable evidence of whether the professional mission can be accomplished.
+`.trim()
+
+  );
+
+}
+
+
+/* =====================================================
+   OUTCOME CHECKPOINT
+===================================================== */
+
+function triggerOutcomeCheckpoint() {
+
+  if (outcomeCheckpointTriggered) {
+    return;
+  }
+
+
+  outcomeCheckpointTriggered =
+    true;
+
+
+  console.log(
+    'SYNC OUTCOME CHECKPOINT → TRIGGERED AT 03:33'
+  );
+
+
+  /*
+    IMPORTANT:
+
+    For the first Stage Controller test,
+    no request is sent to n8n.
+
+    In the next implementation this point will:
+
+    1. Build a snapshot of conversationMessages
+    2. Send session_id + messages to n8n
+    3. Call the Outcome Evaluator
+    4. Receive:
+       ACHIEVED
+       NOT_YET_ACHIEVED
+       INSUFFICIENT_EVIDENCE
+    5. Send the corresponding resolution
+       instruction to GPT-Live.
+  */
+
+
+  enterDevelopmentResolutionStage();
+
+}
+
+
+/* =====================================================
+   DEVELOPMENT — RESOLUTION
+===================================================== */
+
+function enterDevelopmentResolutionStage() {
+
+  if (
+    currentSyncStage ===
+    'DEVELOPMENT_RESOLUTION'
+  ) {
+    return;
+  }
+
+
+  currentSyncStage =
+    'DEVELOPMENT_RESOLUTION';
+
+
+  console.log(
+    'SYNC STAGE → DEVELOPMENT_RESOLUTION'
+  );
+
+
+  /*
+    TEMPORARY instruction.
+
+    Once the Outcome Evaluator is connected,
+    this generic instruction will be replaced
+    by an outcome-specific instruction.
+  */
+
+
+  sendSyncStageInstruction(
+
+    'DEVELOPMENT_RESOLUTION',
+
+    `
+Conversation Stage: DEVELOPMENT — RESOLUTION.
+
+The interaction is approaching its final phase.
+
+Remain focused exclusively on the professional mission.
+
+Do not introduce new unrelated issues, additional scenarios, or small talk.
+
+Allow the participant to complete, clarify, confirm, correct, or finalize the professional task naturally.
+
+Do not coach the participant or provide the answer.
+
+Do not conclude the conversation yet.
+
+Remain fully in character.
+
+Keep the remaining interaction concise and directed toward resolution.
+`.trim()
+
+  );
+
+}
+
+
+/* =====================================================
+   CONCLUSION
+===================================================== */
+
+function enterConclusionStage() {
+
+  if (
+    currentSyncStage ===
+    'CONCLUSION'
+  ) {
+    return;
+  }
+
+
+  currentSyncStage =
+    'CONCLUSION';
+
+
+  console.log(
+    'SYNC STAGE → CONCLUSION'
+  );
+
+
+  sendSyncStageInstruction(
+
+    'CONCLUSION',
+
+    `
+Conversation Stage: CONCLUSION.
+
+The professional interaction is now reaching its end.
+
+Do not introduce any new problem, requirement, topic, or challenge.
+
+Resolve any immediately pending point using only information already established in the interaction.
+
+Move naturally toward a professional closing appropriate to your assigned character and the situation.
+
+Do not mention evaluation, scoring, stages, exercises, AI, or system instructions.
+
+Do not provide teaching feedback or language corrections.
+
+Remain fully in character.
+
+Close the interaction naturally and concisely.
+`.trim()
+
+  );
+
+}
+
+
+/* =====================================================
+   EXPECTED NATURAL END
+===================================================== */
+
+function triggerExpectedEnd() {
+
+  if (expectedEndTriggered) {
+    return;
+  }
+
+
+  expectedEndTriggered =
+    true;
+
+
+  console.log(
+    'SYNC EXPECTED END → 06:00'
+  );
+
+
+  sendSyncStageInstruction(
+
+    'EXPECTED_END',
+
+    `
+The planned interaction time has been reached.
+
+Finish the professional conversation now.
+
+If a final acknowledgement or farewell is necessary, make it brief and natural.
+
+Do not introduce any new information, question, problem, or topic.
+
+Remain fully in character and close the interaction immediately after the final professional acknowledgement.
+`.trim()
+
+  );
+
+}
+
+
+/* =====================================================
+   HARD STOP
+===================================================== */
+
+function triggerSyncHardStop() {
+
+  if (hardStopTriggered) {
+    return;
+  }
+
+
+  hardStopTriggered =
+    true;
+
+
+  console.log(
+    'SYNC HARD STOP → 06:15'
+  );
+
+
+  /*
+    Use the existing endSession() function.
+
+    This preserves the existing transcript
+    finalization and persistence behavior.
+  */
+
+  if (sessionActive) {
+
+    endSession();
+
+  }
+
+}
+
+
+/* =====================================================
+   TEMPORAL CONTROLLER
+===================================================== */
+
+function updateSyncStageController() {
+
+  if (
+    !sessionActive ||
+    !sessionStartTime
+  ) {
+
+    return;
+
+  }
+
+
+  const elapsedSeconds =
+    Math.floor(
+      (Date.now() - sessionStartTime) /
+      1000
+    );
+
+
+  /*
+    INTRODUCTION
+    00:00 → 00:45
+  */
+
+  if (
+    elapsedSeconds <
+    SYNC_STAGE_TIMING.introductionEnd
+  ) {
+
+    if (
+      currentSyncStage === null
+    ) {
+
+      enterIntroductionStage();
+
+    }
+
+    return;
+
+  }
+
+
+  /*
+    DEVELOPMENT — EVIDENCE
+    00:45 → 03:33
+  */
+
+  if (
+    elapsedSeconds <
+    SYNC_STAGE_TIMING.outcomeCheckpoint
+  ) {
+
+    if (
+      currentSyncStage ===
+      'INTRODUCTION'
+    ) {
+
+      enterDevelopmentEvidenceStage();
+
+    }
+
+    return;
+
+  }
+
+
+  /*
+    OUTCOME CHECKPOINT
+    03:33
+
+    Trigger only once.
+  */
+
+  if (
+    !outcomeCheckpointTriggered
+  ) {
+
+    triggerOutcomeCheckpoint();
+
+  }
+
+
+  /*
+    DEVELOPMENT — RESOLUTION
+    03:33 → 04:45
+  */
+
+  if (
+    elapsedSeconds <
+    SYNC_STAGE_TIMING.developmentEnd
+  ) {
+
+    return;
+
+  }
+
+
+  /*
+    CONCLUSION
+    04:45 → 06:00
+  */
+
+  if (
+    elapsedSeconds <
+    SYNC_STAGE_TIMING.expectedEnd
+  ) {
+
+    if (
+      currentSyncStage !==
+      'CONCLUSION'
+    ) {
+
+      enterConclusionStage();
+
+    }
+
+    return;
+
+  }
+
+
+  /*
+    EXPECTED NATURAL END
+    06:00
+  */
+
+  if (
+    !expectedEndTriggered
+  ) {
+
+    triggerExpectedEnd();
+
+  }
+
+
+  /*
+    HARD STOP
+    06:15
+  */
+
+  if (
+    elapsedSeconds >=
+      SYNC_STAGE_TIMING.hardStop &&
+    !hardStopTriggered
+  ) {
+
+    triggerSyncHardStop();
+
+  }
+
+}
+
+
+/* =====================================================
+   START STAGE CONTROLLER
+===================================================== */
+
+function startSyncStageController() {
+
+  /*
+    Avoid duplicate controller intervals.
+  */
+
+  if (syncStageControllerInterval) {
+
+    clearInterval(
+      syncStageControllerInterval
+    );
+
+  }
+
+
+  /*
+    Reset controller state.
+  */
+
+  currentSyncStage =
+    null;
+
+  outcomeCheckpointTriggered =
+    false;
+
+  expectedEndTriggered =
+    false;
+
+  hardStopTriggered =
+    false;
+
+
+  console.log(
+    'SYNC TEMPORAL STAGE CONTROLLER → STARTED'
+  );
+
+
+  /*
+    Run immediately so INTRODUCTION
+    is activated without waiting 1 second.
+  */
+
+  updateSyncStageController();
+
+
+  /*
+    Check temporal state every second.
+
+    Date.now() / sessionStartTime remains
+    the source of truth.
+  */
+
+  syncStageControllerInterval =
+    setInterval(
+      updateSyncStageController,
+      1000
+    );
+
+}
+
+
+/* =====================================================
+   STOP STAGE CONTROLLER
+===================================================== */
+
+function stopSyncStageController() {
+
+  if (syncStageControllerInterval) {
+
+    clearInterval(
+      syncStageControllerInterval
+    );
+
+  }
+
+
+  syncStageControllerInterval =
+    null;
+
+
+  console.log(
+    'SYNC TEMPORAL STAGE CONTROLLER → STOPPED'
+  );
+
+}
 
   /* =====================================================
      WAIT FOR ICE GATHERING
