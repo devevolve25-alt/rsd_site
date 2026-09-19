@@ -1095,11 +1095,20 @@ function enterDevelopmentResolutionStage(
 ) {
 
   if (
-    currentSyncStage ===
-    'DEVELOPMENT_RESOLUTION'
-  ) {
-    return;
-  }
+  currentSyncStage === 'DEVELOPMENT_RESOLUTION' ||
+  currentSyncStage === 'CONCLUSION' ||
+  expectedEndTriggered ||
+  hardStopTriggered ||
+  !sessionActive
+) {
+
+  console.log(
+    'OUTCOME RESULT IGNORED: resolution window already closed'
+  );
+
+  return;
+
+}
 
 
   currentSyncStage =
