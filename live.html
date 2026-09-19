@@ -1023,12 +1023,76 @@ async function triggerOutcomeCheckpoint() {
 
 }
 
+  function handleOutcomeEvaluatorResult(result) {
+
+  const allowedOutcomes = [
+    'ACHIEVED',
+    'NOT_YET_ACHIEVED',
+    'INSUFFICIENT_EVIDENCE'
+  ];
+
+
+  let outcome =
+    result?.outcome;
+
+
+  let missingEvidence =
+    Array.isArray(result?.missing_evidence)
+      ? result.missing_evidence
+      : [];
+
+
+  /*
+    Invalid response = safe fallback.
+  */
+
+  if (
+    !allowedOutcomes.includes(outcome)
+  ) {
+
+    console.warn(
+      'INVALID OUTCOME EVALUATOR RESPONSE:',
+      result
+    );
+
+
+    outcome =
+      'INSUFFICIENT_EVIDENCE';
+
+    missingEvidence =
+      [];
+
+  }
+
+
+  console.log(
+    'SYNC OUTCOME:',
+    outcome
+  );
+
+
+  console.log(
+    'SYNC MISSING EVIDENCE:',
+    missingEvidence
+  );
+
+
+  enterDevelopmentResolutionStage(
+    outcome,
+    missingEvidence
+  );
+
+}
+
 
 /* =====================================================
    DEVELOPMENT — RESOLUTION
 ===================================================== */
 
-function enterDevelopmentResolutionStage() {
+function enterDevelopmentResolutionStage(
+  outcome,
+  missingEvidence = []
+) {
 
   if (
     currentSyncStage ===
@@ -1047,39 +1111,144 @@ function enterDevelopmentResolutionStage() {
   );
 
 
-  /*
-    TEMPORARY instruction.
-
-    Once the Outcome Evaluator is connected,
-    this generic instruction will be replaced
-    by an outcome-specific instruction.
-  */
+  let instruction = '';
 
 
-  sendSyncStageInstruction(
+  /* =================================================
+     ACHIEVED
+  ================================================= */
 
-    'DEVELOPMENT_RESOLUTION',
+  if (outcome === 'ACHIEVED') {
 
-    `
-Conversation Stage: DEVELOPMENT — RESOLUTION.
+    instruction = `
+The professional objective has already been demonstrated.
 
-The interaction is approaching its final phase.
+Continue naturally toward resolution of the current professional interaction.
 
-Remain focused exclusively on the professional mission.
+Acknowledge the professional result naturally through your assigned character when appropriate.
 
-Do not introduce new unrelated issues, additional scenarios, or small talk.
+Do not introduce new challenges, requirements, problems, or unrelated topics.
 
-Allow the participant to complete, clarify, confirm, correct, or finalize the professional task naturally.
+Do not test the participant further.
 
-Do not coach the participant or provide the answer.
+Do not mention evaluation, scoring, stages, success criteria, or the outcome.
 
-Do not conclude the conversation yet.
+Do not provide teaching feedback or language corrections.
 
 Remain fully in character.
 
-Keep the remaining interaction concise and directed toward resolution.
-`.trim()
+Do not force an immediate ending if a brief natural professional resolution is still necessary.
+`.trim();
 
+  }
+
+
+  /* =================================================
+     NOT YET ACHIEVED
+  ================================================= */
+
+  else if (
+    outcome ===
+    'NOT_YET_ACHIEVED'
+  ) {
+
+    const evidenceText =
+      missingEvidence.length > 0
+        ? missingEvidence
+            .map(
+              (item, index) =>
+                `${index + 1}. ${item}`
+            )
+            .join('\n')
+        : 'Continue gathering the professional evidence required by the existing scenario.';
+
+
+    instruction = `
+The professional objective has not yet been sufficiently demonstrated.
+
+Continue the current professional interaction naturally and give the participant a reasonable opportunity to complete the mission.
+
+The following professional evidence is still needed:
+
+${evidenceText}
+
+Use this information ONLY to guide your behavior as the assigned character.
+
+Do not read these requirements to the participant.
+
+Do not reveal that an evaluation is taking place.
+
+Do not tell the participant what to say.
+
+Do not coach the participant.
+
+Do not provide the answer.
+
+Do not lower or change the professional requirements.
+
+Do not introduce unrelated topics or new challenges.
+
+Remain fully in character.
+
+Focus the remaining interaction on creating a natural opportunity for the missing professional evidence to emerge.
+`.trim();
+
+  }
+
+
+  /* =================================================
+     INSUFFICIENT EVIDENCE
+  ================================================= */
+
+  else {
+
+    const evidenceText =
+      missingEvidence.length > 0
+        ? missingEvidence
+            .map(
+              (item, index) =>
+                `${index + 1}. ${item}`
+            )
+            .join('\n')
+        : 'Continue gathering evidence directly related to the existing professional mission.';
+
+
+    instruction = `
+There is not yet enough observable evidence to determine the professional outcome.
+
+Continue the current professional interaction naturally.
+
+The following professional evidence still needs to be observed:
+
+${evidenceText}
+
+Use this information ONLY to guide your behavior as the assigned character.
+
+Create natural opportunities for the participant to provide the required information, decision, clarification, confirmation, explanation, negotiation, or action.
+
+Do not read these requirements to the participant.
+
+Do not reveal that an evaluation is taking place.
+
+Do not tell the participant what to say.
+
+Do not coach the participant.
+
+Do not provide the answer.
+
+Do not introduce unrelated topics or new challenges.
+
+Remain fully in character.
+
+Keep the interaction focused on the existing professional mission.
+`.trim();
+
+  }
+
+
+  sendSyncStageInstruction(
+    'DEVELOPMENT_RESOLUTION',
+    instruction
   );
 
 }
