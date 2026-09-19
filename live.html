@@ -1031,20 +1031,20 @@
   }
 
 
-  /* =====================================================
-     SAVE CONVERSATION MESSAGES
+    /* =====================================================
+     SEND CONVERSATION TO N8N
   ===================================================== */
 
   async function saveConversationMessages() {
 
     /*
-      Avoid duplicate writes.
+      Prevent duplicate submissions.
     */
 
     if (conversationSaveStarted) {
 
       console.log(
-        'Conversation save already started'
+        'Conversation submission already started'
       );
 
       return {
@@ -1054,12 +1054,11 @@
     }
 
 
-    conversationSaveStarted =
-      true;
+    conversationSaveStarted = true;
 
 
     /*
-      Ensure the consolidated array exists.
+      Ensure conversationMessages exists.
     */
 
     if (
@@ -1076,13 +1075,13 @@
 
 
     /*
-      Do not call the endpoint with an empty conversation.
+      Do not call n8n with an empty conversation.
     */
 
     if (conversationMessages.length === 0) {
 
       console.warn(
-        'Conversation not saved: no transcript messages available'
+        'Conversation not submitted: no transcript messages available'
       );
 
       return {
@@ -1092,15 +1091,48 @@
     }
 
 
+    /*
+      TEMPORARY TEST SESSION ID
+
+      Later this will come from the validated
+      signed session token.
+    */
+
+    const sessionId =
+      '3a1f0bf3-323e-45ab-bb00-3b7fc345a64c';
+
+
+    /*
+      Payload sent to n8n.
+    */
+
+    const payload = {
+
+      session_id:
+        sessionId,
+
+      interaction:
+        'sync',
+
+      messages:
+        conversationMessages
+
+    };
+
+
     console.log(
-      'Saving conversation messages:',
-      conversationMessages
+      'Sending Live conversation to n8n:',
+      payload
     );
 
 
+    /*
+      Send conversation to n8n workflow.
+    */
+
     const response =
       await fetch(
-        '/api/save-live-transcript',
+        'https://powerfulkiwi-n8n.cloudfy.live/webhook/ae8588a5-2ecb-4b5f-891f-89d6015d8570',
         {
 
           method:
@@ -1114,16 +1146,20 @@
           },
 
           body:
-            JSON.stringify({
-
-              messages:
-                conversationMessages
-
-            })
+            JSON.stringify(
+              payload
+            )
 
         }
       );
 
+
+    /*
+      Read n8n response.
+
+      The workflow may return JSON or plain text,
+      so both are supported.
+    */
 
     const responseText =
       await response.text();
@@ -1153,10 +1189,14 @@
     }
 
 
+    /*
+      HTTP error from n8n.
+    */
+
     if (!response.ok) {
 
       throw new Error(
-        `Transcript save error ${response.status}: ${
+        `n8n webhook error ${response.status}: ${
           typeof result === 'string'
             ? result
             : JSON.stringify(result)
@@ -1167,7 +1207,7 @@
 
 
     console.log(
-      'LIVE TRANSCRIPT SAVED:',
+      'LIVE CONVERSATION SENT TO N8N:',
       result
     );
 
