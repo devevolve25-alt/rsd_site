@@ -919,16 +919,13 @@ Keep the conversation focused on obtaining observable evidence of whether the pr
    OUTCOME CHECKPOINT
 ===================================================== */
 
-function triggerOutcomeCheckpoint() {
+async function triggerOutcomeCheckpoint() {
 
   if (outcomeCheckpointTriggered) {
     return;
   }
 
-
-  outcomeCheckpointTriggered =
-    true;
-
+  outcomeCheckpointTriggered = true;
 
   console.log(
     'SYNC OUTCOME CHECKPOINT → TRIGGERED AT 03:33'
@@ -936,26 +933,93 @@ function triggerOutcomeCheckpoint() {
 
 
   /*
-    IMPORTANT:
-
-    For the first Stage Controller test,
-    no request is sent to n8n.
-
-    In the next implementation this point will:
-
-    1. Build a snapshot of conversationMessages
-    2. Send session_id + messages to n8n
-    3. Call the Outcome Evaluator
-    4. Receive:
-       ACHIEVED
-       NOT_YET_ACHIEVED
-       INSUFFICIENT_EVIDENCE
-    5. Send the corresponding resolution
-       instruction to GPT-Live.
+    Build a snapshot of the conversation
+    available at the checkpoint.
   */
 
+  const messages =
+    buildConversationMessages(
+      transcriptEvents
+    );
 
-  enterDevelopmentResolutionStage();
+
+  console.log(
+    'OUTCOME CHECKPOINT MESSAGES:',
+    messages
+  );
+
+
+  try {
+
+    const response = await fetch(
+      'https://powerfulkiwi-n8n.cloudfy.live/webhook/a2fedf3d-563a-4408-bd70-19635ffe15be',
+      {
+        method: 'POST',
+
+        headers: {
+          'Content-Type': 'application/json'
+        },
+
+        body: JSON.stringify({
+
+          session_id:
+            '3a1f0bf3-323e-45ab-bb00-3b7fc345a64c',
+
+          messages:
+            messages
+
+        })
+      }
+    );
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        `Outcome Evaluator HTTP ${response.status}`
+      );
+
+    }
+
+
+    const result =
+      await response.json();
+
+
+    console.log(
+      'OUTCOME EVALUATOR RESPONSE:',
+      result
+    );
+
+
+    handleOutcomeEvaluatorResult(
+      result
+    );
+
+  }
+
+  catch (error) {
+
+    console.error(
+      'OUTCOME EVALUATOR ERROR:',
+      error
+    );
+
+
+    /*
+      Fail-safe:
+      an evaluator/network failure must
+      never interrupt the Live session.
+    */
+
+    handleOutcomeEvaluatorResult({
+      outcome:
+        'INSUFFICIENT_EVIDENCE',
+
+      missing_evidence: []
+    });
+
+  }
 
 }
 
