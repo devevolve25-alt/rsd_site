@@ -1,85 +1,15 @@
 export default async function handler(req, res) {
 
-  /* =====================================================
-     METHOD
-  ===================================================== */
-
   if (req.method !== 'POST') {
-
     return res.status(405).json({
       error: 'Method not allowed'
     });
-
   }
-
-
-  /* =====================================================
-     TEMPORARY TEST SESSION
-
-     Hardcoded ONLY for the current development test.
-
-     In production, session_id will come from the
-     validated signed token.
-  ===================================================== */
 
   const SESSION_ID =
     '3a1f0bf3-323e-45ab-bb00-3b7fc345a64c';
 
-
   try {
-
-    /* =====================================================
-       INPUT
-    ===================================================== */
-
-    const {
-      messages
-    } = req.body || {};
-
-
-    if (!Array.isArray(messages)) {
-
-      return res.status(400).json({
-        error: 'messages must be an array'
-      });
-
-    }
-
-
-    if (messages.length === 0) {
-
-      return res.status(400).json({
-        error: 'messages cannot be empty'
-      });
-
-    }
-
-
-    /* =====================================================
-       BASIC MESSAGE VALIDATION
-    ===================================================== */
-
-    for (const message of messages) {
-
-      if (
-        !message ||
-        !Number.isInteger(message.sequence) ||
-        !['user', 'executor'].includes(message.role) ||
-        typeof message.content !== 'string'
-      ) {
-
-        return res.status(400).json({
-          error: 'Invalid conversation message structure'
-        });
-
-      }
-
-    }
-
-
-    /* =====================================================
-       SUPABASE CONFIG
-    ===================================================== */
 
     const SUPABASE_URL =
       process.env.SUPABASE_URL;
@@ -88,182 +18,109 @@ export default async function handler(req, res) {
       process.env.SUPABASE_SECRET_KEY;
 
 
-    if (
-      !SUPABASE_URL ||
-      !SUPABASE_SECRET_KEY
-    ) {
-
-      console.error(
-        'Missing Supabase environment variables'
-      );
+    if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) {
 
       return res.status(500).json({
-        error: 'Server configuration error'
+        error: 'Missing Supabase environment variables',
+        has_url: !!SUPABASE_URL,
+        has_secret_key: !!SUPABASE_SECRET_KEY
       });
 
     }
 
 
-    /* =====================================================
-       UPDATE SESSION
-    ===================================================== */
+    /*
+      DIAGNOSTIC TEST
 
-    const supabaseResponse =
+      We are NOT writing anything yet.
+
+      We only ask Supabase:
+      "Does this exact session exist?"
+    */
+
+    const url =
+      `${SUPABASE_URL}/rest/v1/sessions` +
+      `?id=eq.${SESSION_ID}` +
+      `&select=id,interaction,status`;
+
+
+    console.log(
+      'Looking for session:',
+      SESSION_ID
+    );
+
+
+    const response =
       await fetch(
-        `${SUPABASE_URL}/rest/v1/sessions?id=eq.${SESSION_ID}`,
+        url,
         {
-
-          method:
-            'PATCH',
+          method: 'GET',
 
           headers: {
-
-            'apikey':
-              SUPABASE_SECRET_KEY,
-
-            'Authorization':
-              `Bearer ${SUPABASE_SECRET_KEY}`,
-
-            'Content-Type':
-              'application/json',
-
-            'Prefer':
-              'return=representation'
-
-          },
-
-          body:
-            JSON.stringify({
-
-              messages:
-                messages
-
-            })
-
+            'apikey': SUPABASE_SECRET_KEY,
+            'Accept': 'application/json'
+          }
         }
       );
 
 
-    /* =====================================================
-       READ SUPABASE RESPONSE
-    ===================================================== */
-
     const responseText =
-      await supabaseResponse.text();
+      await response.text();
 
 
-    let result = null;
+    let data;
 
-
-    if (responseText) {
-
-      try {
-
-        result =
-          JSON.parse(responseText);
-
-      }
-
-      catch {
-
-        result =
-          responseText;
-
-      }
-
+    try {
+      data = JSON.parse(responseText);
+    }
+    catch {
+      data = responseText;
     }
 
-
-    /* =====================================================
-       SUPABASE ERROR
-    ===================================================== */
-
-    if (!supabaseResponse.ok) {
-
-      console.error(
-        'Supabase transcript save error:',
-        result
-      );
-
-
-      return res
-        .status(supabaseResponse.status)
-        .json({
-
-          error:
-            'Failed to save conversation',
-
-          details:
-            result
-
-        });
-
-    }
-
-
-    /* =====================================================
-       SESSION NOT FOUND
-    ===================================================== */
-
-    if (
-      !Array.isArray(result) ||
-      result.length === 0
-    ) {
-
-      return res.status(404).json({
-        error: 'Session not found'
-      });
-
-    }
-
-
-    /* =====================================================
-       SUCCESS
-    ===================================================== */
 
     console.log(
-      'Live conversation saved:',
-      {
-
-        session_id:
-          SESSION_ID,
-
-        messages:
-          messages.length
-
-      }
+      'Supabase diagnostic status:',
+      response.status
     );
 
+    console.log(
+      'Supabase diagnostic result:',
+      data
+    );
+
+
+    /*
+      IMPORTANT:
+      Return the diagnostic result to the browser.
+    */
 
     return res.status(200).json({
 
-      success:
-        true,
+      diagnostic: true,
 
-      session_id:
+      session_id_requested:
         SESSION_ID,
 
-      messages_saved:
-        messages.length
+      supabase_http_status:
+        response.status,
+
+      supabase_response:
+        data
 
     });
 
+
   }
-
-
   catch (error) {
 
     console.error(
-      'Unexpected transcript save error:',
+      'Supabase diagnostic error:',
       error
     );
 
-
     return res.status(500).json({
-
-      error:
-        'Failed to save live transcript'
-
+      error: 'Diagnostic failed',
+      message: error.message
     });
 
   }
