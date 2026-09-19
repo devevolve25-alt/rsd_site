@@ -2267,6 +2267,7 @@ function stopSyncStageController() {
 
       startTimer();
 
+      startSyncStageController();
 
       console.log(
         'GPT-Live-1 session started:',
@@ -3102,6 +3103,8 @@ function stopSyncStageController() {
     ------------------------------------------------- */
 
     stopTimer();
+
+    stopSyncStageController();
 
     sessionStartTime =
       null;
