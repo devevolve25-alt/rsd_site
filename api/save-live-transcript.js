@@ -1,15 +1,29 @@
 export default async function handler(req, res) {
 
+  /* =====================================================
+     METHOD
+  ===================================================== */
+
   if (req.method !== 'POST') {
     return res.status(405).json({
       error: 'Method not allowed'
     });
   }
 
+
+  /* =====================================================
+     TEST SESSION
+  ===================================================== */
+
   const SESSION_ID =
     '3a1f0bf3-323e-45ab-bb00-3b7fc345a64c';
 
+
   try {
+
+    /* =====================================================
+       ENVIRONMENT VARIABLES
+    ===================================================== */
 
     const SUPABASE_URL =
       process.env.SUPABASE_URL;
@@ -21,27 +35,49 @@ export default async function handler(req, res) {
     if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) {
 
       return res.status(500).json({
-        error: 'Missing Supabase environment variables',
-        has_url: !!SUPABASE_URL,
-        has_secret_key: !!SUPABASE_SECRET_KEY
+
+        error:
+          'Missing Supabase environment variables',
+
+        has_url:
+          !!SUPABASE_URL,
+
+        has_secret_key:
+          !!SUPABASE_SECRET_KEY
+
       });
 
     }
 
 
-    /*
-      DIAGNOSTIC TEST
+    /* =====================================================
+       IDENTIFY PROJECT HOST
 
-      We are NOT writing anything yet.
+       Safe to return.
+       The Secret Key is NEVER returned.
+    ===================================================== */
 
-      We only ask Supabase:
-      "Does this exact session exist?"
-    */
+    const projectHost =
+      new URL(SUPABASE_URL).hostname;
+
+
+    /* =====================================================
+       BUILD SUPABASE REQUEST
+
+       READ ONLY.
+       Nothing will be written to the database.
+    ===================================================== */
 
     const url =
       `${SUPABASE_URL}/rest/v1/sessions` +
       `?id=eq.${SESSION_ID}` +
-      `&select=id,interaction,status`;
+      `&select=id,user_id,scenario_id,interaction,status,started_at`;
+
+
+    console.log(
+      'Supabase project host:',
+      projectHost
+    );
 
 
     console.log(
@@ -50,19 +86,35 @@ export default async function handler(req, res) {
     );
 
 
+    /* =====================================================
+       CALL SUPABASE
+    ===================================================== */
+
     const response =
       await fetch(
         url,
         {
-          method: 'GET',
+
+          method:
+            'GET',
 
           headers: {
-            'apikey': SUPABASE_SECRET_KEY,
-            'Accept': 'application/json'
+
+            'apikey':
+              SUPABASE_SECRET_KEY,
+
+            'Accept':
+              'application/json'
+
           }
+
         }
       );
 
+
+    /* =====================================================
+       READ RESPONSE
+    ===================================================== */
 
     const responseText =
       await response.text();
@@ -70,33 +122,45 @@ export default async function handler(req, res) {
 
     let data;
 
+
     try {
-      data = JSON.parse(responseText);
+
+      data =
+        JSON.parse(responseText);
+
     }
+
     catch {
-      data = responseText;
+
+      data =
+        responseText;
+
     }
 
 
     console.log(
-      'Supabase diagnostic status:',
+      'Supabase HTTP status:',
       response.status
     );
 
+
     console.log(
-      'Supabase diagnostic result:',
+      'Supabase response:',
       data
     );
 
 
-    /*
-      IMPORTANT:
-      Return the diagnostic result to the browser.
-    */
+    /* =====================================================
+       RETURN DIAGNOSTIC
+    ===================================================== */
 
     return res.status(200).json({
 
-      diagnostic: true,
+      diagnostic:
+        true,
+
+      supabase_project_host:
+        projectHost,
 
       session_id_requested:
         SESSION_ID,
@@ -109,8 +173,9 @@ export default async function handler(req, res) {
 
     });
 
-
   }
+
+
   catch (error) {
 
     console.error(
@@ -118,9 +183,18 @@ export default async function handler(req, res) {
       error
     );
 
+
     return res.status(500).json({
-      error: 'Diagnostic failed',
-      message: error.message
+
+      diagnostic:
+        false,
+
+      error:
+        'Diagnostic failed',
+
+      message:
+        error.message
+
     });
 
   }
