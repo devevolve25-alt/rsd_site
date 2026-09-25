@@ -1,335 +1,225 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RS DESENVOLVIMENTO - Futuro Digital com IA</title>
-    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- Referência ao seu arquivo de estilos externo -->
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="G.P.C. Business Talks: treinamento profissional com IA para transformar conhecimento linguístico em performance observável, mensurável e aplicável ao trabalho." />
+  <title>G.P.C. Business Talks | Treinamento profissional com IA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-    <!--
-    <div class="side-menu">
-        <div class="logo">RSD</div>
-        <a href="#home" aria-label="Home">🏠</a>
-        <a href="#services" aria-label="Services">⚙️</a>
-        <a href="#portfolio" aria-label="Portfolio">💼</a>
-        <a href="#contact" aria-label="Contact">✉️</a>
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="#inicio" aria-label="Business Talks - início">
+        <img src="https://zplqlcvcpeohtxodvfkq.supabase.co/storage/v1/object/public/logos_estab/LOGO_BT_CUT.png" alt="Business Talks" />
+      </a>
+      <nav class="main-nav" aria-label="Navegação principal">
+        <a href="#solucao">Business Talks</a>
+        <a href="#como-funciona">Como funciona</a>
+        <a href="#empresas">Para empresas</a>
+        <a href="#resultados">Mensuração</a>
+      </nav>
+      <a class="btn btn-small" href="link_cta.html">Solicitar demonstração</a>
     </div>
-    -->
+  </header>
 
-    <div class="main-content">
-        <!-- Título principal em dourado -->
-        <h1>RS DESENVOLVIMENTO: Desenhando o Futuro Digital com Inteligência Artificial</h1>
-        <!-- Subtítulo em branco -->
-        <p>Na vanguarda da inovação tecnológica, a RS DESENVOLVIMENTO é a sua parceira estratégica para construir o futuro digital do seu negócio. Com um olhar no horizonte e as mais avançadas tecnologias de Inteligência Artificial, projetamos e implementamos soluções personalizadas que não apenas otimizam suas operações, mas as preparam para um crescimento exponencial e duradouro.</p>
-
-        <div class="cards-container">
-            <!-- CARD PAI MODIFICADO: Contém os três cards filhos -->
-            <div class="quantum-card">
-                <div class="quantum-bg-effect-top-left"></div>
-                <div class="quantum-bg-effect-bottom-right"></div>
-
-                <h2>Nossas Soluções Atuais: A Solidez da Inovação.</h2>
-                <p>Começamos pavimentando o caminho com plataformas robustas e eficientes, garantindo que você tenha as ferramentas certas para as demandas de hoje:</p>
-
-                <!-- CARD FILHO 1: VENDISIA -->
-                <div class="inner-solution-card">
-                    <h3>VENDISIA: Sua Plataforma de Agendamento Inteligente e Completa</h3>
-                    <p>Conheça a VENDISIA, nossa plataforma de atendimento e agendamento que já está revolucionando a gestão de horários. Pensada "mobile first" e com um agente de IA integrado, a VENDISIA é a escolha ideal para:</p>
-
-
-        <p><strong>Beleza & Bem-Estar:</strong></p>
-        <p>Salões de beleza, barbearias, clínicas de estética, spas.</p>
-
-
-        <p><strong>Saúde & Cuidado:</strong></p>
-        <p>Clínicas médicas e odontológicas, fisioterapeutas, nutricionistas.</p>
-
-
-        <p><strong>Serviços Profissionais:</strong></p>
-        <p>Personal trainers, coaches, consultores e professores.</p>
-
-
-        <!-- Para este item, como não há um "título: descrição" explícito, todo o texto é envolvido para que se comporte como um bloco. -->
-        <p>E todo tipo de negócio que precisa de agendamentos otimizados e gestão completa (cálculo de comissões, faturamento, CRM).</p>
-
-
-                    <p>Disponível em planos flexíveis (<em>Conecta Fácil, Agenda Pro, Gestão Total</em>), a VENDISIA é a prova de que a inteligência artificial já transforma a realidade de milhares de negócios.</p>
-                    <a href="javascript:void(0);" class="cta-button orange" data-chat-target="vendisiaInnerChat">SAIBA MAIS SOBRE VENDISIA</a>
-                    <!-- Chat integrado para o card filho da VENDISIA -->
-                    <div id="vendisiaInnerChat" class="card-chat-modal">
-                        <button class="close-chat-button">&times;</button>
-                        <h3>Converse sobre a VENDISIA!</h3>
-                        <div class="chat-messages">
-                            <div class="chat-message ai">Olá! Quer saber mais sobre como a VENDISIA pode otimizar seus agendamentos e gestão?</div>
-                        </div>
-                        <div class="chat-input-area">
-                            <input type="text" class="chat-input" placeholder="Digite sua mensagem...">
-                            <button class="chat-send-button" id="sendVendisiaChat">Enviar</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- CARD FILHO 2: Atendimento com IA Via WhatsApp -->
-                <div class="inner-solution-card">
-                    <h3>Atendimento com IA Via WhatsApp: Conexão 24/7 e Personalizada.</h3>
-                    <p>Leve a inteligência artificial diretamente para o canal de comunicação preferido dos seus clientes. Nosso agente de IA no WhatsApp responde a dúvidas, realiza agendamentos e envia e-mails 24 horas por dia, 7 dias por semana. Perfeito para:</p>
-                   
-                        <p><strong>Pequenos Comércios & Delivery:</strong></p><p>Agilizar pedidos e suporte.</p>
-                        <p><strong>Prestadores de Serviço Autônomos:</strong></p><p>Gerenciar demandas e informações.</p>
-                        <p><strong>E-commerce (Suporte):</strong></p><p>Automatizar interações e FAQs.</p>
-                    
-                    <a href="javascript:void(0);" class="cta-button green" data-chat-target="whatsappInnerChat">FALE COM NOSSA IA NO WHATSAPP</a>
-                    <!-- Chat integrado para o card filho do WhatsApp -->
-                    <div id="whatsappInnerChat" class="card-chat-modal">
-                        <button class="close-chat-button">&times;</button>
-                        <h3>Converse sobre o Atendimento via WhatsApp!</h3>
-                        <div class="chat-messages">
-                            <div class="chat-message ai">Olá! Como nossa IA pode revolucionar seu atendimento via WhatsApp?</div>
-                        </div>
-                        <div class="chat-input-area">
-                            <input type="text" class="chat-input" placeholder="Digite sua mensagem...">
-                            <button class="chat-send-button" id="sendWhatsappChat">Enviar</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- CARD FILHO 3: Desenvolvimento de Web Sites -->
-                <div class="inner-solution-card">
-                    <h3>Desenvolvimento de Web Sites: Sua Presença Digital Essencial.</h3>
-                    <p>Em um mundo conectado, ter um website profissional é a base para a credibilidade e visibilidade da sua marca. Criamos websites modernos, otimizados para SEO e focados na experiência do usuário, ideais para:</p>
-                    
-                        <p><strong>Startups & Empreendedores:</strong></p><p>Para lançar sua marca com profissionalismo.</p>
-                        <p><strong>Pequenas e Médias Empresas (PMEs):</strong></p><p>Para solidificar sua presença e atrair clientes.</p>
-                        <p><strong>Profissionais Liberais:</strong></p><p>Para apresentar seu portfólio e serviços com excelência.</p>
-                    
-                    <a href="javascript:void(0);" class="cta-button blue" data-chat-target="websiteInnerChat">CRIE SEU WEBSITE</a>
-                    <!-- Chat integrado para o card filho de Websites -->
-                    <div id="websiteInnerChat" class="card-chat-modal">
-                        <button class="close-chat-button">&times;</button>
-                        <h3>Converse sobre Desenvolvimento de Websites!</h3>
-                        <div class="chat-messages">
-                            <div class="chat-message ai">Olá! Pronto para construir seu website dos sonhos com a gente?</div>
-                        </div>
-                        <div class="chat-input-area">
-                            <input type="text" class="chat-input" placeholder="Digite sua mensagem...">
-                            <button class="chat-send-button" id="sendWebsiteChat">Enviar</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 2º Card (Originalmente o 2º): Expandindo Horizontes -->
-            <div class="quantum-card">
-                <div class="quantum-bg-effect-top-left"></div>
-                <div class="quantum-bg-effect-bottom-right"></div>
-
-                <h2>Expandindo Horizontes: Possibilidades Infinitas com Abordagem AI-First.</h2>
-                <p>Além das soluções que você já vê, a verdadeira força da RS DESENVOLVIMENTO reside em nossa capacidade de criar o futuro. Somos especialistas em desenvolver sistemas "AI-First" personalizados, onde a inteligência artificial é o motor da sua estratégia, abrindo um campo vasto de oportunidades para:</p>
-
-                <h3>CRMs e ERPs AI-FIRST Personalizados: Inteligência na Gestão Total.</h3>
-                <p><strong>Hiperpersonalização do Cliente:</strong></p>
-                <p>Para Grandes Empresas & Franquias ou E-commerce de Alto Volume que buscam antecipar necessidades, otimizar funis de vendas e fidelizar com precisão cirúrgica.</p>
-
-                <p><strong>Otimização Operacional Avançada:</strong></p>
-                <p>Para Indústrias & Manufatura ou Logística que precisam de automação inteligente, manutenção preditiva, gestão de cadeia de suprimentos e processos financeiros sem precedentes.</p>
-
-                <p><strong>Tomada de Decisão Estratégica Baseada em Dados:</strong></p>
-                <p>Para qualquer negócio, incluindo Empresas B2B de Consultoria & Tecnologia, que deseja transformar volumes massivos de dados em insights acionáveis, garantindo um diferencial competitivo sustentável.</p>
-
-                <a href="javascript:void(0);" class="cta-button blue" data-chat-target="expandChat">SAIBA MAIS</a>
-
-                <!-- Chat integrado neste card -->
-                <div id="expandChat" class="card-chat-modal">
-                    <button class="close-chat-button">&times;</button>
-                    <h3>Explore as Possibilidades com nossa IA!</h3>
-                    <div class="chat-messages">
-                        <div class="chat-message ai">O que você gostaria de saber sobre as novas fronteiras da IA?</div>
-                    </div>
-                    <div class="chat-input-area">
-                        <input type="text" class="chat-input" placeholder="Digite sua mensagem...">
-                        <button class="chat-send-button" id="sendExpandChat">Enviar</button>
-                        </div>
-                </div>
-            </div>
-
-            <!-- 3º Card (Originalmente o 3º): Nossa IA se Adapta. Sua Empresa Cresce. -->
-            <div class="quantum-card">
-                <div class="quantum-bg-effect-top-left"></div>
-                <div class="quantum-bg-effect-bottom-right"></div>
-
-                <h2>Nossa IA se Adapta. Sua Empresa Cresce.</h2>
-                <p>Na RS DESENVOLVIMENTO, não vendemos apenas softwares; criamos inteligência sob medida que se integra perfeitamente à sua visão, seja você uma startup em ascensão, uma PME consolidada ou uma grande corporação buscando a próxima disrupção. Estamos prontos para explorar as possibilidades e construir a solução AI-First que levará seu negócio ao próximo nível.</p>
-
-                <a href="javascript:void(0);" class="cta-button" data-chat-target="approachesChat">CONHEÇA NOSSAS ABORDAGENS</a>
-
-                <!-- Chat integrado neste card -->
-                <div id="approachesChat" class="card-chat-modal">
-                    <button class="close-chat-button">&times;</button>
-                    <h3>Nossa IA se Adapta. Sua Empresa Cresce.</h3>
-                    <div class="chat-messages">
-                        <div class="chat-message ai">Quer entender como nossas abordagens AI-First podem impulsionar seu crescimento?</div>
-                    </div>
-                    <div class="chat-input-area">
-                        <input type="text" class="chat-input" placeholder="Digite sua mensagem...">
-                        <button class="chat-send-button" id="sendApproachesChat">Enviar</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 4º Card (Originalmente o 4º): Pronto para Transformar Seu Negócio? -->
-            <div class="quantum-card">
-                <div class="quantum-bg-effect-top-left"></div>
-                <div class="quantum-bg-effect-bottom-right"></div>
-
-                <h2>Pronto para Transformar Seu Negócio?</h2>
-                <p>Conecte-se com a RS DESENVOLVIMENTO e descubra como a Inteligência Artificial pode impulsionar sua empresa a novos patamares de eficiência, inovação e sucesso.</p>
-
-                <a href="javascript:void(0);" class="cta-button green" data-chat-target="contactChat">FALE CONOSCO</a>
-
-                <!-- Chat integrado neste card -->
-                <div id="contactChat" class="card-chat-modal">
-                    <button class="close-chat-button">&times;</button>
-                    <h3>Fale Conosco via IA!</h3>
-                    <div class="chat-messages">
-                        <div class="chat-message ai">Olá! Como podemos ajudar a transformar seu negócio com IA?</div>
-                    </div>
-                    <div class="chat-input-area">
-                        <input type="text" class="chat-input" placeholder="Digite sua mensagem...">
-                        <button class="chat-send-button" id="sendContactChat">Enviar</button>
-                    </div>
-                </div>
-            </div>
+  <main>
+    <section class="hero" id="inicio">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <span class="eyebrow">G.P.C. BUSINESS TALKS</span>
+          <h1>Transforme inglês estudado em <span>performance no trabalho.</span></h1>
+          <p class="hero-lead">Treinamento profissional com IA que coloca seus colaboradores em situações de comunicação próximas da realidade, analisa sua performance e transforma cada prática em dados para desenvolvimento.</p>
+          <div class="hero-actions">
+            <a class="btn" href="link_cta.html">Experimentar uma simulação</a>
+            <a class="text-link" href="#como-funciona">Entenda como funciona <span aria-hidden="true">→</span></a>
+          </div>
+          <p class="microcopy">Prática contextualizada. Feedback individual. Resultados mensuráveis.</p>
         </div>
+        <aside class="hero-panel" aria-label="Resumo do processo">
+          <span class="panel-kicker">DA PRÁTICA À EVIDÊNCIA</span>
+          <div class="flow-step"><b>01</b><div><strong>Situação profissional</strong><span>Um objetivo concreto, dentro de um contexto de trabalho.</span></div></div>
+          <div class="flow-line"></div>
+          <div class="flow-step"><b>02</b><div><strong>Interação com IA</strong><span>O profissional precisa compreender, responder e agir.</span></div></div>
+          <div class="flow-line"></div>
+          <div class="flow-step"><b>03</b><div><strong>Análise estruturada</strong><span>Performance profissional e linguística avaliadas separadamente.</span></div></div>
+          <div class="flow-line"></div>
+          <div class="flow-step"><b>04</b><div><strong>Feedback e relatório</strong><span>Evidências transformadas em informação útil para desenvolvimento.</span></div></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="problem section">
+      <div class="container narrow center">
+        <span class="eyebrow">O DESAFIO</span>
+        <h2>Seu colaborador estudou inglês.<br />Mas consegue usá-lo quando o trabalho exige?</h2>
+        <p>Conhecimento linguístico e capacidade de comunicação profissional não são a mesma coisa. Reuniões, negociações, problemas, clientes e decisões exigem que o profissional consiga transformar o que sabe em comunicação efetiva.</p>
+        <p class="statement">O G.P.C. foi criado para trabalhar exatamente o espaço entre <strong>saber</strong> e <strong>conseguir fazer.</strong></p>
+      </div>
+    </section>
+
+    <section class="solution section soft" id="solucao">
+      <div class="container split">
+        <div>
+          <span class="eyebrow">A SOLUÇÃO</span>
+          <h2>Treinamento por simulação. Não apenas conteúdo.</h2>
+          <p>O <strong>G.P.C. Business Talks</strong> cria situações profissionais nas quais o participante precisa utilizar o idioma para alcançar um objetivo concreto.</p>
+          <p>Em vez de apenas estudar como conduzir uma reunião, esclarecer um problema ou negociar uma condição, o profissional é colocado em uma situação em que precisa efetivamente fazer isso.</p>
+          <p>A inteligência artificial permite variar interlocutores, contextos e desafios, mantendo a experiência alinhada ao nível linguístico e aos objetivos do participante.</p>
+        </div>
+        <div class="quote-card">
+          <span class="quote-mark">“</span>
+          <p>Não medimos apenas quanto o profissional treinou. Analisamos o que ele conseguiu demonstrar durante o treinamento.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="como-funciona">
+      <div class="container">
+        <div class="section-head center">
+          <span class="eyebrow">COMO FUNCIONA</span>
+          <h2>Um processo simples para quem treina.<br />Uma estrutura poderosa por trás de cada prática.</h2>
+        </div>
+        <div class="steps-grid">
+          <article class="step-card"><span>01</span><h3>Contextualização</h3><p>O treinamento considera nível linguístico, objetivos e contexto profissional do participante.</p></article>
+          <article class="step-card"><span>02</span><h3>Simulação</h3><p>A IA cria uma situação profissional com interlocutores, desafios e um objetivo a ser alcançado.</p></article>
+          <article class="step-card"><span>03</span><h3>Interação</h3><p>O participante utiliza o idioma para perguntar, explicar, esclarecer, propor, negociar ou decidir.</p></article>
+          <article class="step-card"><span>04</span><h3>Análise</h3><p>O sistema observa evidências da performance profissional e do uso do idioma.</p></article>
+          <article class="step-card"><span>05</span><h3>Feedback</h3><p>O profissional recebe uma devolutiva objetiva sobre aquilo que demonstrou durante a prática.</p></article>
+          <article class="step-card"><span>06</span><h3>Continuidade</h3><p>Novas práticas criam mais evidências e permitem orientar o desenvolvimento com maior precisão.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section dark" id="empresas">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow light">POR QUE IA NO TREINAMENTO?</span>
+          <h2>Mais prática e informação sem exigir crescimento proporcional da estrutura de treinamento.</h2>
+        </div>
+        <div class="benefits-grid">
+          <article><div class="icon">↘</div><h3>Eficiência de custos</h3><p>Amplie oportunidades de prática individual sem depender da expansão proporcional de instrutores, turmas e horários sincronizados.</p></article>
+          <article><div class="icon">◎</div><h3>Praticidade</h3><p>O profissional pratica em um ambiente estruturado e disponível sob demanda, com situações relacionadas ao uso real do idioma no trabalho.</p></article>
+          <article><div class="icon">▦</div><h3>Mensurabilidade</h3><p>Vá além de presença, horas de treinamento e atividades concluídas. Observe evidências produzidas durante a própria interação.</p></article>
+          <article><div class="icon">≣</div><h3>Relatórios</h3><p>Transforme práticas em registros estruturados de performance, pontos demonstrados e oportunidades de desenvolvimento.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section analysis-section">
+      <div class="container split align-center">
+        <div>
+          <span class="eyebrow">DUAS PERSPECTIVAS</span>
+          <h2>Comunicar bem é mais do que falar inglês corretamente.</h2>
+          <p>Por isso, o G.P.C. separa duas dimensões que normalmente são confundidas.</p>
+        </div>
+        <div class="analysis-cards">
+          <article class="analysis-card">
+            <span>01</span>
+            <h3>Performance profissional</h3>
+            <p>Observa se o participante conseguiu realizar, por meio da comunicação, aquilo que a situação exigia: obter informações, esclarecer pontos, apresentar propostas, discutir condições ou chegar a um resultado.</p>
+          </article>
+          <article class="analysis-card accent">
+            <span>02</span>
+            <h3>Performance linguística</h3>
+            <p>Analisa como o idioma foi utilizado, considerando o nível atual do participante: gramática, vocabulário, clareza comunicativa e recursos de linguagem profissional.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section soft" id="resultados">
+      <div class="container report-grid">
+        <div class="report-mock" aria-label="Exemplo conceitual de relatório">
+          <div class="report-top"><span>RELATÓRIO DE PERFORMANCE</span><span class="status">Sessão concluída</span></div>
+          <div class="report-row"><span>Objetivo profissional</span><strong>Análise baseada em evidências</strong></div>
+          <div class="report-row"><span>Performance linguística</span><strong>Feedback contextualizado</strong></div>
+          <div class="report-row"><span>Desenvolvimento</span><strong>Oportunidades identificadas</strong></div>
+          <div class="report-bars"><i style="width:86%"></i><i style="width:68%"></i><i style="width:78%"></i></div>
+          <small>Representação visual ilustrativa.</small>
+        </div>
+        <div>
+          <span class="eyebrow">MENSURAÇÃO</span>
+          <h2>Treinamento que produz evidências, não apenas registros de participação.</h2>
+          <p>Concluir um módulo demonstra que o conteúdo foi acessado. Uma simulação permite observar como o participante utiliza seus recursos diante de uma situação concreta.</p>
+          <p>As interações do G.P.C. geram dados que podem ser transformados em feedbacks e relatórios, criando uma base mais objetiva para acompanhar o desenvolvimento.</p>
+          <div class="callout"><strong>A pergunta muda.</strong><br />De “o colaborador concluiu o treinamento?” para “o que ele conseguiu demonstrar durante o treinamento?”</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section sizes">
+      <div class="container">
+        <div class="section-head center">
+          <span class="eyebrow">PARA EMPRESAS</span>
+          <h2>Uma tecnologia que acompanha diferentes escalas de treinamento.</h2>
+        </div>
+        <div class="size-grid">
+          <article><span>PEQUENAS EQUIPES</span><h3>Estrutura sem complexidade</h3><p>Ofereça prática profissional individualizada sem precisar construir uma operação interna de treinamento.</p></article>
+          <article><span>MÉDIAS EMPRESAS</span><h3>Padronização e escala</h3><p>Amplie o acesso ao treinamento mantendo uma metodologia comum e informações estruturadas sobre a performance.</p></article>
+          <article><span>GRANDES OPERAÇÕES</span><h3>Personalização em escala</h3><p>Crie experiências adaptáveis a diferentes perfis e necessidades, com potencial para consolidar inteligência sobre treinamento e desenvolvimento.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section proof-concept">
+      <div class="container proof-grid">
+        <div>
+          <span class="eyebrow light">VEJA A TECNOLOGIA EM AÇÃO</span>
+          <h2>Não queremos apenas explicar o conceito. Queremos que você experimente.</h2>
+          <p>Entre em uma simulação do Business Talks e veja como a IA pode transformar uma conversa em uma experiência estruturada de treinamento e análise.</p>
+        </div>
+        <div class="proof-action">
+          <a class="btn btn-light" href="link_cta.html">Iniciar demonstração Sync</a>
+          <span>Ambiente demonstrativo para avaliação da experiência.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section beyond">
+      <div class="container narrow center">
+        <span class="eyebrow">ALÉM DO BUSINESS TALKS</span>
+        <h2>Uma arquitetura de treinamento com IA criada para transformar conhecimento em aplicação.</h2>
+        <p>O Business Talks é a aplicação inicial da tecnologia. A mesma lógica de simulação, interação, análise e comprovação pode ser adaptada a outros idiomas e a processos corporativos nos quais informações precisam ser compreendidas, aplicadas e verificadas.</p>
+      </div>
+    </section>
+
+    <section class="section faq">
+      <div class="container narrow">
+        <div class="section-head center"><span class="eyebrow">PERGUNTAS FREQUENTES</span><h2>O essencial antes de experimentar.</h2></div>
+        <details><summary>O G.P.C. substitui aulas ou professores?</summary><p>Não precisa substituir. O Business Talks pode funcionar como ambiente independente de prática ou complementar programas existentes, aumentando as oportunidades de aplicação do idioma em situações profissionais.</p></details>
+        <details><summary>Por que não simplesmente conversar livremente com uma IA?</summary><p>Porque o objetivo não é apenas conversar. O G.P.C. estrutura contexto, objetivo, interlocução e critérios de análise para transformar a interação em treinamento profissional com evidências e feedback.</p></details>
+        <details><summary>O treinamento é igual para todos?</summary><p>Não. A experiência pode considerar nível linguístico, objetivos e contexto profissional, permitindo que a prática seja mais relevante para cada participante.</p></details>
+        <details><summary>Como a empresa acompanha a eficácia?</summary><p>As interações geram análises e dados estruturados que podem alimentar feedbacks e relatórios. Isso permite acompanhar evidências da performance demonstrada, e não somente participação ou carga horária.</p></details>
+      </div>
+    </section>
+
+    <section class="final-cta">
+      <div class="container center">
+        <span class="eyebrow light">G.P.C. BUSINESS TALKS</span>
+        <h2>Veja o que acontece quando treinamento deixa de ser apenas conteúdo e passa a gerar performance observável.</h2>
+        <p>Experimente a tecnologia ou converse conosco sobre uma aplicação para sua equipe.</p>
+        <a class="btn btn-light" href="link_cta.html">Conhecer o G.P.C. na prática</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <img class="footer-logo" src="https://zplqlcvcpeohtxodvfkq.supabase.co/storage/v1/object/public/logos_estab/LOGO_BT_CUT.png" alt="Business Talks" />
+        <p>Treinamento profissional com inteligência artificial.</p>
+      </div>
+      <div><strong>Empresa</strong><a href="#">Sobre</a><a href="#">Contato</a><a href="#">Para empresas</a></div>
+      <div><strong>Legal</strong><a href="#">Política de Privacidade</a><a href="#">Termos de Uso</a><a href="#">Cookies</a></div>
+      <div><strong>Contato</strong><span>email@empresa.com.br</span><span>+55 (00) 00000-0000</span><span>Cidade / Estado</span></div>
     </div>
+    <div class="container footer-bottom"><span>© <span id="year"></span> Nome da Empresa. Todos os direitos reservados.</span><span>CNPJ: 00.000.000/0000-00</span></div>
+  </footer>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        console.log('✅ SCRIPT: DOM Content Loaded! O script foi iniciado.');
-
-        const ctaButtons = document.querySelectorAll('.cta-button');
-        const closeChatButtons = document.querySelectorAll('.close-chat-button');
-        const chatInputs = document.querySelectorAll('.chat-input');
-        const chatSendButtons = document.querySelectorAll('.chat-send-button');
-
-        // URL do Webhook para comunicação com agente de IA
-        const webhookURL = 'https://powerfulkiwi-n8n.cloudfy.live/webhook/a344ecd0-aeb5-4228-959d-795fcf2f5ecf';
-
-        // Função para adicionar mensagem ao chat
-        function addMessage(chatMessagesContainer, message, type) {
-            const messageDiv = document.createElement('div');
-            messageDiv.classList.add('chat-message', type);
-            messageDiv.textContent = message;
-            chatMessagesContainer.appendChild(messageDiv);
-            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight; // Auto-scroll
-        }
-
-        // Lógica para abrir chats integrados
-        ctaButtons.forEach(button => {
-            console.log('➡️ SCRIPT: Anexando listener ao botão CTA:', button.textContent);
-            button.addEventListener('click', (event) => {
-                event.preventDefault(); // Evita a navegação padrão da âncora
-                console.log('🎉 SCRIPT: Botão CTA clicado!');
-                const chatTargetId = button.getAttribute('data-chat-target');
-                console.log('💬 SCRIPT: ID do chat alvo:', chatTargetId);
-                const targetChatModal = document.getElementById(chatTargetId);
-                if (targetChatModal) {
-                    console.log('👍 SCRIPT: Modal de chat alvo encontrado:', targetChatModal.id);
-                    targetChatModal.classList.add('show');
-                    // Foca no input do chat assim que ele abre
-                    const chatInput = targetChatModal.querySelector('.chat-input');
-                    if (chatInput) {
-                        chatInput.focus();
-                        console.log('🎯 SCRIPT: Foco no input do chat.');
-                    }
-                } else {
-                    console.warn('⚠️ SCRIPT: Modal de chat alvo NÃO encontrado para o ID:', chatTargetId);
-                }
-            });
-        });
-
-        // Lógica para fechar chats integrados
-        closeChatButtons.forEach(button => {
-            console.log('➡️ SCRIPT: Anexando listener ao botão Fechar Chat.');
-            button.addEventListener('click', () => {
-                console.log('🎉 SCRIPT: Botão Fechar Chat clicado!');
-                const chatModal = button.closest('.card-chat-modal');
-                if (chatModal) {
-                    chatModal.classList.remove('show');
-                    console.log('🔙 SCRIPT: Modal de chat fechado.');
-                }
-            });
-        });
-
-        // Lógica para enviar mensagens (agora com webhook)
-        chatSendButtons.forEach(button => {
-            console.log('➡️ SCRIPT: Anexando listener ao botão Enviar Mensagem.');
-            button.addEventListener('click', async () => { // Adicionado 'async' para usar await
-                console.log('🎉 SCRIPT: Botão Enviar Mensagem clicado!');
-                const chatInput = button.previousElementSibling; // O input é o elemento irmão anterior
-                const chatMessagesContainer = button.closest('.card-chat-modal').querySelector('.chat-messages');
-                const userMessage = chatInput.value.trim();
-
-                // Captura o ID do botão de envio para usar como contexto
-                const sendButtonId = button.id;
-                console.log('✉️ SCRIPT: ID do botão de envio:', sendButtonId);
-                const chatContext = sendButtonId.replace('send', '').replace('Chat', ''); // Ex: Vendisia, Whatsapp, Website, Expand, Approaches, Contact
-
-
-                if (userMessage) {
-                    addMessage(chatMessagesContainer, userMessage, 'user');
-                    chatInput.value = ''; // Limpa o input
-                    console.log('✉️ SCRIPT: Mensagem do usuário adicionada.');
-
-                    // Construir o payload para o webhook
-                    const payload = {
-                        message: userMessage,
-                        context: chatContext,
-                        timestamp: new Date().toISOString()
-                    };
-                    console.log('📡 SCRIPT: Enviando para webhook:', payload);
-
-                    try {
-                        const response = await fetch(webhookURL, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(payload)
-                        });
-
-                        if (response.ok) {
-                            const data = await response.json();
-                            console.log('✅ SCRIPT: Webhook respondeu com sucesso:', data);
-                            // Aqui você pode adicionar a resposta da IA ao chat
-                        addMessage(chatMessagesContainer, data.output || 'Obrigado pela sua mensagem! Nossa IA recebeu e está processando.', 'ai');    
-                        } else {
-                            console.error('❌ SCRIPT: Erro na resposta do webhook:', response.status, response.statusText);
-                            addMessage(chatMessagesContainer, 'Houve um erro ao se comunicar com a IA. Por favor, tente novamente mais tarde.', 'ai');
-                        }
-                    } catch (error) {
-                        console.error('🔥 SCRIPT: Erro ao enviar mensagem para o webhook:', error);
-                        addMessage(chatMessagesContainer, 'Não foi possível conectar com a IA. Verifique sua conexão ou tente novamente.', 'ai');
-                    }
-                }
-            });
-        });
-
-        // Lógica para enviar mensagens com Enter
-        chatInputs.forEach(input => {
-            console.log('➡️ SCRIPT: Anexando listener de "keypress" ao input do chat.');
-            input.addEventListener('keypress', (event) => {
-                if (event.key === 'Enter') {
-                    event.preventDefault(); // Evita quebra de linha no input
-                    console.log('🎉 SCRIPT: Tecla Enter pressionada no input do chat!');
-                    const sendButton = input.nextElementSibling; // O botão de enviar é o próximo irmão
-                    sendButton.click(); // Dispara o clique do botão de enviar
-                }
-            });
-        });
-    });
-</script>
+  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
 </body>
 </html>
