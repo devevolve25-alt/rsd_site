@@ -535,6 +535,34 @@
 
 
   /* =====================================================
+     LIVE ACCESS TOKEN
+  ===================================================== */
+
+  const urlParams =
+    new URLSearchParams(
+      window.location.search
+    );
+
+  const liveToken =
+    urlParams.get('token');
+
+
+  if (!liveToken) {
+
+    talkButton.disabled =
+      true;
+
+    statusText.textContent =
+      'Invalid Live access link';
+
+    console.error(
+      'Live access token not found in URL'
+    );
+
+  }
+
+
+  /* =====================================================
      SESSION STATE
   ===================================================== */
 
@@ -3004,7 +3032,7 @@ function stopSyncStageController() {
 
       const response =
         await fetch(
-          '/api/live-session',
+          'https://powerfulkiwi-n8n.cloudfy.live/webhook/live-session',
           {
 
             method:
@@ -3019,7 +3047,13 @@ function stopSyncStageController() {
 
             body:
               JSON.stringify({
-                sdp: sdp
+
+                token:
+                  liveToken,
+
+                sdp:
+                  sdp
+
               })
 
           }
