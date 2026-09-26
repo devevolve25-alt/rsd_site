@@ -1000,13 +1000,13 @@ async function triggerOutcomeCheckpoint() {
 
         body: JSON.stringify({
 
-          session_id:
-            '3a1f0bf3-323e-45ab-bb00-3b7fc345a64c',
+  token:
+    liveToken,
 
-          messages:
-            messages
+  messages:
+    messages
 
-        })
+})
       }
     );
 
@@ -2030,189 +2030,195 @@ function stopSyncStageController() {
 
 
     /* =====================================================
-     SEND CONVERSATION TO N8N
-  ===================================================== */
+   SEND CONVERSATION TO N8N
+===================================================== */
 
-  async function saveConversationMessages() {
+async function saveConversationMessages() {
 
-    /*
-      Prevent duplicate submissions.
-    */
+  /*
+    Prevent duplicate submissions.
+  */
 
-    if (conversationSaveStarted) {
+  if (conversationSaveStarted) {
 
-      console.log(
-        'Conversation submission already started'
+    console.log(
+      'Conversation submission already started'
+    );
+
+    return {
+      skipped: true
+    };
+
+  }
+
+
+  conversationSaveStarted = true;
+
+
+  /*
+    Ensure conversationMessages exists.
+  */
+
+  if (
+    !Array.isArray(conversationMessages) ||
+    conversationMessages.length === 0
+  ) {
+
+    conversationMessages =
+      buildConversationMessages(
+        transcriptEvents
       );
 
-      return {
-        skipped: true
-      };
-
-    }
+  }
 
 
-    conversationSaveStarted = true;
+  /*
+    Do not call n8n with an empty conversation.
+  */
+
+  if (conversationMessages.length === 0) {
+
+    console.warn(
+      'Conversation not submitted: no transcript messages available'
+    );
+
+    return {
+      skipped: true
+    };
+
+  }
 
 
-    /*
-      Ensure conversationMessages exists.
-    */
+  /*
+    Ensure Live access token exists.
+  */
 
-    if (
-      !Array.isArray(conversationMessages) ||
-      conversationMessages.length === 0
-    ) {
+  if (!liveToken) {
 
-      conversationMessages =
-        buildConversationMessages(
-          transcriptEvents
+    throw new Error(
+      'Live access token not available'
+    );
+
+  }
+
+
+  /*
+    Payload sent to n8n.
+
+    The browser sends only the opaque Live token.
+    The backend resolves the actual application
+    session from sessions.live_token.
+  */
+
+  const payload = {
+
+    token:
+      liveToken,
+
+    interaction:
+      'sync',
+
+    messages:
+      conversationMessages
+
+  };
+
+
+  console.log(
+    'Sending Live conversation to n8n:',
+    payload
+  );
+
+
+  /*
+    Send conversation to n8n workflow.
+  */
+
+  const response =
+    await fetch(
+      'https://powerfulkiwi-n8n.cloudfy.live/webhook/ae8588a5-2ecb-4b5f-891f-89d6015d8570',
+      {
+
+        method:
+          'POST',
+
+        headers: {
+
+          'Content-Type':
+            'application/json'
+
+        },
+
+        body:
+          JSON.stringify(
+            payload
+          )
+
+      }
+    );
+
+
+  /*
+    Read n8n response.
+
+    The workflow may return JSON or plain text,
+    so both are supported.
+  */
+
+  const responseText =
+    await response.text();
+
+
+  let result = null;
+
+
+  if (responseText) {
+
+    try {
+
+      result =
+        JSON.parse(
+          responseText
         );
 
     }
 
+    catch {
 
-    /*
-      Do not call n8n with an empty conversation.
-    */
-
-    if (conversationMessages.length === 0) {
-
-      console.warn(
-        'Conversation not submitted: no transcript messages available'
-      );
-
-      return {
-        skipped: true
-      };
+      result =
+        responseText;
 
     }
-
-
-    /*
-      TEMPORARY TEST SESSION ID
-
-      Later this will come from the validated
-      signed session token.
-    */
-
-    const sessionId =
-      '3a1f0bf3-323e-45ab-bb00-3b7fc345a64c';
-
-
-    /*
-      Payload sent to n8n.
-    */
-
-    const payload = {
-
-      session_id:
-        sessionId,
-
-      interaction:
-        'sync',
-
-      messages:
-        conversationMessages
-
-    };
-
-
-    console.log(
-      'Sending Live conversation to n8n:',
-      payload
-    );
-
-
-    /*
-      Send conversation to n8n workflow.
-    */
-
-    const response =
-      await fetch(
-        'https://powerfulkiwi-n8n.cloudfy.live/webhook/ae8588a5-2ecb-4b5f-891f-89d6015d8570',
-        {
-
-          method:
-            'POST',
-
-          headers: {
-
-            'Content-Type':
-              'application/json'
-
-          },
-
-          body:
-            JSON.stringify(
-              payload
-            )
-
-        }
-      );
-
-
-    /*
-      Read n8n response.
-
-      The workflow may return JSON or plain text,
-      so both are supported.
-    */
-
-    const responseText =
-      await response.text();
-
-
-    let result = null;
-
-
-    if (responseText) {
-
-      try {
-
-        result =
-          JSON.parse(
-            responseText
-          );
-
-      }
-
-      catch {
-
-        result =
-          responseText;
-
-      }
-
-    }
-
-
-    /*
-      HTTP error from n8n.
-    */
-
-    if (!response.ok) {
-
-      throw new Error(
-        `n8n webhook error ${response.status}: ${
-          typeof result === 'string'
-            ? result
-            : JSON.stringify(result)
-        }`
-      );
-
-    }
-
-
-    console.log(
-      'LIVE CONVERSATION SENT TO N8N:',
-      result
-    );
-
-
-    return result;
 
   }
+
+
+  /*
+    HTTP error from n8n.
+  */
+
+  if (!response.ok) {
+
+    throw new Error(
+      `n8n webhook error ${response.status}: ${
+        typeof result === 'string'
+          ? result
+          : JSON.stringify(result)
+      }`
+    );
+
+  }
+
+
+  console.log(
+    'LIVE CONVERSATION SENT TO N8N:',
+    result
+  );
+
+
+  return result;
+
+}
 
 
   /* =====================================================
