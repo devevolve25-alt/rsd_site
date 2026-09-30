@@ -1,22 +1,133 @@
 /* =====================================================
-   ELEMENTS
+   BUSINESS TALKS
+   LIVE DEMO
 ===================================================== */
-
-const talkButton =
-  document.getElementById('talkButton');
-
-const statusText =
-  document.getElementById('statusText');
-
-const liveIndicator =
-  document.getElementById('liveIndicator');
-
-const timer =
-  document.getElementById('timer');
 
 
 /* =====================================================
-   LIVE ACCESS TOKEN
+   ENDPOINTS
+===================================================== */
+
+/*
+  PREPARATION WEBHOOK
+
+  Responsibilities:
+  - validate token
+  - update user_name
+  - update profession
+  - update industry
+  - generate demo scenario
+  - save scenario
+  - return success
+*/
+
+const DEMO_PREPARATION_WEBHOOK =
+  'https://powerfulkiwi-n8n.cloudfy.live/webhook/7e399616-6269-4c8b-a671-60be6bbfb066';
+
+
+/*
+  TEMPORARY:
+
+  This is still the production Live endpoint.
+
+  Replace it when the dedicated demo Live
+  workflow is created.
+*/
+
+const DEMO_LIVE_WEBHOOK =
+  'https://powerfulkiwi-n8n.cloudfy.live/webhook/live-session';
+
+
+/*
+  TEMPORARY:
+
+  This is still the current transcript webhook.
+
+  Replace it when the dedicated demo
+  persistence / analysis workflow is created.
+*/
+
+const DEMO_TRANSCRIPT_WEBHOOK =
+  'https://powerfulkiwi-n8n.cloudfy.live/webhook/ae8588a5-2ecb-4b5f-891f-89d6015d8570';
+
+
+/* =====================================================
+   PAGE ELEMENTS
+===================================================== */
+
+const preparationState =
+  document.getElementById(
+    'preparationState'
+  );
+
+const liveState =
+  document.getElementById(
+    'liveState'
+  );
+
+const demoForm =
+  document.getElementById(
+    'demoForm'
+  );
+
+const userNameInput =
+  document.getElementById(
+    'userNameInput'
+  );
+
+const professionInput =
+  document.getElementById(
+    'professionInput'
+  );
+
+const industryInput =
+  document.getElementById(
+    'industryInput'
+  );
+
+const continueButton =
+  document.getElementById(
+    'continueButton'
+  );
+
+const formError =
+  document.getElementById(
+    'formError'
+  );
+
+const talkButton =
+  document.getElementById(
+    'talkButton'
+  );
+
+const statusText =
+  document.getElementById(
+    'statusText'
+  );
+
+const liveIndicator =
+  document.getElementById(
+    'liveIndicator'
+  );
+
+const timer =
+  document.getElementById(
+    'timer'
+  );
+
+const missionElement =
+  document.getElementById(
+    'mission'
+  );
+
+const objectiveElement =
+  document.getElementById(
+    'objective'
+  );
+
+
+/* =====================================================
+   TOKEN
 ===================================================== */
 
 const urlParams =
@@ -28,98 +139,628 @@ const liveToken =
   urlParams.get('token');
 
 
-if (!liveToken) {
+/* =====================================================
+   PAGE STATE
+===================================================== */
 
-  talkButton.disabled =
-    true;
+let preparationCompleted =
+  false;
 
-  statusText.textContent =
-    'Invalid Live access link';
-
-  console.error(
-    'Live access token not found in URL'
-  );
-
-}
+let preparationRequestRunning =
+  false;
 
 
 /* =====================================================
-   SESSION STATE
+   LIVE SESSION STATE
 ===================================================== */
 
-let sessionActive = false;
-let sessionStartTime = null;
-let timerInterval = null;
+let sessionActive =
+  false;
 
-let peerConnection = null;
-let dataChannel = null;
-let remoteAudio = null;
-let liveSessionId = null;
+let sessionStartTime =
+  null;
 
-let liveMediaStream = null;
+let timerInterval =
+  null;
 
-let openingInstructionEventId = null;
-let openingCommentaryEventId = null;
-let openingCommentarySent = false;
+let peerConnection =
+  null;
+
+let dataChannel =
+  null;
+
+let remoteAudio =
+  null;
+
+let liveSessionId =
+  null;
+
+let liveMediaStream =
+  null;
+
+let openingInstructionEventId =
+  null;
+
+let openingCommentaryEventId =
+  null;
+
+let openingCommentarySent =
+  false;
 
 
 /* =====================================================
    TRANSCRIPT STATE
 ===================================================== */
 
-let transcriptEvents = [];
+let transcriptEvents =
+  [];
 
-let conversationMessages = [];
+let conversationMessages =
+  [];
 
-const TRANSCRIPT_GAP_THRESHOLD_MS = 1500;
+const TRANSCRIPT_GAP_THRESHOLD_MS =
+  1500;
 
+let conversationSaveStarted =
+  false;
+
+
+/* =====================================================
+   DEFAULT DEMO MISSION
+===================================================== */
 
 /*
-  Prevent duplicate persistence.
+  These values are intentionally generic.
 
-  session.closed, fallback timeout and local close
-  can potentially reach the finalization logic.
-
-  This flag guarantees that the conversation
-  is persisted only once.
+  They do not expose:
+  - user name
+  - profession
+  - industry
+  - generated scenario
+  - private possible solutions
 */
 
-let conversationSaveStarted = false;
+const DEFAULT_MISSION =
+  'Understand the professional situation, propose a practical course of action, and explain your reasoning.';
+
+const DEFAULT_OBJECTIVE =
+  'Reach a practical professional recommendation through the conversation.';
 
 
 /* =====================================================
-   DEMO SESSION DATA
+   INITIAL PAGE STATE
 ===================================================== */
 
-const sessionData = {
+function initializePage() {
 
-  mission:
-    'Understand the professional situation, propose a practical course of action, and explain your reasoning.',
+  preparationState.hidden =
+    false;
 
-  objective:
-    'Reach a practical professional recommendation through the conversation.'
+  liveState.hidden =
+    true;
 
-};
+  talkButton.disabled =
+    true;
 
 
-/* =====================================================
-   LOAD PAGE DATA
-===================================================== */
+  missionElement.textContent =
+    DEFAULT_MISSION;
 
-function loadSessionData(data) {
+  objectiveElement.textContent =
+    DEFAULT_OBJECTIVE;
 
-  document.getElementById('mission')
-    .textContent =
-      data.mission || '';
 
-  document.getElementById('objective')
-    .textContent =
-      data.objective || '';
+  /*
+    No token means the invitation cannot
+    be associated with a demo session.
+  */
+
+  if (!liveToken) {
+
+    disablePreparation(
+      'This demo link is invalid.'
+    );
+
+    console.error(
+      'Demo token not found in URL'
+    );
+
+    return;
+
+  }
+
+
+  console.log(
+    'Demo invitation token detected'
+  );
 
 }
 
 
-loadSessionData(sessionData);
+/* =====================================================
+   DISABLE PREPARATION
+===================================================== */
+
+function disablePreparation(
+  message
+) {
+
+  userNameInput.disabled =
+    true;
+
+  professionInput.disabled =
+    true;
+
+  industryInput.disabled =
+    true;
+
+  continueButton.disabled =
+    true;
+
+  formError.textContent =
+    message || 'Unable to continue.';
+
+}
+
+
+/* =====================================================
+   NORMALIZE FORM VALUE
+===================================================== */
+
+function normalizeFormValue(
+  value
+) {
+
+  if (
+    typeof value !== 'string'
+  ) {
+
+    return '';
+
+  }
+
+  return value
+    .trim()
+    .replace(/\s+/g, ' ');
+
+}
+
+
+/* =====================================================
+   VALIDATE PREPARATION FORM
+===================================================== */
+
+function validatePreparationForm() {
+
+  const userName =
+    normalizeFormValue(
+      userNameInput.value
+    );
+
+  const profession =
+    normalizeFormValue(
+      professionInput.value
+    );
+
+  const industry =
+    normalizeFormValue(
+      industryInput.value
+    );
+
+
+  if (!userName) {
+
+    return {
+      valid: false,
+      message:
+        'Please enter your name.'
+    };
+
+  }
+
+
+  if (!profession) {
+
+    return {
+      valid: false,
+      message:
+        'Please enter your profession.'
+    };
+
+  }
+
+
+  if (!industry) {
+
+    return {
+      valid: false,
+      message:
+        'Please enter your industry.'
+    };
+
+  }
+
+
+  return {
+
+    valid:
+      true,
+
+    data: {
+
+      user_name:
+        userName,
+
+      profession:
+        profession,
+
+      industry:
+        industry
+
+    }
+
+  };
+
+}
+
+
+/* =====================================================
+   PARSE HTTP RESPONSE
+===================================================== */
+
+async function parseResponse(
+  response
+) {
+
+  const responseText =
+    await response.text();
+
+
+  if (!responseText) {
+
+    return null;
+
+  }
+
+
+  try {
+
+    return JSON.parse(
+      responseText
+    );
+
+  }
+
+  catch {
+
+    return responseText;
+
+  }
+
+}
+
+
+/* =====================================================
+   PREPARE DEMO
+===================================================== */
+
+async function prepareDemo(
+  participantData
+) {
+
+  if (!liveToken) {
+
+    throw new Error(
+      'Demo token is missing'
+    );
+
+  }
+
+
+  /*
+    Browser sends the token plus only
+    the three participant-provided values.
+  */
+
+  const payload = {
+
+    token:
+      liveToken,
+
+    user_name:
+      participantData.user_name,
+
+    profession:
+      participantData.profession,
+
+    industry:
+      participantData.industry
+
+  };
+
+
+  console.log(
+    'Preparing personalized demo'
+  );
+
+
+  const response =
+    await fetch(
+      DEMO_PREPARATION_WEBHOOK,
+      {
+
+        method:
+          'POST',
+
+        headers: {
+
+          'Content-Type':
+            'application/json'
+
+        },
+
+        body:
+          JSON.stringify(
+            payload
+          )
+
+      }
+    );
+
+
+  const result =
+    await parseResponse(
+      response
+    );
+
+
+  if (!response.ok) {
+
+    let message =
+      'Unable to prepare the demo.';
+
+
+    if (
+      result &&
+      typeof result === 'object' &&
+      typeof result.message === 'string'
+    ) {
+
+      message =
+        result.message;
+
+    }
+
+
+    throw new Error(
+      message
+    );
+
+  }
+
+
+  return result;
+
+}
+
+
+/* =====================================================
+   COMPLETE PREPARATION
+===================================================== */
+
+function completePreparation(
+  result
+) {
+
+  preparationCompleted =
+    true;
+
+
+  /*
+    We intentionally do NOT keep participant
+    information in a browser session object.
+
+    After n8n has stored it, the browser
+    no longer needs it.
+  */
+
+
+  /*
+    Optional response support.
+
+    If n8n later returns mission/objective,
+    the page can use them.
+
+    Otherwise the fixed generic values remain.
+  */
+
+  if (
+    result &&
+    typeof result === 'object'
+  ) {
+
+    if (
+      typeof result.mission === 'string' &&
+      result.mission.trim()
+    ) {
+
+      missionElement.textContent =
+        result.mission.trim();
+
+    }
+
+
+    if (
+      typeof result.objective === 'string' &&
+      result.objective.trim()
+    ) {
+
+      objectiveElement.textContent =
+        result.objective.trim();
+
+    }
+
+  }
+
+
+  /*
+    Clear form values before removing
+    the preparation screen.
+  */
+
+  demoForm.reset();
+
+
+  /*
+    Switch UI state.
+  */
+
+  preparationState.hidden =
+    true;
+
+  liveState.hidden =
+    false;
+
+
+  /*
+    Live can now be started.
+  */
+
+  talkButton.disabled =
+    false;
+
+  talkButton.textContent =
+    'START TALK';
+
+  statusText.textContent =
+    'Ready to start';
+
+
+  console.log(
+    'Demo preparation completed'
+  );
+
+}
+
+
+/* =====================================================
+   PREPARATION FORM SUBMIT
+===================================================== */
+
+demoForm.addEventListener(
+  'submit',
+  async (event) => {
+
+    event.preventDefault();
+
+
+    if (
+      preparationRequestRunning
+    ) {
+
+      return;
+
+    }
+
+
+    formError.textContent =
+      '';
+
+
+    const validation =
+      validatePreparationForm();
+
+
+    if (!validation.valid) {
+
+      formError.textContent =
+        validation.message;
+
+      return;
+
+    }
+
+
+    preparationRequestRunning =
+      true;
+
+
+    continueButton.disabled =
+      true;
+
+    continueButton.textContent =
+      'PREPARING DEMO...';
+
+
+    userNameInput.disabled =
+      true;
+
+    professionInput.disabled =
+      true;
+
+    industryInput.disabled =
+      true;
+
+
+    try {
+
+      const result =
+        await prepareDemo(
+          validation.data
+        );
+
+
+      console.log(
+        'Demo preparation response:',
+        result
+      );
+
+
+      completePreparation(
+        result
+      );
+
+    }
+
+    catch (error) {
+
+      console.error(
+        'Demo preparation failed:',
+        error
+      );
+
+
+      formError.textContent =
+        error.message ||
+        'Unable to prepare the demo. Please try again.';
+
+
+      userNameInput.disabled =
+        false;
+
+      professionInput.disabled =
+        false;
+
+      industryInput.disabled =
+        false;
+
+      continueButton.disabled =
+        false;
+
+      continueButton.textContent =
+        'CONTINUE';
+
+    }
+
+    finally {
+
+      preparationRequestRunning =
+        false;
+
+    }
+
+  }
+);
 
 
 /* =====================================================
@@ -131,11 +772,18 @@ function startTimer() {
   sessionStartTime =
     Date.now();
 
+
+  timer.textContent =
+    '00:00';
+
+
   timer.classList.add(
     'active'
   );
 
+
   updateTimer();
+
 
   timerInterval =
     setInterval(
@@ -149,27 +797,37 @@ function startTimer() {
 function updateTimer() {
 
   if (!sessionStartTime) {
+
     return;
+
   }
+
 
   const elapsed =
     Math.floor(
-      (Date.now() - sessionStartTime) /
-      1000
+      (
+        Date.now() -
+        sessionStartTime
+      ) / 1000
     );
+
 
   const minutes =
     Math.floor(
       elapsed / 60
     );
 
+
   const seconds =
     elapsed % 60;
 
+
   timer.textContent =
-    String(minutes).padStart(2, '0') +
+    String(minutes)
+      .padStart(2, '0') +
     ':' +
-    String(seconds).padStart(2, '0');
+    String(seconds)
+      .padStart(2, '0');
 
 }
 
@@ -184,6 +842,7 @@ function stopTimer() {
 
   }
 
+
   timerInterval =
     null;
 
@@ -191,11 +850,11 @@ function stopTimer() {
 
 
 /* =====================================================
-   DEMO TEMPORAL STAGE CONTROLLER
+   DEMO TEMPORAL CONTROLLER
 ===================================================== */
 
 /*
-  DEMO SESSION TIMELINE
+  TIMELINE
 
   00:00 - 00:30
   INTRODUCTION
@@ -212,7 +871,6 @@ function stopTimer() {
   03:00
   HARD STOP
 */
-
 
 const DEMO_STAGE_TIMING = {
 
@@ -231,10 +889,6 @@ const DEMO_STAGE_TIMING = {
 };
 
 
-/* =====================================================
-   CONTROLLER STATE
-===================================================== */
-
 let currentDemoStage =
   null;
 
@@ -249,7 +903,7 @@ let demoStageControllerInterval =
 
 
 /* =====================================================
-   SEND STAGE INSTRUCTION TO GPT-LIVE
+   SEND STAGE INSTRUCTION
 ===================================================== */
 
 function sendDemoStageInstruction(
@@ -263,7 +917,7 @@ function sendDemoStageInstruction(
   ) {
 
     console.warn(
-      `Demo stage instruction not sent: DataChannel unavailable (${stage})`
+      `Stage instruction not sent: ${stage}`
     );
 
     return false;
@@ -293,8 +947,7 @@ function sendDemoStageInstruction(
 
 
   console.log(
-    `DEMO STAGE INSTRUCTION → ${stage}`,
-    event
+    `DEMO STAGE → ${stage}`
   );
 
 
@@ -326,11 +979,6 @@ function enterIntroductionStage() {
 
   currentDemoStage =
     'INTRODUCTION';
-
-
-  console.log(
-    'DEMO STAGE → INTRODUCTION'
-  );
 
 
   sendDemoStageInstruction(
@@ -386,11 +1034,6 @@ function enterDevelopmentStage() {
 
   currentDemoStage =
     'DEVELOPMENT';
-
-
-  console.log(
-    'DEMO STAGE → DEVELOPMENT'
-  );
 
 
   sendDemoStageInstruction(
@@ -464,11 +1107,6 @@ function enterConclusionStage() {
     'CONCLUSION';
 
 
-  console.log(
-    'DEMO STAGE → CONCLUSION'
-  );
-
-
   sendDemoStageInstruction(
 
     'CONCLUSION',
@@ -519,17 +1157,14 @@ Close the interaction naturally and concisely.
 function triggerExpectedEnd() {
 
   if (expectedEndTriggered) {
+
     return;
+
   }
 
 
   expectedEndTriggered =
     true;
-
-
-  console.log(
-    'DEMO EXPECTED END → 02:50'
-  );
 
 
   sendDemoStageInstruction(
@@ -564,7 +1199,9 @@ Close the interaction immediately after the final professional acknowledgement.
 function triggerDemoHardStop() {
 
   if (hardStopTriggered) {
+
     return;
+
   }
 
 
@@ -577,13 +1214,6 @@ function triggerDemoHardStop() {
   );
 
 
-  /*
-    Use the existing endSession() mechanism.
-
-    This preserves transcript finalization
-    and persistence behavior.
-  */
-
   if (sessionActive) {
 
     endSession();
@@ -594,7 +1224,7 @@ function triggerDemoHardStop() {
 
 
 /* =====================================================
-   TEMPORAL CONTROLLER
+   UPDATE TEMPORAL CONTROLLER
 ===================================================== */
 
 function updateDemoStageController() {
@@ -611,15 +1241,14 @@ function updateDemoStageController() {
 
   const elapsedSeconds =
     Math.floor(
-      (Date.now() - sessionStartTime) /
-      1000
+      (
+        Date.now() -
+        sessionStartTime
+      ) / 1000
     );
 
 
-  /*
-    INTRODUCTION
-    00:00 → 00:30
-  */
+  /* INTRODUCTION */
 
   if (
     elapsedSeconds <
@@ -639,10 +1268,7 @@ function updateDemoStageController() {
   }
 
 
-  /*
-    DEVELOPMENT
-    00:30 → 02:20
-  */
+  /* DEVELOPMENT */
 
   if (
     elapsedSeconds <
@@ -650,8 +1276,8 @@ function updateDemoStageController() {
   ) {
 
     if (
-      currentDemoStage ===
-      'INTRODUCTION'
+      currentDemoStage !==
+      'DEVELOPMENT'
     ) {
 
       enterDevelopmentStage();
@@ -663,10 +1289,7 @@ function updateDemoStageController() {
   }
 
 
-  /*
-    CONCLUSION
-    02:20 → 02:50
-  */
+  /* CONCLUSION */
 
   if (
     elapsedSeconds <
@@ -687,24 +1310,16 @@ function updateDemoStageController() {
   }
 
 
-  /*
-    EXPECTED NATURAL END
-    02:50
-  */
+  /* EXPECTED END */
 
-  if (
-    !expectedEndTriggered
-  ) {
+  if (!expectedEndTriggered) {
 
     triggerExpectedEnd();
 
   }
 
 
-  /*
-    HARD STOP
-    03:00
-  */
+  /* HARD STOP */
 
   if (
     elapsedSeconds >=
@@ -720,14 +1335,10 @@ function updateDemoStageController() {
 
 
 /* =====================================================
-   START STAGE CONTROLLER
+   START TEMPORAL CONTROLLER
 ===================================================== */
 
 function startDemoStageController() {
-
-  /*
-    Avoid duplicate controller intervals.
-  */
 
   if (demoStageControllerInterval) {
 
@@ -737,10 +1348,6 @@ function startDemoStageController() {
 
   }
 
-
-  /*
-    Reset controller state.
-  */
 
   currentDemoStage =
     null;
@@ -752,23 +1359,8 @@ function startDemoStageController() {
     false;
 
 
-  console.log(
-    'DEMO TEMPORAL STAGE CONTROLLER → STARTED'
-  );
-
-
-  /*
-    Run immediately so INTRODUCTION
-    is activated without waiting 1 second.
-  */
-
   updateDemoStageController();
 
-
-  /*
-    Date.now() / sessionStartTime remains
-    the source of truth.
-  */
 
   demoStageControllerInterval =
     setInterval(
@@ -780,7 +1372,7 @@ function startDemoStageController() {
 
 
 /* =====================================================
-   STOP STAGE CONTROLLER
+   STOP TEMPORAL CONTROLLER
 ===================================================== */
 
 function stopDemoStageController() {
@@ -797,58 +1389,57 @@ function stopDemoStageController() {
   demoStageControllerInterval =
     null;
 
-
-  console.log(
-    'DEMO TEMPORAL STAGE CONTROLLER → STOPPED'
-  );
-
 }
 
 
 /* =====================================================
-   WAIT FOR ICE GATHERING
+   WAIT FOR ICE
 ===================================================== */
 
-function waitForIceGatheringComplete(pc) {
+function waitForIceGatheringComplete(
+  pc
+) {
 
-  return new Promise((resolve) => {
-
-    if (
-      pc.iceGatheringState ===
-      'complete'
-    ) {
-
-      resolve();
-      return;
-
-    }
-
-
-    function checkState() {
+  return new Promise(
+    (resolve) => {
 
       if (
         pc.iceGatheringState ===
         'complete'
       ) {
 
-        pc.removeEventListener(
-          'icegatheringstatechange',
-          checkState
-        );
-
         resolve();
+        return;
 
       }
 
+
+      function checkState() {
+
+        if (
+          pc.iceGatheringState ===
+          'complete'
+        ) {
+
+          pc.removeEventListener(
+            'icegatheringstatechange',
+            checkState
+          );
+
+          resolve();
+
+        }
+
+      }
+
+
+      pc.addEventListener(
+        'icegatheringstatechange',
+        checkState
+      );
+
     }
-
-
-    pc.addEventListener(
-      'icegatheringstatechange',
-      checkState
-    );
-
-  });
+  );
 
 }
 
@@ -857,7 +1448,9 @@ function waitForIceGatheringComplete(pc) {
    BUILD CONVERSATION MESSAGES
 ===================================================== */
 
-function buildConversationMessages(events) {
+function buildConversationMessages(
+  events
+) {
 
   if (
     !Array.isArray(events) ||
@@ -869,79 +1462,72 @@ function buildConversationMessages(events) {
   }
 
 
-  /*
-    Work with a copy.
-
-    transcriptEvents remains untouched.
-
-    start_ms is used as the primary
-    chronological reference.
-
-    Original array position is preserved
-    as stable fallback.
-  */
-
   const orderedEvents =
     events
-      .map((event, index) => ({
-        ...event,
-        _originalIndex: index
-      }))
-      .sort((a, b) => {
+      .map(
+        (event, index) => ({
+          ...event,
+          _originalIndex:
+            index
+        })
+      )
+      .sort(
+        (a, b) => {
 
-        const aStart =
-          Number.isFinite(a.start_ms)
-            ? a.start_ms
-            : Number.MAX_SAFE_INTEGER;
+          const aStart =
+            Number.isFinite(a.start_ms)
+              ? a.start_ms
+              : Number.MAX_SAFE_INTEGER;
 
-        const bStart =
-          Number.isFinite(b.start_ms)
-            ? b.start_ms
-            : Number.MAX_SAFE_INTEGER;
+          const bStart =
+            Number.isFinite(b.start_ms)
+              ? b.start_ms
+              : Number.MAX_SAFE_INTEGER;
 
 
-        if (aStart !== bStart) {
+          if (
+            aStart !== bStart
+          ) {
+
+            return (
+              aStart - bStart
+            );
+
+          }
+
 
           return (
-            aStart - bStart
+            a._originalIndex -
+            b._originalIndex
           );
 
         }
+      );
 
 
-        return (
-          a._originalIndex -
-          b._originalIndex
-        );
-
-      });
-
-
-  const messages = [];
+  const messages =
+    [];
 
   let currentMessage =
     null;
 
 
-  for (const event of orderedEvents) {
+  for (
+    const event
+    of orderedEvents
+  ) {
 
     if (
       !event ||
       !event.speaker ||
-      typeof event.text !== 'string'
+      typeof event.text !==
+        'string'
     ) {
 
       continue;
 
     }
 
-
-    /*
-      Ignore completely empty deltas.
-
-      Do NOT trim text because transcript
-      deltas already contain spacing.
-    */
 
     if (
       event.text.length === 0
@@ -953,20 +1539,20 @@ function buildConversationMessages(events) {
 
 
     const eventStart =
-      Number.isFinite(event.start_ms)
+      Number.isFinite(
+        event.start_ms
+      )
         ? event.start_ms
         : null;
 
 
     const eventEnd =
-      Number.isFinite(event.end_ms)
+      Number.isFinite(
+        event.end_ms
+      )
         ? event.end_ms
         : eventStart;
 
-
-    /*
-      First valid transcript event.
-    */
 
     if (!currentMessage) {
 
@@ -991,18 +1577,10 @@ function buildConversationMessages(events) {
     }
 
 
-    /*
-      Speaker change closes current message.
-    */
-
     const speakerChanged =
       event.speaker !==
       currentMessage.role;
 
-
-    /*
-      Calculate temporal gap.
-    */
 
     let temporalGap =
       0;
@@ -1019,11 +1597,6 @@ function buildConversationMessages(events) {
 
     }
 
-
-    /*
-      Same speaker + large temporal gap
-      starts a new message.
-    */
 
     const temporalBreak =
       !speakerChanged &&
@@ -1063,24 +1636,17 @@ function buildConversationMessages(events) {
     }
 
 
-    /*
-      Same speaker + acceptable temporal gap.
-    */
-
     currentMessage.content +=
       event.text;
 
-
-    /*
-      Keep greatest observed end timestamp.
-    */
 
     if (
       eventEnd !== null
     ) {
 
       if (
-        currentMessage.end_ms === null
+        currentMessage.end_ms ===
+        null
       ) {
 
         currentMessage.end_ms =
@@ -1103,10 +1669,6 @@ function buildConversationMessages(events) {
   }
 
 
-  /*
-    Flush final message.
-  */
-
   if (currentMessage) {
 
     messages.push(
@@ -1115,10 +1677,6 @@ function buildConversationMessages(events) {
 
   }
 
-
-  /*
-    Add deterministic sequence numbers.
-  */
 
   return messages.map(
     (message, index) => ({
@@ -1135,7 +1693,7 @@ function buildConversationMessages(events) {
 
 
 /* =====================================================
-   BUILD AND PRINT FINAL TRANSCRIPT
+   BUILD FINAL TRANSCRIPT
 ===================================================== */
 
 function buildAndPrintFinalTranscript(
@@ -1154,11 +1712,6 @@ function buildAndPrintFinalTranscript(
   );
 
 
-  console.table(
-    transcriptEvents
-  );
-
-
   conversationMessages =
     buildConversationMessages(
       transcriptEvents
@@ -1171,31 +1724,18 @@ function buildAndPrintFinalTranscript(
   );
 
 
-  console.table(
-    conversationMessages
-  );
-
-
   return conversationMessages;
 
 }
 
 
 /* =====================================================
-   SEND CONVERSATION TO N8N
+   SAVE CONVERSATION
 ===================================================== */
 
 async function saveConversationMessages() {
 
-  /*
-    Prevent duplicate submissions.
-  */
-
   if (conversationSaveStarted) {
-
-    console.log(
-      'Conversation submission already started'
-    );
 
     return {
       skipped: true
@@ -1208,12 +1748,10 @@ async function saveConversationMessages() {
     true;
 
 
-  /*
-    Ensure conversationMessages exists.
-  */
-
   if (
-    !Array.isArray(conversationMessages) ||
+    !Array.isArray(
+      conversationMessages
+    ) ||
     conversationMessages.length === 0
   ) {
 
@@ -1225,17 +1763,14 @@ async function saveConversationMessages() {
   }
 
 
-  /*
-    Do not call n8n with empty conversation.
-  */
-
   if (
     conversationMessages.length === 0
   ) {
 
     console.warn(
-      'Conversation not submitted: no transcript messages available'
+      'No transcript available'
     );
+
 
     return {
       skipped: true
@@ -1243,23 +1778,6 @@ async function saveConversationMessages() {
 
   }
 
-
-  /*
-    Ensure Live access token exists.
-  */
-
-  if (!liveToken) {
-
-    throw new Error(
-      'Live access token not available'
-    );
-
-  }
-
-
-  /*
-    Browser sends only opaque demo token.
-  */
 
   const payload = {
 
@@ -1275,24 +1793,9 @@ async function saveConversationMessages() {
   };
 
 
-  console.log(
-    'Sending demo conversation to n8n:',
-    payload
-  );
-
-
-  /*
-    IMPORTANT:
-    This currently preserves the production
-    transcript webhook.
-
-    Replace with the dedicated demo webhook
-    when the demo persistence workflow is ready.
-  */
-
   const response =
     await fetch(
-      'https://powerfulkiwi-n8n.cloudfy.live/webhook/ae8588a5-2ecb-4b5f-891f-89d6015d8570',
+      DEMO_TRANSCRIPT_WEBHOOK,
       {
 
         method:
@@ -1314,52 +1817,19 @@ async function saveConversationMessages() {
     );
 
 
-  const responseText =
-    await response.text();
-
-
-  let result =
-    null;
-
-
-  if (responseText) {
-
-    try {
-
-      result =
-        JSON.parse(
-          responseText
-        );
-
-    }
-
-    catch {
-
-      result =
-        responseText;
-
-    }
-
-  }
+  const result =
+    await parseResponse(
+      response
+    );
 
 
   if (!response.ok) {
 
     throw new Error(
-      `n8n webhook error ${response.status}: ${
-        typeof result === 'string'
-          ? result
-          : JSON.stringify(result)
-      }`
+      `Transcript webhook error ${response.status}`
     );
 
   }
-
-
-  console.log(
-    'DEMO CONVERSATION SENT TO N8N:',
-    result
-  );
 
 
   return result;
@@ -1368,7 +1838,7 @@ async function saveConversationMessages() {
 
 
 /* =====================================================
-   FINALIZE SESSION TRANSCRIPT
+   FINALIZE TRANSCRIPT
 ===================================================== */
 
 async function finalizeSessionTranscript(
@@ -1382,15 +1852,7 @@ async function finalizeSessionTranscript(
 
   try {
 
-    const result =
-      await saveConversationMessages();
-
-
-    console.log(
-      'Demo transcript finalization completed:',
-      result
-    );
-
+    await saveConversationMessages();
 
     return true;
 
@@ -1399,10 +1861,9 @@ async function finalizeSessionTranscript(
   catch (error) {
 
     console.error(
-      'FAILED TO SAVE DEMO TRANSCRIPT:',
+      'Transcript persistence failed:',
       error
     );
-
 
     return false;
 
@@ -1412,19 +1873,16 @@ async function finalizeSessionTranscript(
 
 
 /* =====================================================
-   REQUEST OPENING INSTRUCTIONS
+   OPENING INSTRUCTIONS
 ===================================================== */
 
 function requestOpeningInstructions() {
 
   if (
     !dataChannel ||
-    dataChannel.readyState !== 'open'
+    dataChannel.readyState !==
+      'open'
   ) {
-
-    console.error(
-      'Cannot request opening instructions: data channel is not open'
-    );
 
     return;
 
@@ -1436,50 +1894,38 @@ function requestOpeningInstructions() {
     Date.now();
 
 
-  const event = {
-
-    type:
-      'session.instructions.append',
-
-    event_id:
-      openingInstructionEventId,
-
-    delegation_id:
-      null,
-
-    content:
-      'Begin the professional conversation immediately as your assigned professional peer. Use English and follow all existing character, language, scenario, voice, and interaction instructions. Start naturally from the professional situation. Do not wait for the participant to speak first. After your opening turn, pause and listen for the participant.'
-
-  };
-
-
-  console.log(
-    'Sending demo opening instructions:',
-    event
-  );
-
-
   dataChannel.send(
-    JSON.stringify(event)
+    JSON.stringify({
+
+      type:
+        'session.instructions.append',
+
+      event_id:
+        openingInstructionEventId,
+
+      delegation_id:
+        null,
+
+      content:
+        'Begin the professional conversation immediately as your assigned professional peer. Use English and follow all existing character, language, scenario, voice, and interaction instructions. Start naturally from the professional situation. Do not wait for the participant to speak first. After your opening turn, pause and listen for the participant.'
+
+    })
   );
 
 }
 
 
 /* =====================================================
-   REQUEST OPENING COMMENTARY
+   OPENING COMMENTARY
 ===================================================== */
 
 function requestOpeningCommentary() {
 
   if (
     !dataChannel ||
-    dataChannel.readyState !== 'open'
+    dataChannel.readyState !==
+      'open'
   ) {
-
-    console.error(
-      'Cannot request opening commentary: data channel is not open'
-    );
 
     return;
 
@@ -1487,10 +1933,6 @@ function requestOpeningCommentary() {
 
 
   if (openingCommentarySent) {
-
-    console.log(
-      'Opening commentary already sent'
-    );
 
     return;
 
@@ -1506,31 +1948,22 @@ function requestOpeningCommentary() {
     Date.now();
 
 
-  const event = {
-
-    type:
-      'session.commentary.append',
-
-    event_id:
-      openingCommentaryEventId,
-
-    delegation_id:
-      null,
-
-    content:
-      'Begin the conversation now, following the instructions provided.'
-
-  };
-
-
-  console.log(
-    'Sending demo opening commentary:',
-    event
-  );
-
-
   dataChannel.send(
-    JSON.stringify(event)
+    JSON.stringify({
+
+      type:
+        'session.commentary.append',
+
+      event_id:
+        openingCommentaryEventId,
+
+      delegation_id:
+        null,
+
+      content:
+        'Begin the conversation now, following the instructions provided.'
+
+    })
   );
 
 }
@@ -1540,7 +1973,9 @@ function requestOpeningCommentary() {
    OPENAI EVENT HANDLER
 ===================================================== */
 
-async function handleOpenAIEvent(event) {
+async function handleOpenAIEvent(
+  event
+) {
 
   let data;
 
@@ -1554,12 +1989,7 @@ async function handleOpenAIEvent(event) {
 
   }
 
-  catch (error) {
-
-    console.error(
-      'Invalid OpenAI event:',
-      event.data
-    );
+  catch {
 
     return;
 
@@ -1572,16 +2002,14 @@ async function handleOpenAIEvent(event) {
   );
 
 
-  /* -------------------------------------------------
-     USER TRANSCRIPT DELTA
-  ------------------------------------------------- */
+  /* USER TRANSCRIPT */
 
   if (
     data.type ===
     'session.input_transcript.delta'
   ) {
 
-    const transcriptEvent = {
+    transcriptEvents.push({
 
       speaker:
         'user',
@@ -1595,19 +2023,7 @@ async function handleOpenAIEvent(event) {
       end_ms:
         data.end_ms
 
-    };
-
-
-    transcriptEvents.push(
-      transcriptEvent
-    );
-
-
-    console.log(
-      '[USER]',
-      data.delta,
-      `[${data.start_ms} → ${data.end_ms} ms]`
-    );
+    });
 
 
     return;
@@ -1615,16 +2031,14 @@ async function handleOpenAIEvent(event) {
   }
 
 
-  /* -------------------------------------------------
-     EXECUTOR TRANSCRIPT DELTA
-  ------------------------------------------------- */
+  /* EXECUTOR TRANSCRIPT */
 
   if (
     data.type ===
     'session.output_transcript.delta'
   ) {
 
-    const transcriptEvent = {
+    transcriptEvents.push({
 
       speaker:
         'executor',
@@ -1638,19 +2052,7 @@ async function handleOpenAIEvent(event) {
       end_ms:
         data.end_ms
 
-    };
-
-
-    transcriptEvents.push(
-      transcriptEvent
-    );
-
-
-    console.log(
-      '[EXECUTOR]',
-      data.delta,
-      `[${data.start_ms} → ${data.end_ms} ms]`
-    );
+    });
 
 
     return;
@@ -1658,9 +2060,7 @@ async function handleOpenAIEvent(event) {
   }
 
 
-  /* -------------------------------------------------
-     SESSION STARTED
-  ------------------------------------------------- */
+  /* SESSION STARTED */
 
   if (
     data.type ===
@@ -1679,20 +2079,16 @@ async function handleOpenAIEvent(event) {
     talkButton.disabled =
       false;
 
-
     talkButton.textContent =
       'END TALK';
-
 
     talkButton.classList.add(
       'live'
     );
 
-
     liveIndicator.classList.add(
       'active'
     );
-
 
     statusText.textContent =
       'LIVE';
@@ -1702,18 +2098,6 @@ async function handleOpenAIEvent(event) {
 
     startDemoStageController();
 
-
-    console.log(
-      'GPT-Live-1 demo session started:',
-      liveSessionId
-    );
-
-
-    /*
-      Add explicit opening behavior
-      to the compiled demo prompt.
-    */
-
     requestOpeningInstructions();
 
 
@@ -1722,30 +2106,17 @@ async function handleOpenAIEvent(event) {
   }
 
 
-  /* -------------------------------------------------
-     OPENING INSTRUCTIONS ACCEPTED
-  ------------------------------------------------- */
+  /* INSTRUCTIONS ACCEPTED */
 
   if (
     data.type ===
     'session.instructions.appended'
   ) {
 
-    console.log(
-      'Instructions appended:',
-      data
-    );
-
-
     if (
       data.client_event_id ===
       openingInstructionEventId
     ) {
-
-      console.log(
-        'Demo opening instructions accepted'
-      );
-
 
       requestOpeningCommentary();
 
@@ -1757,52 +2128,12 @@ async function handleOpenAIEvent(event) {
   }
 
 
-  /* -------------------------------------------------
-     OPENING COMMENTARY ACCEPTED
-  ------------------------------------------------- */
-
-  if (
-    data.type ===
-    'session.commentary.appended'
-  ) {
-
-    console.log(
-      'Commentary appended:',
-      data
-    );
-
-
-    if (
-      data.client_event_id ===
-      openingCommentaryEventId
-    ) {
-
-      console.log(
-        'Demo opening commentary accepted'
-      );
-
-    }
-
-
-    return;
-
-  }
-
-
-  /* -------------------------------------------------
-     SESSION CLOSED
-  ------------------------------------------------- */
+  /* SESSION CLOSED */
 
   if (
     data.type ===
     'session.closed'
   ) {
-
-    console.log(
-      'GPT-Live-1 demo session closed:',
-      data
-    );
-
 
     statusText.textContent =
       'Saving conversation...';
@@ -1810,23 +2141,6 @@ async function handleOpenAIEvent(event) {
 
     const saved =
       await finalizeSessionTranscript();
-
-
-    if (saved) {
-
-      console.log(
-        'Demo session transcript successfully persisted'
-      );
-
-    }
-
-    else {
-
-      console.warn(
-        'Demo session ended but transcript persistence failed'
-      );
-
-    }
 
 
     cleanupSession(
@@ -1841,9 +2155,7 @@ async function handleOpenAIEvent(event) {
   }
 
 
-  /* -------------------------------------------------
-     ERROR
-  ------------------------------------------------- */
+  /* ERROR */
 
   if (
     data.type ===
@@ -1851,7 +2163,7 @@ async function handleOpenAIEvent(event) {
   ) {
 
     console.error(
-      'GPT-Live-1 demo error:',
+      'GPT Live error:',
       data
     );
 
@@ -1859,19 +2171,31 @@ async function handleOpenAIEvent(event) {
     statusText.textContent =
       'Live session error';
 
-
-    return;
-
   }
 
 }
 
 
 /* =====================================================
-   START SESSION
+   START LIVE SESSION
 ===================================================== */
 
 async function startSession() {
+
+  /*
+    Live cannot start before preparation.
+  */
+
+  if (!preparationCompleted) {
+
+    console.error(
+      'Demo preparation has not been completed'
+    );
+
+    return;
+
+  }
+
 
   if (
     sessionActive ||
@@ -1883,10 +2207,6 @@ async function startSession() {
   }
 
 
-  /*
-    Reset opening state.
-  */
-
   openingInstructionEventId =
     null;
 
@@ -1896,10 +2216,6 @@ async function startSession() {
   openingCommentarySent =
     false;
 
-
-  /*
-    Reset transcript state.
-  */
 
   transcriptEvents =
     [];
@@ -1911,18 +2227,11 @@ async function startSession() {
     false;
 
 
-  console.log(
-    'Demo transcript buffers reset'
-  );
-
-
   talkButton.disabled =
     true;
 
-
   talkButton.textContent =
     'CONNECTING...';
-
 
   statusText.textContent =
     'Requesting microphone access';
@@ -1931,9 +2240,7 @@ async function startSession() {
   try {
 
 
-    /* -------------------------------------------------
-       1. MICROPHONE
-    ------------------------------------------------- */
+    /* MICROPHONE */
 
     liveMediaStream =
       await navigator.mediaDevices
@@ -1942,21 +2249,17 @@ async function startSession() {
         });
 
 
-    /* -------------------------------------------------
-       2. CREATE WEBRTC CONNECTION
-    ------------------------------------------------- */
-
     statusText.textContent =
       'Creating secure connection';
 
+
+    /* WEBRTC */
 
     peerConnection =
       new RTCPeerConnection();
 
 
-    /* -------------------------------------------------
-       3. RECEIVE GPT-LIVE AUDIO
-    ------------------------------------------------- */
+    /* REMOTE AUDIO */
 
     remoteAudio =
       document.createElement(
@@ -1966,7 +2269,6 @@ async function startSession() {
 
     remoteAudio.autoplay =
       true;
-
 
     remoteAudio.playsInline =
       true;
@@ -1981,12 +2283,6 @@ async function startSession() {
       'track',
       (event) => {
 
-
-        console.log(
-          'Remote audio track received'
-        );
-
-
         if (
           event.streams &&
           event.streams[0]
@@ -1999,52 +2295,48 @@ async function startSession() {
 
         else {
 
-          const stream =
+          remoteAudio.srcObject =
             new MediaStream([
               event.track
             ]);
-
-
-          remoteAudio.srcObject =
-            stream;
 
         }
 
 
         remoteAudio
           .play()
-          .catch((error) => {
+          .catch(
+            (error) => {
 
-            console.warn(
-              'Audio autoplay warning:',
-              error
-            );
+              console.warn(
+                'Audio autoplay warning:',
+                error
+              );
 
-          });
+            }
+          );
 
       }
     );
 
 
-    /* -------------------------------------------------
-       4. ADD MICROPHONE TO WEBRTC
-    ------------------------------------------------- */
+    /* MICROPHONE TRACK */
 
     liveMediaStream
       .getAudioTracks()
-      .forEach((track) => {
+      .forEach(
+        (track) => {
 
-        peerConnection.addTrack(
-          track,
-          liveMediaStream
-        );
+          peerConnection.addTrack(
+            track,
+            liveMediaStream
+          );
 
-      });
+        }
+      );
 
 
-    /* -------------------------------------------------
-       5. CREATE OPENAI DATA CHANNEL
-    ------------------------------------------------- */
+    /* DATA CHANNEL */
 
     dataChannel =
       peerConnection
@@ -2063,25 +2355,8 @@ async function startSession() {
       'open',
       () => {
 
-        console.log(
-          'OpenAI data channel opened'
-        );
-
-
         statusText.textContent =
           'Initializing Live session';
-
-      }
-    );
-
-
-    dataChannel.addEventListener(
-      'close',
-      () => {
-
-        console.log(
-          'OpenAI data channel closed'
-        );
 
       }
     );
@@ -2092,7 +2367,7 @@ async function startSession() {
       (error) => {
 
         console.error(
-          'OpenAI data channel error:',
+          'Data channel error:',
           error
         );
 
@@ -2100,24 +2375,16 @@ async function startSession() {
     );
 
 
-    /* -------------------------------------------------
-       6. CONNECTION STATE MONITOR
-    ------------------------------------------------- */
+    /* CONNECTION MONITOR */
 
     peerConnection.addEventListener(
       'connectionstatechange',
       () => {
 
-
-        console.log(
-          'WebRTC connection state:',
-          peerConnection?.connectionState
-        );
-
-
         if (
-          peerConnection?.connectionState ===
-          'failed'
+          peerConnection &&
+          peerConnection.connectionState ===
+            'failed'
         ) {
 
           cleanupSession(
@@ -2130,9 +2397,7 @@ async function startSession() {
     );
 
 
-    /* -------------------------------------------------
-       7. CREATE SDP OFFER
-    ------------------------------------------------- */
+    /* SDP OFFER */
 
     statusText.textContent =
       'Preparing Live session';
@@ -2148,10 +2413,6 @@ async function startSession() {
         offer
       );
 
-
-    /* -------------------------------------------------
-       8. WAIT FOR ICE CANDIDATES
-    ------------------------------------------------- */
 
     await waitForIceGatheringComplete(
       peerConnection
@@ -2173,27 +2434,15 @@ async function startSession() {
     }
 
 
-    /* -------------------------------------------------
-       9. SEND SDP TO N8N
-    ------------------------------------------------- */
+    /* SEND TO N8N */
 
     statusText.textContent =
       'Connecting to GPT-Live-1';
 
 
-    /*
-      IMPORTANT:
-
-      This currently preserves the production
-      Live-session endpoint.
-
-      If the demo uses a dedicated n8n workflow,
-      replace this URL with the demo endpoint.
-    */
-
     const response =
       await fetch(
-        'https://powerfulkiwi-n8n.cloudfy.live/webhook/live-session',
+        DEMO_LIVE_WEBHOOK,
         {
 
           method:
@@ -2221,40 +2470,30 @@ async function startSession() {
       );
 
 
-    /* -------------------------------------------------
-       10. VERIFY SERVER RESPONSE
-    ------------------------------------------------- */
+    const result =
+      await parseResponse(
+        response
+      );
+
 
     if (!response.ok) {
 
-      const errorText =
-        await response.text();
-
-
       throw new Error(
-        `Live API error ${response.status}: ${errorText}`
+        `Live API error ${response.status}`
       );
 
     }
 
 
-    const result =
-      await response.json();
-
-
-    console.log(
-      'Demo Live session created:',
-      result
-    );
-
-
     if (
+      !result ||
+      typeof result !== 'object' ||
       !result.transport ||
       !result.transport.sdp
     ) {
 
       throw new Error(
-        'OpenAI response does not contain SDP answer'
+        'Live response does not contain SDP answer'
       );
 
     }
@@ -2265,9 +2504,7 @@ async function startSession() {
       null;
 
 
-    /* -------------------------------------------------
-       11. APPLY OPENAI SDP ANSWER
-    ------------------------------------------------- */
+    /* APPLY SDP ANSWER */
 
     await peerConnection
       .setRemoteDescription({
@@ -2281,34 +2518,15 @@ async function startSession() {
       });
 
 
-    /*
-      HTTP request already created the Live session.
-
-      Do NOT send session.start.
-
-      Wait for:
-
-      session.started
-
-      Then:
-
-      1. session.instructions.append
-      2. session.instructions.appended
-      3. session.commentary.append
-    */
-
-
     statusText.textContent =
       'Waiting for Live session';
-
 
   }
 
   catch (error) {
 
-
     console.error(
-      'Unable to start demo Live session:',
+      'Unable to start Live demo:',
       error
     );
 
@@ -2323,34 +2541,30 @@ async function startSession() {
 
 
 /* =====================================================
-   REQUEST SESSION END
+   END SESSION
 ===================================================== */
 
 function endSession() {
 
   if (!sessionActive) {
+
     return;
+
   }
 
 
   talkButton.disabled =
     true;
 
-
   statusText.textContent =
     'Ending conversation...';
 
-
-  /*
-    Ask GPT-Live to close cleanly.
-  */
 
   if (
     dataChannel &&
     dataChannel.readyState ===
       'open'
   ) {
-
 
     dataChannel.send(
       JSON.stringify({
@@ -2360,20 +2574,10 @@ function endSession() {
     );
 
 
-    /*
-      Safety timeout.
-
-      If session.closed is not received,
-      persist locally collected transcript
-      after 15 seconds.
-    */
-
     setTimeout(
       async () => {
 
-
         if (peerConnection) {
-
 
           statusText.textContent =
             'Saving conversation...';
@@ -2393,7 +2597,6 @@ function endSession() {
 
         }
 
-
       },
       15000
     );
@@ -2404,29 +2607,20 @@ function endSession() {
   }
 
 
-  /*
-    Data channel already unavailable.
-
-    Persist locally collected transcript
-    before cleanup.
-  */
-
-  statusText.textContent =
-    'Saving conversation...';
-
-
   finalizeSessionTranscript(
     'local close'
   )
-    .then((saved) => {
+    .then(
+      (saved) => {
 
-      cleanupSession(
-        saved
-          ? 'Session ended'
-          : 'Session ended - save failed'
-      );
+        cleanupSession(
+          saved
+            ? 'Session ended'
+            : 'Session ended - save failed'
+        );
 
-    });
+      }
+    );
 
 }
 
@@ -2435,19 +2629,16 @@ function endSession() {
    CLEANUP
 ===================================================== */
 
-function cleanupSession(message) {
-
-
-  /* -------------------------------------------------
-     STOP MICROPHONE
-  ------------------------------------------------- */
+function cleanupSession(
+  message
+) {
 
   if (liveMediaStream) {
 
     liveMediaStream
       .getTracks()
       .forEach(
-        track =>
+        (track) =>
           track.stop()
       );
 
@@ -2458,10 +2649,6 @@ function cleanupSession(message) {
   }
 
 
-  /* -------------------------------------------------
-     CLOSE DATA CHANNEL
-  ------------------------------------------------- */
-
   if (dataChannel) {
 
     try {
@@ -2470,13 +2657,8 @@ function cleanupSession(message) {
 
     }
 
-    catch (error) {
-
-      console.warn(
-        'Error closing data channel:',
-        error
-      );
-
+    catch {
+      // no-op
     }
 
   }
@@ -2486,10 +2668,6 @@ function cleanupSession(message) {
     null;
 
 
-  /* -------------------------------------------------
-     CLOSE PEER CONNECTION
-  ------------------------------------------------- */
-
   if (peerConnection) {
 
     try {
@@ -2498,13 +2676,8 @@ function cleanupSession(message) {
 
     }
 
-    catch (error) {
-
-      console.warn(
-        'Error closing peer connection:',
-        error
-      );
-
+    catch {
+      // no-op
     }
 
   }
@@ -2513,10 +2686,6 @@ function cleanupSession(message) {
   peerConnection =
     null;
 
-
-  /* -------------------------------------------------
-     REMOVE REMOTE AUDIO
-  ------------------------------------------------- */
 
   if (remoteAudio) {
 
@@ -2531,13 +2700,8 @@ function cleanupSession(message) {
 
     }
 
-    catch (error) {
-
-      console.warn(
-        'Error removing remote audio:',
-        error
-      );
-
+    catch {
+      // no-op
     }
 
   }
@@ -2547,26 +2711,13 @@ function cleanupSession(message) {
     null;
 
 
-  /* -------------------------------------------------
-     STOP TIMER
-  ------------------------------------------------- */
-
   stopTimer();
-
-  sessionStartTime =
-    null;
-
-
-  /* -------------------------------------------------
-     STOP DEMO STAGE CONTROLLER
-  ------------------------------------------------- */
 
   stopDemoStageController();
 
 
-  /* -------------------------------------------------
-     RESET SESSION STATE
-  ------------------------------------------------- */
+  sessionStartTime =
+    null;
 
   sessionActive =
     false;
@@ -2574,10 +2725,6 @@ function cleanupSession(message) {
   liveSessionId =
     null;
 
-
-  /* -------------------------------------------------
-     RESET UI
-  ------------------------------------------------- */
 
   liveIndicator.classList.remove(
     'active'
@@ -2592,7 +2739,6 @@ function cleanupSession(message) {
   talkButton.disabled =
     true;
 
-
   talkButton.textContent =
     'SESSION ENDED';
 
@@ -2600,11 +2746,6 @@ function cleanupSession(message) {
   statusText.textContent =
     message ||
     'Session ended';
-
-
-  console.log(
-    'Demo Live session cleanup completed'
-  );
 
 }
 
@@ -2640,20 +2781,12 @@ window.addEventListener(
   'beforeunload',
   () => {
 
-    /*
-      Stop local resources immediately.
-
-      Do not attempt asynchronous transcript
-      persistence here because browsers do not
-      guarantee completion during unload.
-    */
-
     if (liveMediaStream) {
 
       liveMediaStream
         .getTracks()
         .forEach(
-          track =>
+          (track) =>
             track.stop()
         );
 
@@ -2691,3 +2824,10 @@ window.addEventListener(
 
   }
 );
+
+
+/* =====================================================
+   INITIALIZE
+===================================================== */
+
+initializePage();
