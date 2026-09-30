@@ -35,7 +35,7 @@ const DEMO_PREPARATION_WEBHOOK =
 */
 
 const DEMO_LIVE_WEBHOOK =
-  'https://powerfulkiwi-n8n.cloudfy.live/webhook/live-session';
+  'https://powerfulkiwi-n8n.cloudfy.live/webhook/demo-live-start';
 
 
 /*
