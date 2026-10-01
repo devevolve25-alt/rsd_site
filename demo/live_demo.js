@@ -1049,7 +1049,9 @@ Conversation Stage: INTRODUCTION.
 
 Begin the professional interaction naturally as the assigned professional peer.
 
-Briefly present the professional situation using the scenario information already provided to you.
+Your first spoken sentence must introduce yourself by name and must naturally include the words "My name is Daniel."
+
+After introducing yourself, briefly present the professional situation using the scenario information already provided to you.
 
 Give the participant only the information necessary to understand the central issue and why action is needed.
 
@@ -1201,7 +1203,7 @@ Do not switch from professional peer to teacher or evaluator.
 
 Remain fully in character.
 
-Close the interaction naturally and concisely.
+Close the interaction naturally and concisely by showing appreciation.
     `.trim()
 
   );
@@ -1233,17 +1235,33 @@ function triggerExpectedEnd() {
     `
 The planned interaction time has been reached.
 
-Finish the professional conversation now.
+The conversation must end now.
 
-If a final acknowledgement or farewell is necessary, make it brief and natural.
+This is the final closing stage of the interaction.
 
-Do not ask another question.
+Do not ask any question.
 
-Do not introduce any new information, problem, alternative, challenge, or topic.
+Do not request confirmation, clarification, feedback, additional information, or another response from the participant.
+
+Do not introduce any new information, problem, alternative, concern, challenge, or topic.
+
+Do not reopen any previous discussion point.
+
+If appropriate, briefly acknowledge the participant's final recommendation using only information already established in the conversation.
+
+Then give a clear and concise professional farewell.
+
+Your closing must clearly signal that the conversation is finished. End with a natural farewell such as "Thank you for your time. Have a good day."
+
+Do not invite the participant to continue speaking.
+
+Do not say phrases such as "Is there anything else?", "What do you think?", "Would you like to add anything?", or any equivalent question.
+
+After the farewell, do not continue the conversation.
 
 Remain fully in character.
 
-Close the interaction immediately after the final professional acknowledgement.
+This must be your final conversational turn.
     `.trim()
 
   );
@@ -2063,7 +2081,7 @@ function requestOpeningInstructions() {
         null,
 
       content:
-        'Begin the professional conversation immediately as your assigned professional peer. Use English and follow all existing character, language, scenario, voice, and interaction instructions. Start naturally from the professional situation. Do not wait for the participant to speak first. After your opening turn, pause and listen for the participant.'
+        'Begin the conversation now. Follow the current INTRODUCTION stage instructions exactly. Do not add a separate opening structure or additional introductory content.'
 
     })
   );
