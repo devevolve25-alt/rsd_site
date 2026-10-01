@@ -2740,7 +2740,7 @@ async function startSession() {
    END SESSION
 ===================================================== */
 
-function endSession() {
+async function endSession() {
 
   if (!sessionActive) {
 
@@ -2749,12 +2749,41 @@ function endSession() {
   }
 
 
+  /*
+    Immediately lock the session so that
+    endSession cannot run more than once.
+  */
+
+  sessionActive =
+    false;
+
+
   talkButton.disabled =
     true;
 
-  statusText.textContent =
-    'Ending conversation...';
+  talkButton.textContent =
+    'PROCESSING...';
 
+  statusText.textContent =
+    'Preparing your feedback...';
+
+
+  /*
+    Stop the temporal controllers immediately.
+    No additional stage instructions should
+    be sent after the session has ended.
+  */
+
+  stopTimer();
+
+  stopDemoStageController();
+
+
+  /*
+    Ask the Live session to close, but do not
+    depend on session.closed to start feedback
+    processing.
+  */
 
   if (
     dataChannel &&
@@ -2762,91 +2791,76 @@ function endSession() {
       'open'
   ) {
 
-    dataChannel.send(
-      JSON.stringify({
-        type:
-          'session.close'
-      })
+    try {
+
+      dataChannel.send(
+        JSON.stringify({
+          type:
+            'session.close'
+        })
+      );
+
+    }
+
+    catch (error) {
+
+      console.warn(
+        'Unable to send session.close:',
+        error
+      );
+
+    }
+
+  }
+
+
+  /*
+    Persist the transcript and wait for the
+    analysis workflow to return the feedback.
+  */
+
+  const result =
+    await finalizeSessionTranscript(
+      'session end'
     );
 
 
-    setTimeout(
-      async () => {
-
-        if (peerConnection) {
-
-          statusText.textContent =
-            'Saving conversation...';
-
-
-          const result =
-            await finalizeSessionTranscript(
-              'fallback'
-            );
-
-
-          const feedback =
-            extractFeedback(
-              result
-            );
-
-
-          cleanupSession(
-            result
-              ? 'Session ended'
-              : 'Session ended - save failed'
-          );
-
-
-          if (feedback) {
-
-            showFeedback(
-              feedback
-            );
-
-          }
-
-        }
-
-      },
-      15000
+  const feedback =
+    extractFeedback(
+      result
     );
 
+
+  /*
+    Clean up WebRTC only after the transcript
+    request has completed.
+  */
+
+  cleanupSession(
+    feedback
+      ? 'Session ended'
+      : 'Session ended - feedback unavailable'
+  );
+
+
+  /*
+    Replace the Live interface with the
+    feedback interface.
+  */
+
+  if (feedback) {
+
+    showFeedback(
+      feedback
+    );
 
     return;
 
   }
 
 
-  finalizeSessionTranscript(
-    'local close'
-  )
-    .then(
-      (result) => {
-
-        const feedback =
-          extractFeedback(
-            result
-          );
-
-
-        cleanupSession(
-          result
-            ? 'Session ended'
-            : 'Session ended - save failed'
-        );
-
-
-        if (feedback) {
-
-          showFeedback(
-            feedback
-          );
-
-        }
-
-      }
-    );
+  statusText.textContent =
+    'Session ended - feedback unavailable';
 
 }
 
