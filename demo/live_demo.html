@@ -183,91 +183,187 @@
 
 
     <!-- =================================================
-         LIVE AREA
+         ACTIVE LIVE SESSION
+         This entire area will be hidden when feedback
+         is displayed.
     ================================================== -->
 
-    <section class="live-area">
-
-      <div class="live-title">
-        Live professional conversation
-      </div>
-
-
-      <button
-        id="talkButton"
-        class="talk-button"
-        type="button"
-      >
-        START TALK
-      </button>
+    <div
+      id="liveSessionContent"
+      class="live-session-content"
+    >
 
 
-      <div class="session-status">
+      <!-- ===============================================
+           LIVE AREA
+      ================================================ -->
 
-        <span
-          id="liveIndicator"
-          class="live-indicator"
-        ></span>
+      <section class="live-area">
 
-        <span id="statusText">
-          Ready to start
-        </span>
+        <div class="live-title">
+          Live professional conversation
+        </div>
 
-        <span
-          id="timer"
-          class="timer"
+
+        <button
+          id="talkButton"
+          class="talk-button"
+          type="button"
         >
-          00:00
-        </span>
+          START TALK
+        </button>
+
+
+        <div class="session-status">
+
+          <span
+            id="liveIndicator"
+            class="live-indicator"
+          ></span>
+
+          <span id="statusText">
+            Ready to start
+          </span>
+
+          <span
+            id="timer"
+            class="timer"
+          >
+            00:00
+          </span>
+
+        </div>
+
+      </section>
+
+
+      <!-- ===============================================
+           SCENARIO PANEL
+           Filled dynamically after preparation.
+      ================================================ -->
+
+      <aside
+        id="scenarioPanel"
+        class="mission-panel"
+      >
+
+
+        <!-- SCENARIO TITLE -->
+
+        <div class="mission-section">
+
+          <div class="mission-label">
+            YOUR SCENARIO
+          </div>
+
+          <div
+            class="scenario-title"
+            id="scenarioTitle"
+          >
+            Professional workplace situation
+          </div>
+
+        </div>
+
+
+        <!-- SITUATION -->
+
+        <div class="mission-section">
+
+          <div class="mission-label">
+            SITUATION
+          </div>
+
+          <div
+            class="mission-text"
+            id="scenarioSituation"
+          >
+            Your personalized professional situation
+            will appear here.
+          </div>
+
+        </div>
+
+
+        <!-- USER TASK -->
+
+        <div class="mission-section">
+
+          <div class="mission-label">
+            YOUR TASK
+          </div>
+
+          <div
+            class="mission-text"
+            id="scenarioTask"
+          >
+            Understand the situation, propose a practical
+            course of action, and explain your reasoning.
+          </div>
+
+        </div>
+
+
+      </aside>
+
+
+    </div>
+
+
+    <!-- =================================================
+         FEEDBACK STATE
+         Hidden until the transcript analysis is complete.
+    ================================================== -->
+
+    <section
+      id="feedbackState"
+      class="feedback-state"
+      hidden
+      aria-live="polite"
+    >
+
+      <div class="feedback-container">
+
+
+        <!-- =============================================
+             FEEDBACK HEADER
+        ============================================== -->
+
+        <div class="feedback-header">
+
+          <div class="feedback-label">
+            SESSION FEEDBACK
+          </div>
+
+          <h2>
+            Your performance snapshot
+          </h2>
+
+          <p>
+            Based on your interaction during this
+            professional simulation.
+          </p>
+
+        </div>
+
+
+        <!-- =============================================
+             FEEDBACK REPORT
+        ============================================== -->
+
+        <div class="feedback-card">
+
+          <div
+            id="feedbackText"
+            class="feedback-text"
+          ></div>
+
+        </div>
+
 
       </div>
 
     </section>
-
-
-    <!-- =================================================
-         MISSION PANEL
-    ================================================== -->
-
-    <aside class="mission-panel">
-
-
-      <div class="mission-section">
-
-        <div class="mission-label">
-          YOUR MISSION
-        </div>
-
-        <div
-          class="mission-text"
-          id="mission"
-        >
-          Understand the professional situation,
-          propose a practical course of action,
-          and explain your reasoning.
-        </div>
-
-      </div>
-
-
-      <div class="mission-section">
-
-        <div class="mission-label">
-          OBJECTIVE
-        </div>
-
-        <div
-          class="mission-text"
-          id="objective"
-        >
-          Reach a practical professional recommendation
-          through the conversation.
-        </div>
-
-      </div>
-
-
-    </aside>
 
 
   </main>
