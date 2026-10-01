@@ -48,7 +48,7 @@ const DEMO_LIVE_WEBHOOK =
 */
 
 const DEMO_TRANSCRIPT_WEBHOOK =
-  'https://powerfulkiwi-n8n.cloudfy.live/webhook/ae8588a5-2ecb-4b5f-891f-89d6015d8570';
+  'https://powerfulkiwi-n8n.cloudfy.live/webhook/demo_messages';
 
 
 /* =====================================================
