@@ -115,14 +115,34 @@ const timer =
     'timer'
   );
 
-const missionElement =
+const liveSessionContent =
   document.getElementById(
-    'mission'
+    'liveSessionContent'
   );
 
-const objectiveElement =
+const scenarioTitle =
   document.getElementById(
-    'objective'
+    'scenarioTitle'
+  );
+
+const scenarioSituation =
+  document.getElementById(
+    'scenarioSituation'
+  );
+
+const scenarioTask =
+  document.getElementById(
+    'scenarioTask'
+  );
+
+const feedbackState =
+  document.getElementById(
+    'feedbackState'
+  );
+
+const feedbackText =
+  document.getElementById(
+    'feedbackText'
   );
 
 
@@ -206,25 +226,29 @@ let conversationSaveStarted =
 
 
 /* =====================================================
-   DEFAULT DEMO MISSION
+   DEFAULT PUBLIC SCENARIO
 ===================================================== */
 
 /*
-  These values are intentionally generic.
+  These values are temporary placeholders only.
 
-  They do not expose:
-  - user name
-  - profession
-  - industry
-  - generated scenario
-  - private possible solutions
+  After preparation, n8n returns the public scenario:
+  - title
+  - situation
+  - user_task
+
+  Private scenario data such as peer_context and
+  possible_solutions must never be exposed here.
 */
 
-const DEFAULT_MISSION =
-  'Understand the professional situation, propose a practical course of action, and explain your reasoning.';
+const DEFAULT_SCENARIO_TITLE =
+  'Professional workplace situation';
 
-const DEFAULT_OBJECTIVE =
-  'Reach a practical professional recommendation through the conversation.';
+const DEFAULT_SCENARIO_SITUATION =
+  'Your personalized professional situation will appear here.';
+
+const DEFAULT_SCENARIO_TASK =
+  'Understand the situation, propose a practical course of action, and explain your reasoning.';
 
 
 /* =====================================================
@@ -242,12 +266,23 @@ function initializePage() {
   talkButton.disabled =
     true;
 
+  liveSessionContent.hidden =
+    false;
 
-  missionElement.textContent =
-    DEFAULT_MISSION;
+  feedbackState.hidden =
+    true;
 
-  objectiveElement.textContent =
-    DEFAULT_OBJECTIVE;
+  feedbackText.textContent =
+    '';
+
+  scenarioTitle.textContent =
+    DEFAULT_SCENARIO_TITLE;
+
+  scenarioSituation.textContent =
+    DEFAULT_SCENARIO_SITUATION;
+
+  scenarioTask.textContent =
+    DEFAULT_SCENARIO_TASK;
 
 
   /*
@@ -557,48 +592,66 @@ function completePreparation(
 
 
   /*
-    We intentionally do NOT keep participant
-    information in a browser session object.
-
-    After n8n has stored it, the browser
-    no longer needs it.
+    Participant information is already stored by n8n.
+    The browser keeps only the public scenario data
+    required to prepare the participant for the Live demo.
   */
 
+  const preparationResult =
+    Array.isArray(result)
+      ? result[0]
+      : result;
 
-  /*
-    Optional response support.
+  const publicScenario =
+    preparationResult &&
+    typeof preparationResult === 'object' &&
+    preparationResult.scenario &&
+    typeof preparationResult.scenario === 'object'
+      ? preparationResult.scenario
+      : null;
 
-    If n8n later returns mission/objective,
-    the page can use them.
 
-    Otherwise the fixed generic values remain.
-  */
-
-  if (
-    result &&
-    typeof result === 'object'
-  ) {
+  if (publicScenario) {
 
     if (
-      typeof result.mission === 'string' &&
-      result.mission.trim()
+      typeof publicScenario.title === 'string' &&
+      publicScenario.title.trim()
     ) {
 
-      missionElement.textContent =
-        result.mission.trim();
+      scenarioTitle.textContent =
+        publicScenario.title.trim();
 
     }
 
 
     if (
-      typeof result.objective === 'string' &&
-      result.objective.trim()
+      typeof publicScenario.situation === 'string' &&
+      publicScenario.situation.trim()
     ) {
 
-      objectiveElement.textContent =
-        result.objective.trim();
+      scenarioSituation.textContent =
+        publicScenario.situation.trim();
 
     }
+
+
+    if (
+      typeof publicScenario.user_task === 'string' &&
+      publicScenario.user_task.trim()
+    ) {
+
+      scenarioTask.textContent =
+        publicScenario.user_task.trim();
+
+    }
+
+  }
+
+  else {
+
+    console.warn(
+      'Preparation response does not contain a public scenario'
+    );
 
   }
 
@@ -620,6 +673,12 @@ function completePreparation(
 
   liveState.hidden =
     false;
+
+  liveSessionContent.hidden =
+    false;
+
+  feedbackState.hidden =
+    true;
 
 
   /*
@@ -1730,6 +1789,102 @@ function buildAndPrintFinalTranscript(
 
 
 /* =====================================================
+   FEEDBACK RESPONSE
+===================================================== */
+
+function extractFeedback(
+  result
+) {
+
+  if (
+    !Array.isArray(result) ||
+    !result[0] ||
+    typeof result[0] !== 'object'
+  ) {
+
+    return '';
+
+  }
+
+
+  const report =
+    result[0];
+
+
+  if (
+    report.validation?.status !== 'ok'
+  ) {
+
+    console.warn(
+      'Feedback response validation is not ok:',
+      report.validation
+    );
+
+    return '';
+
+  }
+
+
+  const feedback =
+    report.final_report?.feedback;
+
+
+  if (
+    typeof feedback !== 'string' ||
+    !feedback.trim()
+  ) {
+
+    return '';
+
+  }
+
+
+  return feedback.trim();
+
+}
+
+
+function showFeedback(
+  feedback
+) {
+
+  if (
+    typeof feedback !== 'string' ||
+    !feedback.trim()
+  ) {
+
+    return false;
+
+  }
+
+
+  feedbackText.textContent =
+    feedback.trim();
+
+  liveSessionContent.hidden =
+    true;
+
+  feedbackState.hidden =
+    false;
+
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+
+
+  console.log(
+    'Demo feedback displayed'
+  );
+
+
+  return true;
+
+}
+
+
+/* =====================================================
    SAVE CONVERSATION
 ===================================================== */
 
@@ -1852,9 +2007,10 @@ async function finalizeSessionTranscript(
 
   try {
 
-    await saveConversationMessages();
+    const result =
+      await saveConversationMessages();
 
-    return true;
+    return result;
 
   }
 
@@ -1865,7 +2021,7 @@ async function finalizeSessionTranscript(
       error
     );
 
-    return false;
+    return null;
 
   }
 
@@ -2139,15 +2295,37 @@ async function handleOpenAIEvent(
       'Saving conversation...';
 
 
-    const saved =
+    const result =
       await finalizeSessionTranscript();
 
 
+    const feedback =
+      extractFeedback(
+        result
+      );
+
+
     cleanupSession(
-      saved
+      result
         ? 'Session ended'
         : 'Session ended - save failed'
     );
+
+
+    if (feedback) {
+
+      showFeedback(
+        feedback
+      );
+
+    }
+
+    else {
+
+      statusText.textContent =
+        'Session ended - feedback unavailable';
+
+    }
 
 
     return;
@@ -2583,17 +2761,32 @@ function endSession() {
             'Saving conversation...';
 
 
-          const saved =
+          const result =
             await finalizeSessionTranscript(
               'fallback'
             );
 
 
+          const feedback =
+            extractFeedback(
+              result
+            );
+
+
           cleanupSession(
-            saved
+            result
               ? 'Session ended'
               : 'Session ended - save failed'
           );
+
+
+          if (feedback) {
+
+            showFeedback(
+              feedback
+            );
+
+          }
 
         }
 
@@ -2611,13 +2804,28 @@ function endSession() {
     'local close'
   )
     .then(
-      (saved) => {
+      (result) => {
+
+        const feedback =
+          extractFeedback(
+            result
+          );
+
 
         cleanupSession(
-          saved
+          result
             ? 'Session ended'
             : 'Session ended - save failed'
         );
+
+
+        if (feedback) {
+
+          showFeedback(
+            feedback
+          );
+
+        }
 
       }
     );
