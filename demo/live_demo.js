@@ -2309,41 +2309,9 @@ async function handleOpenAIEvent(
     'session.closed'
   ) {
 
-    statusText.textContent =
-      'Saving conversation...';
-
-
-    const result =
-      await finalizeSessionTranscript();
-
-
-    const feedback =
-      extractFeedback(
-        result
-      );
-
-
-    cleanupSession(
-      result
-        ? 'Session ended'
-        : 'Session ended - save failed'
+    console.log(
+      'OpenAI Live session closed'
     );
-
-
-    if (feedback) {
-
-      showFeedback(
-        feedback
-      );
-
-    }
-
-    else {
-
-      statusText.textContent =
-        'Session ended - feedback unavailable';
-
-    }
 
 
     return;
