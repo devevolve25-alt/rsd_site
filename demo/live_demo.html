@@ -53,121 +53,134 @@
 
 
   <!-- ===================================================
-       PREPARATION STATE
-  ==================================================== -->
+     PREPARATION STATE
+==================================================== -->
 
-  <main
-    id="preparationState"
-    class="preparation-state"
-  >
+<main
+  id="preparationState"
+  class="preparation-state"
+>
 
-    <section class="preparation-card">
+  <section class="preparation-card">
+
+    <div class="preparation-header">
+
+      <h2>
+        Prepare your demo
+      </h2>
+
+      <p>
+        Tell us a little about your professional context.
+        This information will be used to create your
+        personalized workplace situation.
+      </p>
+
+    </div>
+
+
+    <form id="demoForm">
+
+
+      <!-- NAME -->
+
+      <div class="form-group">
+
+        <label for="userNameInput">
+          Your name
+        </label>
+
+        <input
+          id="userNameInput"
+          name="user_name"
+          type="text"
+          autocomplete="name"
+          maxlength="100"
+          required
+        >
+
+      </div>
+
+
+      <!-- PROFESSION -->
+
+      <div class="form-group">
+
+        <label for="professionInput">
+          Profession
+        </label>
+
+        <input
+          id="professionInput"
+          name="profession"
+          type="text"
+          autocomplete="organization-title"
+          maxlength="120"
+          placeholder="e.g. Sales Manager"
+          required
+        >
+
+      </div>
+
+
+      <!-- INDUSTRY -->
+
+      <div class="form-group">
+
+        <label for="industryInput">
+          Industry
+        </label>
+
+        <input
+          id="industryInput"
+          name="industry"
+          type="text"
+          maxlength="120"
+          placeholder="e.g. Industrial Manufacturing"
+          required
+        >
+
+      </div>
+
+
+      <!-- FORM ERROR -->
+
+      <div
+        id="formError"
+        class="form-error"
+        role="alert"
+        aria-live="polite"
+      ></div>
+
+
+      <!-- FEEDBACK NOTICE -->
 
       <div class="preparation-header">
 
-        <h2>
-          Prepare your demo
-        </h2>
-
         <p>
-          Tell us a little about your professional context.
-          This information will be used to create your
-          personalized workplace situation.
+          <strong>
+            Sua devolutiva será enviada por e-mail ao final desta sessão.
+          </strong>
         </p>
 
       </div>
 
 
-      <form id="demoForm">
+      <!-- CONTINUE -->
+
+      <button
+        id="continueButton"
+        class="continue-button"
+        type="submit"
+      >
+        CONTINUE
+      </button>
 
 
-        <!-- NAME -->
+    </form>
 
-        <div class="form-group">
+  </section>
 
-          <label for="userNameInput">
-            Your name
-          </label>
-
-          <input
-            id="userNameInput"
-            name="user_name"
-            type="text"
-            autocomplete="name"
-            maxlength="100"
-            required
-          >
-
-        </div>
-
-
-        <!-- PROFESSION -->
-
-        <div class="form-group">
-
-          <label for="professionInput">
-            Profession
-          </label>
-
-          <input
-            id="professionInput"
-            name="profession"
-            type="text"
-            autocomplete="organization-title"
-            maxlength="120"
-            placeholder="e.g. Sales Manager"
-            required
-          >
-
-        </div>
-
-
-        <!-- INDUSTRY -->
-
-        <div class="form-group">
-
-          <label for="industryInput">
-            Industry
-          </label>
-
-          <input
-            id="industryInput"
-            name="industry"
-            type="text"
-            maxlength="120"
-            placeholder="e.g. Industrial Manufacturing"
-            required
-          >
-
-        </div>
-
-
-        <!-- FORM ERROR -->
-
-        <div
-          id="formError"
-          class="form-error"
-          role="alert"
-          aria-live="polite"
-        ></div>
-
-
-        <!-- CONTINUE -->
-
-        <button
-          id="continueButton"
-          class="continue-button"
-          type="submit"
-        >
-          CONTINUE
-        </button>
-
-
-      </form>
-
-    </section>
-
-  </main>
+</main>
 
 
   <!-- ===================================================
