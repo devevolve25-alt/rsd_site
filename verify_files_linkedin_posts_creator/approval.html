@@ -410,8 +410,16 @@ function getFields(card) {
 }
 
 async function updateRow(table, id, changes) {
-  const { error } = await db.from(table).update(changes).eq("id", id);
+  const { data, error } = await db
+    .from(table)
+    .update(changes)
+    .eq("id", id)
+    .select();
+
   if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error("Nenhuma linha foi alterada. Verifique a policy de UPDATE (RLS).");
+  }
 }
 
 async function handleAction(button) {
