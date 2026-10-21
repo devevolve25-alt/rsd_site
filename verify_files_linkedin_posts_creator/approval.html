@@ -1,0 +1,516 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel Editorial LinkedIn</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+:root {
+  font-family: Arial, sans-serif;
+  color: #172b4d;
+  background: #f3f5f8;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+header {
+  background: #17365d;
+  color: white;
+  padding: 22px;
+}
+header h1 { margin: 0 0 6px; font-size: 23px; }
+header p { margin: 0; color: #dbe7f5; }
+main { max-width: 1100px; margin: auto; padding: 20px; }
+nav { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+button, select, input, textarea {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+  border: 0;
+  border-radius: 6px;
+  padding: 10px 13px;
+  background: #e5eaf1;
+  color: #172b4d;
+}
+button.active, button.primary {
+  background: #17365d;
+  color: white;
+}
+button.approve { background: #18794e; color: white; }
+button.reject { background: #b42318; color: white; }
+button:disabled { opacity: .5; cursor: wait; }
+#message {
+  padding: 12px;
+  margin-bottom: 16px;
+  border-radius: 6px;
+  background: white;
+  white-space: pre-wrap;
+}
+#message:empty { display: none; }
+.toolbar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.toolbar select { max-width: 100%; }
+.card {
+  background: white;
+  border: 1px solid #dce2ea;
+  border-radius: 9px;
+  padding: 18px;
+  margin-bottom: 16px;
+}
+.card h2 { font-size: 18px; margin: 0 0 14px; }
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field.full { grid-column: 1 / -1; }
+label { font-size: 13px; font-weight: bold; color: #475569; }
+input, textarea, select {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  padding: 10px;
+  background: white;
+  color: #172b4d;
+}
+textarea { min-height: 95px; resize: vertical; }
+.meta {
+  color: #64748b;
+  font-size: 12px;
+  margin: 12px 0;
+  overflow-wrap: anywhere;
+}
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.preview {
+  display: block;
+  width: 100%;
+  max-width: 520px;
+  max-height: 420px;
+  object-fit: contain;
+  background: #f1f5f9;
+  border-radius: 6px;
+  margin: 12px 0;
+}
+.empty { padding: 24px; text-align: center; color: #64748b; }
+.status { font-size: 13px; color: #475569; margin-bottom: 12px; }
+@media (max-width: 650px) {
+  main { padding: 12px; }
+  .fields { grid-template-columns: 1fr; }
+  .field.full { grid-column: auto; }
+}
+</style>
+</head>
+
+<body>
+<header>
+  <h1>Painel Editorial LinkedIn</h1>
+  <p>Revisão de tópicos, posts e imagens antes da publicação</p>
+</header>
+
+<main>
+  <nav>
+    <button class="active" data-tab="topics">Tópicos</button>
+    <button data-tab="posts">Posts</button>
+    <button data-tab="images">Imagens</button>
+    <button id="reload">Atualizar dados</button>
+  </nav>
+
+  <div id="message" role="status"></div>
+  <div id="content"></div>
+</main>
+
+<script>
+/*
+  CONFIGURAÇÃO OBRIGATÓRIA:
+  1. Informe a URL do projeto Supabase.
+  2. Informe a chave publishable (ou anon legada).
+  Nunca coloque a chave service_role aqui.
+*/
+const SUPABASE_URL =
+      'https://zplqlcvcpeohtxodvfkq.supabase.co';
+
+    const SUPABASE_KEY =
+      'sb_publishable_YwQnRSNbTfXKnzTAbVWXGw_x8Zs2oK4';
+const BUCKET = "logos_stab";
+
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const state = {
+  tab: "topics",
+  topics: [],
+  posts: [],
+  imageUrls: {},
+  filter: "all",
+  busy: false
+};
+
+const content = document.getElementById("content");
+const message = document.getElementById("message");
+
+function notify(text) {
+  message.textContent = text;
+}
+
+function esc(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;",
+    '"': "&quot;", "'": "&#39;"
+  })[c]);
+}
+
+function statusLabel(status) {
+  const labels = {
+    pending: "Pendente",
+    approved: "Aprovado",
+    rejected: "Rejeitado",
+    published: "Publicado",
+    revision: "Revisão solicitada"
+  };
+  return labels[status] || status || "Sem status";
+}
+
+function optionsStatus(current) {
+  const values = ["pending", "approved", "rejected", "revision"];
+  if (current && !values.includes(current)) values.unshift(current);
+  return values.map(s =>
+    `<option value="${esc(s)}" ${s === current ? "selected" : ""}>${esc(statusLabel(s))}</option>`
+  ).join("");
+}
+
+function field(label, key, value, multiline = false) {
+  return `
+    <div class="field ${multiline ? "full" : ""}">
+      <label>${esc(label)}</label>
+      ${multiline
+        ? `<textarea data-field="${esc(key)}">${esc(value)}</textarea>`
+        : `<input data-field="${esc(key)}" value="${esc(value)}">`}
+    </div>`;
+}
+
+function selectField(label, key, value, values) {
+  return `
+    <div class="field">
+      <label>${esc(label)}</label>
+      <select data-field="${esc(key)}">
+        ${values.map(v => `<option value="${esc(v)}" ${v === value ? "selected" : ""}>${esc(v)}</option>`).join("")}
+      </select>
+    </div>`;
+}
+
+function toolbar() {
+  return `
+    <div class="toolbar">
+      <select id="filter">
+        <option value="all">Todos os status</option>
+        <option value="pending">Pendentes</option>
+        <option value="approved">Aprovados</option>
+        <option value="rejected">Rejeitados</option>
+        <option value="revision">Em revisão</option>
+      </select>
+    </div>`;
+}
+
+function filtered(rows, key = "status") {
+  return rows.filter(row =>
+    state.filter === "all" || row[key] === state.filter
+  );
+}
+
+async function loadData() {
+  notify("Carregando dados...");
+  content.innerHTML = "";
+
+  const [topicsResult, postsResult] = await Promise.all([
+    db.from("linkedin_topics")
+      .select("*")
+      .order("created_at", { ascending: false }),
+    db.from("linkedin_posts")
+      .select("*")
+      .order("created_at", { ascending: false })
+  ]);
+
+  if (topicsResult.error || postsResult.error) {
+    notify(
+      "Erro ao carregar dados.\n" +
+      (topicsResult.error?.message || "") + "\n" +
+      (postsResult.error?.message || "") +
+      "\nVerifique a chave, as permissões RLS e o acesso às tabelas."
+    );
+    return;
+  }
+
+  state.topics = topicsResult.data || [];
+  state.posts = postsResult.data || [];
+
+  // Atualiza as URLs de imagem para exibição.
+  state.imageUrls = {};
+  await Promise.all(state.posts.map(async post => {
+    state.imageUrls[post.id] = await resolveImage(post.post_image);
+  }));
+
+  notify(
+    `Carregados: ${state.topics.length} tópicos e ${state.posts.length} posts.`
+  );
+  render();
+}
+
+async function resolveImage(value) {
+  if (!value) return "";
+
+  // Aceita URL completa ou caminho relativo no bucket.
+  if (/^https?:\/\//i.test(value)) return value;
+
+  const path = value.replace(/^\/+/, "").replace(/^logos_stab\//, "");
+
+  const signed = await db.storage.from(BUCKET).createSignedUrl(path, 3600);
+  if (!signed.error && signed.data?.signedUrl) {
+    return signed.data.signedUrl;
+  }
+
+  // Fallback para buckets públicos.
+  const result = db.storage.from(BUCKET).getPublicUrl(path);
+  return result.data?.publicUrl || "";
+}
+
+function render() {
+  document.querySelectorAll("[data-tab]").forEach(button => {
+    button.classList.toggle("active", button.dataset.tab === state.tab);
+  });
+
+  if (state.tab === "topics") renderTopics();
+  else if (state.tab === "posts") renderPosts();
+  else renderImages();
+}
+
+function renderTopics() {
+  const rows = filtered(state.topics);
+
+  content.innerHTML = toolbar() + (rows.length ? rows.map(topic => `
+    <section class="card" data-id="${esc(topic.id)}">
+      <h2>${esc(topic.title || "Tópico sem título")}</h2>
+      <div class="status">Status: ${esc(statusLabel(topic.status))}</div>
+      <div class="fields">
+        ${field("Título", "title", topic.title)}
+        ${selectField("Público-alvo", "target_audience", topic.target_audience, ["b2c","b2b"])}
+        ${field("Objetivo", "objective", topic.objective, true)}
+        ${field("Justificativa", "justification", topic.justification, true)}
+        ${field("Data prevista (AAAA-MM-DD)", "scheduled_date", topic.scheduled_date)}
+        ${selectField("Status", "status", topic.status, ["pending","approved","rejected","revision"])}
+      </div>
+      <div class="meta">ID: ${esc(topic.id)}</div>
+      <div class="actions">
+        <button class="primary" data-action="save-topic">Salvar alterações</button>
+        <button class="approve" data-action="topic-approve">Aprovar</button>
+        <button class="reject" data-action="topic-reject">Rejeitar</button>
+      </div>
+    </section>
+  `).join("") : `<div class="empty">Nenhum tópico encontrado.</div>`);
+
+  setFilter();
+}
+
+function renderPosts() {
+  const rows = filtered(state.posts);
+
+  content.innerHTML = toolbar() + (rows.length ? rows.map(post => {
+    const topic = state.topics.find(t => t.id === post.topic_id);
+    return `
+      <section class="card" data-id="${esc(post.id)}">
+        <h2>${esc(post.post_title || "Post sem título")}</h2>
+        <div class="status">
+          Tópico: ${esc(topic?.title || "Não encontrado")}<br>
+          Status do post: ${esc(statusLabel(post.status))}
+        </div>
+        <div class="fields">
+          ${field("Título", "post_title", post.post_title)}
+          ${field("CTA", "cta", post.cta)}
+          ${field("Texto do post", "post_text", post.post_text, true)}
+          ${field("Justificativa", "justification", post.justification, true)}
+          ${selectField("Status do post", "status", post.status, ["pending","approved","rejected","revision"])}
+          ${selectField("Status da imagem", "image_status", post.image_status || "pending", ["pending","approved","rejected"])}
+        </div>
+        ${post.post_image
+          ? `<img class="preview" src="${esc(state.imageUrls[post.id] || "")}" alt="Imagem do post">`
+          : `<div class="empty">Este post ainda não tem imagem.</div>`}
+        <div class="meta">
+          ID: ${esc(post.id)}<br>
+          Arquivo: ${esc(post.post_image || "Não definido")}<br>
+          Publicado: ${post.posted ? "Sim" : "Não"}
+        </div>
+        <div class="actions">
+          <button class="primary" data-action="save-post">Salvar alterações</button>
+          <button class="approve" data-action="post-approve">Aprovar post</button>
+          <button class="reject" data-action="post-reject">Rejeitar post</button>
+          <button class="approve" data-action="image-approve">Aprovar imagem</button>
+          <button class="reject" data-action="image-reject">Rejeitar imagem</button>
+        </div>
+      </section>`;
+  }).join("") : `<div class="empty">Nenhum post encontrado.</div>`);
+
+  setFilter();
+}
+
+function renderImages() {
+  const rows = filtered(state.posts, "image_status");
+
+  content.innerHTML = toolbar() + (rows.length ? rows.map(post => `
+    <section class="card" data-id="${esc(post.id)}">
+      <h2>${esc(post.post_title || "Post sem título")}</h2>
+      <div class="status">Status da imagem: ${esc(statusLabel(post.image_status || "pending"))}</div>
+      ${post.post_image && state.imageUrls[post.id]
+        ? `<img class="preview" src="${esc(state.imageUrls[post.id])}" alt="Imagem para revisão">`
+        : `<div class="empty">Imagem não disponível.</div>`}
+      <div class="meta">${esc(post.post_image || "Nenhum arquivo vinculado")}</div>
+      <div class="field">
+        <label>Substituir imagem</label>
+        <input type="file" accept="image/*" data-file>
+      </div>
+      <div class="actions">
+        <button class="primary" data-action="upload-image">Enviar e vincular imagem</button>
+        <button class="approve" data-action="image-approve">Aprovar imagem</button>
+        <button class="reject" data-action="image-reject">Rejeitar imagem</button>
+      </div>
+    </section>
+  `).join("") : `<div class="empty">Nenhuma imagem encontrada.</div>`);
+
+  setFilter();
+}
+
+function setFilter() {
+  const select = document.getElementById("filter");
+  if (select) {
+    select.value = state.filter;
+    select.addEventListener("change", () => {
+      state.filter = select.value;
+      render();
+    }, { once: true });
+  }
+}
+
+function getFields(card) {
+  const result = {};
+  card.querySelectorAll("[data-field]").forEach(el => {
+    result[el.dataset.field] = el.value.trim() || null;
+  });
+  return result;
+}
+
+async function updateRow(table, id, changes) {
+  const { error } = await db.from(table).update(changes).eq("id", id);
+  if (error) throw error;
+}
+
+async function handleAction(button) {
+  if (state.busy) return;
+  const card = button.closest("[data-id]");
+  const id = card?.dataset.id;
+  if (!id) return;
+
+  const action = button.dataset.action;
+  state.busy = true;
+  button.disabled = true;
+
+  try {
+    if (action === "save-topic") {
+      await updateRow("linkedin_topics", id, getFields(card));
+      notify("Tópico salvo.");
+    }
+
+    if (action === "topic-approve" || action === "topic-reject") {
+      const status = action === "topic-approve" ? "approved" : "rejected";
+      await updateRow("linkedin_topics", id, { status });
+      notify("Status do tópico atualizado: " + statusLabel(status));
+    }
+
+    if (action === "save-post") {
+      await updateRow("linkedin_posts", id, getFields(card));
+      notify("Post salvo.");
+    }
+
+    if (action === "post-approve" || action === "post-reject") {
+      const status = action === "post-approve" ? "approved" : "rejected";
+      await updateRow("linkedin_posts", id, { status });
+      notify("Status do post atualizado: " + statusLabel(status));
+    }
+
+    if (action === "image-approve" || action === "image-reject") {
+      const image_status = action === "image-approve" ? "approved" : "rejected";
+      await updateRow("linkedin_posts", id, { image_status });
+      notify("Status da imagem atualizado: " + statusLabel(image_status));
+    }
+
+    if (action === "upload-image") {
+      const file = card.querySelector("[data-file]")?.files?.[0];
+      if (!file) throw new Error("Selecione uma imagem antes de enviar.");
+      if (!file.type.startsWith("image/")) {
+        throw new Error("O arquivo selecionado não é uma imagem.");
+      }
+
+      const ext = (file.name.split(".").pop() || "png").replace(/[^a-zA-Z0-9]/g, "");
+      const path = `linkedin/${id}/${crypto.randomUUID()}.${ext}`;
+
+      const upload = await db.storage.from(BUCKET).upload(path, file, {
+        contentType: file.type,
+        upsert: false
+      });
+      if (upload.error) throw upload.error;
+
+      // Salva o caminho relativo no banco, não a URL temporária.
+      await updateRow("linkedin_posts", id, {
+        post_image: path,
+        image_status: "pending",
+        linkedin_image_urn: null
+      });
+
+      notify("Imagem enviada e vinculada. Ela voltou para pendente de aprovação.");
+    }
+
+    await loadData();
+  } catch (error) {
+    notify("Não foi possível concluir a operação:\n" + (error.message || String(error)));
+  } finally {
+    state.busy = false;
+    button.disabled = false;
+  }
+}
+
+document.querySelectorAll("[data-tab]").forEach(button => {
+  button.addEventListener("click", () => {
+    state.tab = button.dataset.tab;
+    render();
+  });
+});
+
+document.getElementById("reload").addEventListener("click", loadData);
+
+content.addEventListener("click", event => {
+  const button = event.target.closest("[data-action]");
+  if (button) handleAction(button);
+});
+
+// Não tenta conectar usando valores de exemplo.
+if (
+  SUPABASE_URL.includes("SEU-PROJETO") ||
+  SUPABASE_KEY.includes("SUA_CHAVE")
+) {
+  notify("Configure SUPABASE_URL e SUPABASE_KEY no início do arquivo.");
+} else {
+  loadData();
+}
+</script>
+</body>
+</html>
