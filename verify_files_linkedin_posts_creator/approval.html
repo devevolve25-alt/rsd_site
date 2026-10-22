@@ -533,7 +533,7 @@ async function loadData() {
   // Atualiza as URLs de imagem para exibição.
   state.imageUrls = {};
   await Promise.all(state.posts.map(async post => {
-    state.imageUrls[post.id] = await resolveImage(post.post_image);
+    state.imageUrls[post.id] = await resolveImage(imageSource(post));
   }));
 
   notify(
@@ -542,20 +542,20 @@ async function loadData() {
   render();
 }
 
+// A imagem exibida no painel vem de image_db_url (URL no bucket do Supabase).
+// post_image guarda o caminho do LinkedIn e não é usado para exibição.
+function imageSource(post) {
+  return post.image_db_url || "";
+}
+
 async function resolveImage(value) {
   if (!value) return "";
 
-  // Aceita URL completa ou caminho relativo no bucket.
+  // URL completa (bucket público): usa direto.
   if (/^https?:\/\//i.test(value)) return value;
 
+  // Caminho relativo no bucket: monta a URL pública.
   const path = value.replace(/^\/+/, "").replace(/^logos_stab\//, "");
-
-  const signed = await db.storage.from(BUCKET).createSignedUrl(path, 3600);
-  if (!signed.error && signed.data?.signedUrl) {
-    return signed.data.signedUrl;
-  }
-
-  // Fallback para buckets públicos.
   const result = db.storage.from(BUCKET).getPublicUrl(path);
   return result.data?.publicUrl || "";
 }
@@ -625,12 +625,12 @@ function renderPosts() {
           ${selectField("Status do post", "status", post.status, ["pending","approved","rejected","revision"])}
           ${selectField("Status da imagem", "image_status", post.image_status || "pending", ["pending","approved","rejected"])}
         </div>
-        ${post.post_image
+        ${imageSource(post)
           ? `<img class="preview" src="${esc(state.imageUrls[post.id] || "")}" alt="Imagem do post">`
           : `<div class="empty">Este post ainda não tem imagem.</div>`}
         <div class="meta">
           ID: ${esc(post.id)}<br>
-          Arquivo: ${esc(post.post_image || "Não definido")}<br>
+          Arquivo: ${esc(imageSource(post) || "Não definido")}<br>
           Publicado: ${post.posted ? "Sim" : "Não"}
         </div>
         <div class="actions">
@@ -656,10 +656,10 @@ function renderImages() {
         Tipo de conteúdo: ${esc(post.content_type || "Não definido")}<br>
         Status da imagem: ${esc(statusLabel(post.image_status || "pending"))}
       </div>
-      ${post.post_image && state.imageUrls[post.id]
+      ${imageSource(post) && state.imageUrls[post.id]
         ? `<img class="preview" src="${esc(state.imageUrls[post.id])}" alt="Imagem para revisão">`
         : `<div class="empty">Imagem não disponível.</div>`}
-      <div class="meta">${esc(post.post_image || "Nenhum arquivo vinculado")}</div>
+      <div class="meta">${esc(imageSource(post) || "Nenhum arquivo vinculado")}</div>
       <div class="field">
         <label>Substituir imagem</label>
         <input type="file" accept="image/*" data-file>
@@ -736,8 +736,16 @@ async function handleAction(button) {
 
     if (action === "topic-approve" || action === "topic-reject") {
       const status = action === "topic-approve" ? "approved" : "rejected";
-      await updateRow("linkedin_topics", id, { status });
-      notify("Status do tópico atualizado: " + statusLabel(status));
+      const changes = action === "topic-approve"
+        ? { ...getFields(card), status }
+        : { status };
+
+      await updateRow("linkedin_topics", id, changes);
+      notify(
+        action === "topic-approve"
+          ? "Tópico salvo e aprovado."
+          : "Status do tópico atualizado: " + statusLabel(status)
+      );
     }
 
     if (action === "save-post") {
@@ -747,8 +755,16 @@ async function handleAction(button) {
 
     if (action === "post-approve" || action === "post-reject") {
       const status = action === "post-approve" ? "approved" : "rejected";
-      await updateRow("linkedin_posts", id, { status });
-      notify("Status do post atualizado: " + statusLabel(status));
+      const changes = action === "post-approve"
+        ? { ...getFields(card), status }
+        : { status };
+
+      await updateRow("linkedin_posts", id, changes);
+      notify(
+        action === "post-approve"
+          ? "Post salvo e aprovado."
+          : "Status do post atualizado: " + statusLabel(status)
+      );
     }
 
     if (action === "image-approve" || action === "image-reject") {
@@ -773,9 +789,11 @@ async function handleAction(button) {
       });
       if (upload.error) throw upload.error;
 
-      // Salva o caminho relativo no banco, não a URL temporária.
+      // Bucket público: salva a URL pública em image_db_url.
+      // post_image (caminho do LinkedIn) não é alterado.
+      const publicUrl = db.storage.from(BUCKET).getPublicUrl(path).data?.publicUrl;
       await updateRow("linkedin_posts", id, {
-        post_image: path,
+        image_db_url: publicUrl,
         image_status: "pending",
         linkedin_image_urn: null
       });
