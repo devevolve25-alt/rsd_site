@@ -409,6 +409,7 @@ const state = {
   posts: [],
   imageUrls: {},
   filter: "all",
+  contentFilter: "all",
   busy: false
 };
 
@@ -465,7 +466,19 @@ function selectField(label, key, value, values) {
     </div>`;
 }
 
+// Valores de content_type existentes na aba atual ("__none__" = sem valor).
+function contentTypeValues() {
+  const source = state.tab === "topics" ? state.topics : state.posts;
+  const values = [...new Set(source.map(r => r.content_type).filter(Boolean))].sort();
+  if (source.some(r => !r.content_type)) values.push("__none__");
+  return values;
+}
+
 function toolbar() {
+  const typeOptions = contentTypeValues().map(v =>
+    `<option value="${esc(v)}">${esc(v === "__none__" ? "Não definido" : v)}</option>`
+  ).join("");
+
   return `
     <div class="toolbar">
       <select id="filter">
@@ -475,13 +488,20 @@ function toolbar() {
         <option value="rejected">Rejeitados</option>
         <option value="revision">Em revisão</option>
       </select>
+      <select id="filter-type">
+        <option value="all">Todos os tipos de conteúdo</option>
+        ${typeOptions}
+      </select>
     </div>`;
 }
 
 function filtered(rows, key = "status") {
-  return rows.filter(row =>
-    state.filter === "all" || row[key] === state.filter
-  );
+  return rows.filter(row => {
+    const okStatus = state.filter === "all" || row[key] === state.filter;
+    const type = row.content_type || "__none__";
+    const okType = state.contentFilter === "all" || type === state.contentFilter;
+    return okStatus && okType;
+  });
 }
 
 async function loadData() {
@@ -541,6 +561,10 @@ async function resolveImage(value) {
 }
 
 function render() {
+  if (state.contentFilter !== "all" && !contentTypeValues().includes(state.contentFilter)) {
+    state.contentFilter = "all";
+  }
+
   document.querySelectorAll("[data-tab]").forEach(button => {
     button.classList.toggle("active", button.dataset.tab === state.tab);
   });
@@ -657,6 +681,15 @@ function setFilter() {
     select.value = state.filter;
     select.addEventListener("change", () => {
       state.filter = select.value;
+      render();
+    }, { once: true });
+  }
+
+  const typeSelect = document.getElementById("filter-type");
+  if (typeSelect) {
+    typeSelect.value = state.contentFilter;
+    typeSelect.addEventListener("change", () => {
+      state.contentFilter = typeSelect.value;
       render();
     }, { once: true });
   }
