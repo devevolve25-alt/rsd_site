@@ -466,6 +466,16 @@ function selectField(label, key, value, values) {
     </div>`;
 }
 
+// Seletor de data (AAAA-MM-DD), sem horário.
+function dateField(label, key, value) {
+  const day = value ? String(value).slice(0, 10) : "";
+  return `
+    <div class="field">
+      <label>${esc(label)}</label>
+      <input type="date" data-field="${esc(key)}" value="${esc(day)}">
+    </div>`;
+}
+
 // Valores de content_type existentes na aba atual ("__none__" = sem valor).
 function contentTypeValues() {
   const source = state.tab === "topics" ? state.topics : state.posts;
@@ -589,7 +599,6 @@ function renderTopics() {
         ${selectField("Público-alvo", "target_audience", topic.target_audience, ["b2c","b2b"])}
         ${field("Objetivo", "objective", topic.objective, true)}
         ${field("Justificativa", "justification", topic.justification, true)}
-        ${field("Data prevista (AAAA-MM-DD)", "scheduled_date", topic.scheduled_date)}
         ${selectField("Status", "status", topic.status, ["pending","approved","rejected","revision"])}
       </div>
       <div class="meta">ID: ${esc(topic.id)}</div>
@@ -624,6 +633,7 @@ function renderPosts() {
           ${field("Justificativa", "justification", post.justification, true)}
           ${selectField("Status do post", "status", post.status, ["pending","approved","rejected","revision"])}
           ${selectField("Status da imagem", "image_status", post.image_status || "pending", ["pending","approved","rejected"])}
+          ${dateField("Data prevista de postagem", "scheduled_at", post.scheduled_at)}
         </div>
         ${imageSource(post)
           ? `<img class="preview" src="${esc(state.imageUrls[post.id] || "")}" alt="Imagem do post">`
